@@ -1,4 +1,4 @@
-﻿const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require('uuid');
 const QRCode = require('qrcode');
 const path = require('path');
 const fs = require('fs');
@@ -291,7 +291,40 @@ async function bulkUploadCertificates(req, res) {
   }
 }
 
-module.exports = { uploadCertificate, getCertificate, getCertificateByCertNumber, getCertificatesByUniversity, getCertificatesByEmail, getCertificatesByRegisterNumber, bulkUploadCertificates };
+function getCertificatesByIdentity(req, res) {
+  try {
+    const { email, registerNumber } = req.query;
+    if (!registerNumber && !email) {
+      return res.status(400).json({ error: 'email or registerNumber query parameter is required' });
+    }
+    let certs;
+    if (registerNumber) {
+      const normalized = registerNumber.trim();
+      certs = db.prepare(`
+        SELECT c.*, u.name as university_name
+        FROM certificates c
+        JOIN universities u ON c.university_id = u.id
+        WHERE c.register_number = ?
+        ORDER BY c.created_at DESC
+      `).all(normalized);
+    } else {
+      const normalized = email.trim();
+      certs = db.prepare(`
+        SELECT c.*, u.name as university_name
+        FROM certificates c
+        JOIN universities u ON c.university_id = u.id
+        WHERE c.student_email = ?
+        ORDER BY c.created_at DESC
+      `).all(normalized);
+    }
+    res.json(certs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch certificates' });
+  }
+}
+
+module.exports = { uploadCertificate, getCertificate, getCertificateByCertNumber, getCertificatesByUniversity, getCertificatesByEmail, getCertificatesByRegisterNumber, bulkUploadCertificates, listCertificateTypes, getCertificatesByIdentity };
 
 function listCertificateTypes(req, res) {
   const { CERTIFICATE_TYPES } = require('../utils/certificateTypes');
