@@ -50,9 +50,10 @@ function Verifier() {
       return {
         cert_id: cert.id,
         certificate_number: cert.certificate_number,
+        register_number: cert.register_number,
         student_name: cert.student_name,
-        student_email: cert.student_email,
         course: cert.course,
+        cgpa: cert.cgpa,
         start_year: cert.start_year,
         end_year: cert.end_year,
         issue_date: cert.issue_date,

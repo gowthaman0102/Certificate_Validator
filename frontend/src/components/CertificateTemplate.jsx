@@ -1,6 +1,10 @@
 ﻿import { forwardRef } from 'react';
+import { getCertificateDescription } from '../utils/certificateTypes';
 
 const CertificateTemplate = forwardRef(function CertificateTemplate({ certificate, qrCodeUrl }, ref) {
+  const certType = certificate.certificate_type || 'COURSE_COMPLETION';
+  const description = getCertificateDescription(certType, certificate);
+
   return (
     <div
       ref={ref}
@@ -37,7 +41,7 @@ const CertificateTemplate = forwardRef(function CertificateTemplate({ certificat
           Register No: {certificate.register_number}
         </div>
         <div style={{ fontSize: '15px', color: '#2B3B5C', lineHeight: '1.6' }}>
-          has successfully completed the course of study in
+          {description}
         </div>
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '24px', fontWeight: 600, color: '#16233F', margin: '8px 0' }}>
           {certificate.course}

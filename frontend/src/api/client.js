@@ -34,6 +34,12 @@ export const getCertificateByCertNumber = (certNumber) => client.get(`/certifica
 export const getCertificatesByUniversity = (id) => client.get(`/certificates/university/${id}`);
 export const getCertificatesByEmail = (email) => client.get(`/certificates/by-email?email=${encodeURIComponent(email)}`);
 export const getCertificatesByRegisterNumber = (registerNumber) => client.get(`/certificates/by-register-number?registerNumber=${encodeURIComponent(registerNumber)}`);
+export const getStudentCertificates = ({ email, registerNumber }) => {
+  const params = new URLSearchParams();
+  if (email) params.set('email', email);
+  if (registerNumber) params.set('registerNumber', registerNumber);
+  return client.get(`/certificates/by-identity?${params.toString()}`);
+};
 
 // ---- Verification ----
 export const verifyCertificate = (data) => client.post('/verify', data);

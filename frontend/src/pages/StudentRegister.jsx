@@ -1,13 +1,12 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../api/client';
 
-function Register() {
+function StudentRegister() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [registerNumber, setRegisterNumber] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('STUDENT');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -18,20 +17,18 @@ function Register() {
     setLoading(true);
 
     try {
-      const payload = { name, email, password, role };
-      if (role === 'STUDENT') {
-        payload.register_number = registerNumber.trim();
-      }
+      const payload = {
+        name,
+        email,
+        password,
+        role: 'STUDENT',
+        register_number: registerNumber.trim(),
+      };
 
       const res = await registerUser(payload);
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
-
-      if (res.data.user.role === 'UNIVERSITY') {
-        navigate('/university');
-      } else {
-        navigate('/student');
-      }
+      navigate('/student');
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed');
     } finally {
@@ -39,15 +36,13 @@ function Register() {
     }
   }
 
-  const loginPath = role === 'UNIVERSITY' ? '/university-login' : '/student-login';
-
   return (
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-brand">
           <div className="auth-brand-badge">🎓</div>
           <div className="auth-brand-title">CredentialVault</div>
-          <div className="auth-brand-subtitle">CREATE AN ACCOUNT</div>
+          <div className="auth-brand-subtitle">STUDENT REGISTRATION</div>
         </div>
         {error && <div className="error-msg">{error}</div>}
         <form onSubmit={handleSubmit}>
@@ -67,17 +62,13 @@ function Register() {
             required
           />
 
-          {role === 'STUDENT' && (
-            <>
-              <label>Register Number</label>
-              <input
-                type="text"
-                value={registerNumber}
-                onChange={(e) => setRegisterNumber(e.target.value)}
-                required
-              />
-            </>
-          )}
+          <label>Register Number</label>
+          <input
+            type="text"
+            value={registerNumber}
+            onChange={(e) => setRegisterNumber(e.target.value)}
+            required
+          />
 
           <label>Password</label>
           <input
@@ -88,18 +79,12 @@ function Register() {
             minLength={6}
           />
 
-          <label>I am a</label>
-          <select value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="STUDENT">Student</option>
-            <option value="UNIVERSITY">University</option>
-          </select>
-
           <button type="submit" disabled={loading}>
             {loading ? 'Creating account...' : 'Register'}
           </button>
         </form>
         <p>
-          Already have an account? <Link to={loginPath}>Login</Link>
+          Already have a student account? <Link to="/student-login">Login</Link>
         </p>
         <p>
           <Link to="/">Back to Home</Link>
@@ -109,4 +94,4 @@ function Register() {
   );
 }
 
-export default Register;
+export default StudentRegister;

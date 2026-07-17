@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { loginUser } from '../api/client';
 
 function StudentLogin() {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,7 +15,14 @@ function StudentLogin() {
     setLoading(true);
 
     try {
-      const res = await loginUser({ email, password });
+      const payload = { password };
+      if (identifier.includes('@')) {
+        payload.email = identifier.trim();
+      } else {
+        payload.register_number = identifier.trim();
+      }
+
+      const res = await loginUser(payload);
 
       if (res.data.user.role !== 'STUDENT') {
         setError('This is a university account. Please go to the University Portal to sign in.');
@@ -42,11 +49,11 @@ function StudentLogin() {
         </div>
         {error && <div className="error-msg">{error}</div>}
         <form onSubmit={handleSubmit}>
-          <label>Student email</label>
+          <label>Student email or register number</label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             required
           />
 
@@ -63,7 +70,7 @@ function StudentLogin() {
           </button>
         </form>
         <p>
-          Don't have a student account? <Link to="/register">Register</Link>
+          Don't have a student account? <Link to="/student-register">Register</Link>
         </p>
         <p>
           <Link to="/">Back to Home</Link>

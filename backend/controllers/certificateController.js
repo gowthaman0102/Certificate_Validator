@@ -1,18 +1,21 @@
-const { v4: uuidv4 } = require('uuid');
+﻿const { v4: uuidv4 } = require('uuid');
 const QRCode = require('qrcode');
 const path = require('path');
 const fs = require('fs');
 const { db } = require('../config/db');
 const { generateHash, signData, generateCertificateNumber } = require('../utils/crypto');
+const { isValidCertificateType } = require('../utils/certificateTypes');
 
 async function uploadCertificate(req, res) {
   try {
-    const { student_name, student_email, register_number, course, cgpa, start_year, end_year, issue_date } = req.body;
+    const { student_name, student_email, register_number, course, cgpa, start_year, end_year, issue_date, certificate_type } = req.body;
     const userId = req.user.id;
 
-    if (!student_name || !register_number || !course || !cgpa || !end_year || !issue_date) {
-      return res.status(400).json({ error: 'student_name, register_number, course, cgpa, end_year, and issue_date are required' });
+    if (!student_name || !register_number || !course || !end_year || !issue_date) {
+      return res.status(400).json({ error: 'student_name, register_number, course, end_year, and issue_date are required' });
     }
+
+    const certType = certificate_type && isValidCertificateType(certificate_type) ? certificate_type : 'DEGREE';
 
     const university = db.prepare('SELECT * FROM universities WHERE user_id = ?').get(userId);
     if (!university) {
@@ -28,10 +31,11 @@ async function uploadCertificate(req, res) {
     const certPayload = JSON.stringify({
       id: certificateId,
       certificate_number: certificateNumber,
+      certificate_type: certType,
       register_number: normalizedRegNo,
       student_name,
       course,
-      cgpa,
+      cgpa: cgpa || '',
       start_year: start_year || '',
       end_year,
       issue_date,
@@ -44,10 +48,11 @@ async function uploadCertificate(req, res) {
     const qrPayload = {
       cert_id: certificateId,
       certificate_number: certificateNumber,
+      certificate_type: certType,
       register_number: normalizedRegNo,
       student_name,
       course,
-      cgpa,
+      cgpa: cgpa || '',
       start_year: start_year || '',
       end_year,
       issue_date,
@@ -62,20 +67,21 @@ async function uploadCertificate(req, res) {
     await QRCode.toFile(qrFilePath, qrData, { width: 400 });
 
     db.prepare(`
-      INSERT INTO certificates (id, certificate_number, register_number, student_name, student_email, course, cgpa, start_year, end_year, issue_date, certificate_hash, signature, university_id, file_path, qr_data, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'VALID')
-    `).run(certificateId, certificateNumber, normalizedRegNo, student_name, normalizedEmail, course, cgpa, start_year || null, end_year, issue_date, certificateHash, signature, university.id, filePath, qrData);
+      INSERT INTO certificates (id, certificate_number, certificate_type, register_number, student_name, student_email, course, cgpa, start_year, end_year, issue_date, certificate_hash, signature, university_id, file_path, qr_data, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'VALID')
+    `).run(certificateId, certificateNumber, certType, normalizedRegNo, student_name, normalizedEmail, course, cgpa || null, start_year || null, end_year, issue_date, certificateHash, signature, university.id, filePath, qrData);
 
     res.status(201).json({
       message: 'Certificate issued successfully',
       certificate: {
         id: certificateId,
         certificate_number: certificateNumber,
+        certificate_type: certType,
         register_number: normalizedRegNo,
         student_name,
         student_email: normalizedEmail,
         course,
-        cgpa,
+        cgpa: cgpa || '',
         start_year: start_year || '',
         end_year,
         issue_date,
@@ -180,8 +186,6 @@ function getCertificatesByRegisterNumber(req, res) {
   }
 }
 
-module.exports = { uploadCertificate, getCertificate, getCertificateByCertNumber, getCertificatesByUniversity, getCertificatesByEmail, getCertificatesByRegisterNumber, bulkUploadCertificates };
-
 async function bulkUploadCertificates(req, res) {
   try {
     const userId = req.user.id;
@@ -200,7 +204,7 @@ async function bulkUploadCertificates(req, res) {
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      const rowNum = i + 2; // account for header row in the original sheet
+      const rowNum = i + 2;
 
       try {
         const student_name = row.student_name;
@@ -211,8 +215,9 @@ async function bulkUploadCertificates(req, res) {
         const start_year = row.start_year || '';
         const student_email = row.student_email || null;
         const issue_date = row.issue_date || new Date().toISOString().split('T')[0];
+        const certType = row.certificate_type && isValidCertificateType(row.certificate_type) ? row.certificate_type : 'DEGREE';
 
-        if (!student_name || !register_number || !course || !cgpa || !end_year) {
+        if (!student_name || !register_number || !course || !end_year) {
           results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, error: 'Missing required field(s)' });
           continue;
         }
@@ -225,10 +230,11 @@ async function bulkUploadCertificates(req, res) {
         const certPayload = JSON.stringify({
           id: certificateId,
           certificate_number: certificateNumber,
+          certificate_type: certType,
           register_number: normalizedRegNo,
           student_name,
           course,
-          cgpa: String(cgpa),
+          cgpa: cgpa ? String(cgpa) : '',
           start_year: String(start_year),
           end_year: String(end_year),
           issue_date,
@@ -241,10 +247,11 @@ async function bulkUploadCertificates(req, res) {
         const qrPayload = {
           cert_id: certificateId,
           certificate_number: certificateNumber,
+          certificate_type: certType,
           register_number: normalizedRegNo,
           student_name,
           course,
-          cgpa: String(cgpa),
+          cgpa: cgpa ? String(cgpa) : '',
           start_year: String(start_year),
           end_year: String(end_year),
           issue_date,
@@ -259,9 +266,9 @@ async function bulkUploadCertificates(req, res) {
         await QRCode.toFile(qrFilePath, qrData, { width: 400 });
 
         db.prepare(`
-          INSERT INTO certificates (id, certificate_number, register_number, student_name, student_email, course, cgpa, start_year, end_year, issue_date, certificate_hash, signature, university_id, file_path, qr_data, status)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'VALID')
-        `).run(certificateId, certificateNumber, normalizedRegNo, student_name, normalizedEmail, course, String(cgpa), String(start_year), String(end_year), issue_date, certificateHash, signature, university.id, null, qrData);
+          INSERT INTO certificates (id, certificate_number, certificate_type, register_number, student_name, student_email, course, cgpa, start_year, end_year, issue_date, certificate_hash, signature, university_id, file_path, qr_data, status)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'VALID')
+        `).run(certificateId, certificateNumber, certType, normalizedRegNo, student_name, normalizedEmail, course, cgpa ? String(cgpa) : null, String(start_year), String(end_year), issue_date, certificateHash, signature, university.id, null, qrData);
 
         results.push({ row: rowNum, register_number: normalizedRegNo, student_name, certificate_number: certificateNumber, success: true });
       } catch (rowErr) {
@@ -282,4 +289,12 @@ async function bulkUploadCertificates(req, res) {
     console.error(err);
     res.status(500).json({ error: 'Bulk issuance failed', debug: err.message });
   }
+}
+
+module.exports = { uploadCertificate, getCertificate, getCertificateByCertNumber, getCertificatesByUniversity, getCertificatesByEmail, getCertificatesByRegisterNumber, bulkUploadCertificates };
+
+function listCertificateTypes(req, res) {
+  const { CERTIFICATE_TYPES } = require('../utils/certificateTypes');
+  const types = Object.entries(CERTIFICATE_TYPES).map(([value, cfg]) => ({ value, label: cfg.label }));
+  res.json(types);
 }

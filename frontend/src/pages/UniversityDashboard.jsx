@@ -8,6 +8,7 @@ import {
   getCertificatesByUniversity,
   revokeCertificate,
 } from '../api/client';
+import { CERTIFICATE_TYPES } from '../utils/certificateTypes';
 import CertificateTemplate from '../components/CertificateTemplate';
 import { downloadCertificateAsPDF } from '../utils/certificatePdf';
 import { parseCertificateExcel } from '../utils/excelParser';
@@ -31,6 +32,7 @@ function UniversityDashboard() {
   const [startYear, setStartYear] = useState('');
   const [endYear, setEndYear] = useState('');
   const [issueDate, setIssueDate] = useState('');
+  const [certificateType, setCertificateType] = useState('COURSE_COMPLETION');
   const [file, setFile] = useState(null);
   const [issuing, setIssuing] = useState(false);
   const [lastIssued, setLastIssued] = useState(null);
@@ -98,6 +100,7 @@ function UniversityDashboard() {
       if (startYear) formData.append('start_year', startYear);
       formData.append('end_year', endYear);
       formData.append('issue_date', issueDate);
+      formData.append('certificate_type', certificateType);
       if (file) formData.append('file', file);
 
       const res = await uploadCertificate(formData);
@@ -106,6 +109,7 @@ function UniversityDashboard() {
       setRegisterNumber('');
       setStudentEmail('');
       setCourse('');
+      setCertificateType('COURSE_COMPLETION');
       setCgpa('');
       setStartYear('');
       setEndYear('');
@@ -302,49 +306,6 @@ function UniversityDashboard() {
           </button>
         </div>
         {bulkError && <div className="error-msg" style={{marginTop: '1rem'}}>{bulkError}</div>}
-        {bulkResults && (
-          <div style={{marginTop: '1.25rem'}}>
-            <div style={{
-              background: bulkResults.failed === 0 ? '#e6f2e8' : '#fdf3e0',
-              border: `1px solid ${bulkResults.failed === 0 ? '#1e6b34' : '#c9a227'}`,
-              borderRadius: '6px',
-              padding: '0.75rem 1rem',
-              marginBottom: '1rem',
-              fontSize: '0.9rem',
-              color: '#1e2b3a',
-            }}>
-              {bulkResults.message}
-            </div>
-            <div style={{maxHeight: '300px', overflowY: 'auto', border: '1px solid #d8dde4', borderRadius: '6px'}}>
-              <table style={{width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem'}}>
-                <thead>
-                  <tr style={{background: '#f7f8fa', textAlign: 'left'}}>
-                    <th style={{padding: '0.5rem 0.75rem'}}>Row</th>
-                    <th style={{padding: '0.5rem 0.75rem'}}>Register No.</th>
-                    <th style={{padding: '0.5rem 0.75rem'}}>Name</th>
-                    <th style={{padding: '0.5rem 0.75rem'}}>Certificate ID</th>
-                    <th style={{padding: '0.5rem 0.75rem'}}>Result</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bulkResults.results.map((r) => (
-                    <tr key={r.row} style={{borderTop: '1px solid #eef1f5'}}>
-                      <td style={{padding: '0.5rem 0.75rem'}}>{r.row}</td>
-                      <td style={{padding: '0.5rem 0.75rem'}}>{r.register_number}</td>
-                      <td style={{padding: '0.5rem 0.75rem'}}>{r.student_name || '-'}</td>
-                      <td style={{padding: '0.5rem 0.75rem'}}>{r.certificate_number || '-'}</td>
-                      <td style={{padding: '0.5rem 0.75rem'}}>
-                        {r.success
-                          ? <span className="status-badge status-valid">SUCCESS</span>
-                          : <span className="status-badge status-revoked" title={r.error}>FAILED</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="card">

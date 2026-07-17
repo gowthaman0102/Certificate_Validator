@@ -3,8 +3,8 @@ const { generateHash, verifySignature } = require('../utils/crypto');
 
 function verifyCertificate(req, res) {
   try {
-    const { cert_id, certificate_number, register_number, student_name, course, cgpa, start_year, end_year, issue_date, issuer_id, hash, signature } = req.body;
-    if (!cert_id || !certificate_number || !register_number || !student_name || !course || !cgpa || !end_year || !issue_date || !issuer_id || !hash || !signature) {
+    const { cert_id, certificate_number, certificate_type, register_number, student_name, course, cgpa, start_year, end_year, issue_date, issuer_id, hash, signature } = req.body;
+    if (!cert_id || !certificate_number || !register_number || !student_name || !course || !end_year || !issue_date || !issuer_id || !hash || !signature) {
       return res.status(400).json({ error: 'Incomplete QR data provided' });
     }
 
@@ -16,10 +16,11 @@ function verifyCertificate(req, res) {
     const recomputedPayload = JSON.stringify({
       id: cert_id,
       certificate_number,
+      certificate_type: certificate_type || 'DEGREE',
       register_number,
       student_name,
       course,
-      cgpa,
+      cgpa: cgpa || '',
       start_year: start_year || '',
       end_year,
       issue_date,
@@ -43,7 +44,7 @@ function verifyCertificate(req, res) {
     return res.json({
       result: 'VALID',
       message: 'Certificate is authentic and unmodified',
-      certificate: { cert_id, certificate_number, register_number, student_name, course, cgpa, start_year, end_year, issue_date, issuer: university.name }
+      certificate: { cert_id, certificate_number, certificate_type, register_number, student_name, course, cgpa, start_year, end_year, issue_date, issuer: university.name }
     });
   } catch (err) {
     console.error(err);

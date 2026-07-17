@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCertificatesByEmail } from '../api/client';
+import { getStudentCertificates } from '../api/client';
 import CertificateTemplate from '../components/CertificateTemplate';
 import { downloadCertificateAsPDF } from '../utils/certificatePdf';
 
@@ -10,6 +10,7 @@ function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [registerNumber, setRegisterNumber] = useState('');
   const [copiedId, setCopiedId] = useState('');
   const hiddenCertRefs = useRef({});
 
@@ -17,18 +18,19 @@ function StudentDashboard() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (user.email) {
       setUserEmail(user.email);
-      loadCertificates(user.email);
+      setRegisterNumber(user.register_number || '');
+      loadCertificates(user.email, user.register_number || '');
     } else {
       setLoading(false);
     }
   }, []);
 
-  async function loadCertificates(email) {
+  async function loadCertificates(email, regNumber) {
     setError('');
     setLoading(true);
     try {
-      const res = await getCertificatesByEmail(email);
-      setCertificates(res.data);
+      const res = await getStudentCertificates({ email, registerNumber: regNumber });
+      setCertificates(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       setError('Failed to load certificates');
     } finally {
@@ -73,7 +75,7 @@ function StudentDashboard() {
 
       <div className="card">
         <p style={{color: '#3d4a5c', fontSize: '0.9rem'}}>
-          Showing certificates issued to <strong>{userEmail}</strong>
+          Showing certificates issued to <strong>{userEmail}</strong>{registerNumber ? ` / ${registerNumber}` : ''}
         </p>
         {error && <div className="error-msg" style={{marginTop: '1rem'}}>{error}</div>}
       </div>

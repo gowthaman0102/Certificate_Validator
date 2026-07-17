@@ -51,17 +51,47 @@ async function verifyRsaSignature(data, signatureHex, publicKeyPem) {
   );
 }
 
+function normalizeValue(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed === '' ? '' : trimmed;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return String(value);
+}
+
+function buildNormalizedPayload(payload) {
+  const normalized = {
+    id: normalizeValue(payload.id ?? payload.cert_id),
+    certificate_number: normalizeValue(payload.certificate_number),
+    register_number: normalizeValue(payload.register_number),
+    student_name: normalizeValue(payload.student_name),
+    course: normalizeValue(payload.course),
+    cgpa: normalizeValue(payload.cgpa),
+    start_year: normalizeValue(payload.start_year),
+    end_year: normalizeValue(payload.end_year),
+    issue_date: normalizeValue(payload.issue_date),
+    issuer_id: normalizeValue(payload.issuer_id),
+  };
+  return JSON.stringify(normalized);
+}
+
 export async function verifyOffline(qrPayload, publicKeyPem) {
   const { cert_id, certificate_number, register_number, student_name, course, cgpa, start_year, end_year, issue_date, issuer_id, hash, signature } = qrPayload;
 
-  const recomputedPayload = JSON.stringify({
-    id: cert_id,
+  const recomputedPayload = buildNormalizedPayload({
+    cert_id,
     certificate_number,
     register_number,
     student_name,
     course,
     cgpa,
-    start_year: start_year || '',
+    start_year,
     end_year,
     issue_date,
     issuer_id,

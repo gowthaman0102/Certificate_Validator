@@ -63,7 +63,7 @@ function UniversityLogin() {
           </button>
         </form>
         <p>
-          Don't have a university account? <Link to="/register">Register</Link>
+          Don't have a university account? <Link to="/university-register">Register</Link>
         </p>
         <p>
           <Link to="/">Back to Home</Link>
