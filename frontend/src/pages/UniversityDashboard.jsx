@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   getMyUniversity,
@@ -8,10 +8,10 @@ import {
   getCertificatesByUniversity,
   revokeCertificate,
 } from '../api/client';
-import { CERTIFICATE_TYPES } from '../utils/certificateTypes';
 import CertificateTemplate from '../components/CertificateTemplate';
 import { downloadCertificateAsPDF } from '../utils/certificatePdf';
 import { parseCertificateExcel } from '../utils/excelParser';
+import { CATEGORIES, NEEDS_DETAIL } from '../utils/certificateCategory';
 
 function UniversityDashboard() {
   const navigate = useNavigate();
@@ -32,8 +32,9 @@ function UniversityDashboard() {
   const [startYear, setStartYear] = useState('');
   const [endYear, setEndYear] = useState('');
   const [issueDate, setIssueDate] = useState('');
-  const [certificateType, setCertificateType] = useState('COURSE_COMPLETION');
   const [file, setFile] = useState(null);
+  const [certCategory, setCertCategory] = useState(CATEGORIES[0].value);
+  const [certDetail, setCertDetail]     = useState('');
   const [issuing, setIssuing] = useState(false);
   const [lastIssued, setLastIssued] = useState(null);
   const [copiedId, setCopiedId] = useState('');
@@ -46,6 +47,12 @@ function UniversityDashboard() {
   const hiddenCertRef = useRef(null);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (!token || user.role !== 'UNIVERSITY') {
+      navigate('/university-login');
+      return;
+    }
     loadUniversity();
   }, []);
 
@@ -100,7 +107,8 @@ function UniversityDashboard() {
       if (startYear) formData.append('start_year', startYear);
       formData.append('end_year', endYear);
       formData.append('issue_date', issueDate);
-      formData.append('certificate_type', certificateType);
+      formData.append('certificate_category', certCategory);
+      if (certDetail.trim()) formData.append('certificate_detail', certDetail.trim());
       if (file) formData.append('file', file);
 
       const res = await uploadCertificate(formData);
@@ -109,12 +117,13 @@ function UniversityDashboard() {
       setRegisterNumber('');
       setStudentEmail('');
       setCourse('');
-      setCertificateType('COURSE_COMPLETION');
       setCgpa('');
       setStartYear('');
       setEndYear('');
       setIssueDate('');
       setFile(null);
+      setCertCategory(CATEGORIES[0].value);
+      setCertDetail('');
       loadCertificates(university.id);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to issue certificate');
@@ -215,7 +224,30 @@ function UniversityDashboard() {
     <div className="dashboard">
       <div className="dashboard-header">
         <h2>{university.name}</h2>
-        <button className="logout-btn" onClick={handleLogout}>Logout</button>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <button
+            className="btn-primary"
+            onClick={() => navigate('/analytics/university')}
+            id="university-analytics-btn"
+          >
+            Analytics
+          </button>
+          <button
+            className="btn-primary"
+            onClick={() => navigate('/analytics/verification')}
+            id="university-verification-analytics-btn"
+          >
+            Verification Stats
+          </button>
+          <button
+            className="btn-primary"
+            onClick={() => navigate('/audit')}
+            id="university-audit-btn"
+          >
+            Audit Logs
+          </button>
+          <button className="logout-btn" onClick={handleLogout}>Logout</button>
+        </div>
       </div>
 
       <div className="card">
@@ -252,6 +284,38 @@ function UniversityDashboard() {
           </div>
           <label>Issue Date</label>
           <input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} required />
+
+          <label>Certificate Category</label>
+          <select
+            value={certCategory}
+            onChange={(e) => { setCertCategory(e.target.value); setCertDetail(''); }}
+            required
+            id="cert-category-select"
+          >
+            {CATEGORIES.map((cat) => (
+              <option key={cat.value} value={cat.value}>{cat.label}</option>
+            ))}
+          </select>
+
+          {NEEDS_DETAIL.has(certCategory) && (
+            <>
+              <label>Certificate Detail <span style={{ color: '#a02622' }}>*</span></label>
+              <input
+                value={certDetail}
+                onChange={(e) => setCertDetail(e.target.value)}
+                placeholder={{
+                  'Course Completion Certificate':     'e.g. Full Stack Web Development, Data Science',
+                  'Internship Completion Certificate': 'e.g. Software Development Internship',
+                  'Project Completion Certificate':    'e.g. Smart Attendance System',
+                  'Participation Certificate':         'e.g. National Hackathon, Workshop on AI',
+                  'Bonafide Certificate':              'e.g. Higher Studies, Passport Application',
+                }[certCategory] || 'Enter detail'}
+                required
+                id="cert-detail-input"
+              />
+            </>
+          )}
+
           <label>Certificate PDF (optional)</label>
           <input type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files[0])} />
           <button className="btn-primary" type="submit" disabled={issuing} style={{marginTop: '1rem'}}>
@@ -296,8 +360,10 @@ function UniversityDashboard() {
       <div className="card">
         <h3>Bulk Issue Certificates</h3>
         <p style={{color: '#7a8699', fontSize: '0.85rem', marginBottom: '1rem'}}>
-          Upload an Excel file (.xlsx) with columns in any order: Register Number, Name, Department, CGPA, Year of Passing.
-          Start Year and Email columns are optional.
+          Upload an Excel file (.xlsx) with columns in any order: Register Number, Name, Department / Course,
+          CGPA, Year of Passing. <strong>Certificate Category</strong> and <strong>Certificate Detail</strong> are
+          new optional columns — if omitted, category defaults to "Course Completion Certificate".
+          Start Year, Email, and Issue Date columns are also optional.
         </p>
         <input type="file" accept=".xlsx,.xls" onChange={handleBulkFileChange} />
         <div style={{marginTop: '1rem'}}>
@@ -306,6 +372,23 @@ function UniversityDashboard() {
           </button>
         </div>
         {bulkError && <div className="error-msg" style={{marginTop: '1rem'}}>{bulkError}</div>}
+        {bulkResults && (
+          <div style={{ marginTop: '1rem', background: '#f7f8fa', border: '1px solid #d8dde4', borderRadius: '6px', padding: '1rem', fontSize: '0.85rem' }}>
+            <p style={{ fontWeight: 600, color: '#1e2b3a', marginBottom: '0.5rem' }}>Bulk Upload Summary</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.4rem 1rem' }}>
+              <div><span style={{ color: '#7a8699' }}>Total Rows:</span> <strong>{bulkResults.total}</strong></div>
+              <div><span style={{ color: '#7a8699' }}>Issued:</span> <strong style={{ color: '#1e6b34' }}>{bulkResults.succeeded}</strong></div>
+              <div><span style={{ color: '#7a8699' }}>Skipped (duplicate restricted):</span> <strong style={{ color: '#c9a227' }}>{bulkResults.skipped_restricted ?? 0}</strong></div>
+              <div><span style={{ color: '#7a8699' }}>Failed:</span> <strong style={{ color: '#a02622' }}>{bulkResults.failed}</strong></div>
+            </div>
+            <p style={{ marginTop: '0.5rem', color: '#7a8699' }}>{bulkResults.message}</p>
+            {bulkResults.results?.filter(r => !r.success).map((r, i) => (
+              <div key={i} style={{ marginTop: '0.3rem', fontSize: '0.78rem', color: '#a02622' }}>
+                Row {r.row} ({r.register_number}): {r.error}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="card">

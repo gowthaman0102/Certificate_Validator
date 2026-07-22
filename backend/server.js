@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -8,6 +8,10 @@ const universityRoutes = require('./routes/universityRoutes');
 const certificateRoutes = require('./routes/certificateRoutes');
 const verificationRoutes = require('./routes/verificationRoutes');
 const revocationRoutes = require('./routes/revocationRoutes');
+const walletRoutes = require('./routes/walletRoutes');
+const auditRoutes      = require('./routes/auditRoutes');
+const analyticsRoutes  = require('./routes/analyticsRoutes');
+const blockchainRoutes = require('./routes/blockchainRoutes');
 
 const app = express();
 
@@ -26,6 +30,10 @@ app.use('/api', universityRoutes);
 app.use('/api', certificateRoutes);
 app.use('/api', verificationRoutes);
 app.use('/api', revocationRoutes);
+app.use('/api', walletRoutes);
+app.use('/api', auditRoutes);
+app.use('/api', analyticsRoutes);
+app.use('/api', blockchainRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

@@ -1,4 +1,4 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 function Home() {
   return (
@@ -48,6 +48,16 @@ function Home() {
             </p>
             <Link to="/verify" className="btn-primary" style={{display: 'inline-block', textDecoration: 'none'}}>
               Verify a Certificate
+            </Link>
+          </div>
+
+          <div className="card" style={{margin: 0, textAlign: 'left'}}>
+            <h3>⛓ Blockchain Explorer</h3>
+            <p style={{color: '#7a8699', fontSize: '0.9rem', marginBottom: '1rem'}}>
+              View anchored certificate hashes, transaction IDs, and block records on the ledger.
+            </p>
+            <Link to="/blockchain-explorer" className="btn-primary" style={{display: 'inline-block', textDecoration: 'none'}}>
+              Open Explorer
             </Link>
           </div>
         </div>

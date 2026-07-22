@@ -1,7 +1,8 @@
-﻿const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { db } = require('../config/db');
+const { logAudit } = require('../utils/auditLogger');
 require('dotenv').config();
 
 function normalizeEmail(value) {
@@ -50,6 +51,12 @@ function register(req, res) {
 
     const token = jwt.sign({ id: userId, email: normalizedEmail, role, register_number: normalizedRegisterNumber }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
+    logAudit(req, {
+      module: 'AUTH', action: 'REGISTER', status: 'SUCCESS',
+      user_id: userId, user_email: normalizedEmail, user_name: name, role,
+      details: { register_number: normalizedRegisterNumber },
+    });
+
     res.status(201).json({
       message: 'User registered successfully',
       token,
@@ -64,12 +71,20 @@ function register(req, res) {
 function login(req, res) {
   try {
     const { email, register_number, password, identifier } = req.body;
-    const normalizedEmail = normalizeEmail(email || identifier);
-    const normalizedRegisterNumber = normalizeRegisterNumber(register_number || identifier);
 
     if (!password) {
       return res.status(400).json({ error: 'Password is required' });
     }
+
+    // Determine what identifier was provided
+    // UniversityLogin sends { email, password }
+    // StudentLogin sends { email, password } OR { register_number, password }
+    // or { identifier } which gets split into email/register_number on the frontend
+    const rawEmail = email || (identifier && identifier.includes('@') ? identifier : null);
+    const rawRegNum = register_number || (identifier && !identifier.includes('@') ? identifier : null);
+
+    const normalizedEmail = normalizeEmail(rawEmail);
+    const normalizedRegisterNumber = normalizeRegisterNumber(rawRegNum);
 
     if (!normalizedEmail && !normalizedRegisterNumber) {
       return res.status(400).json({ error: 'Email or register number is required' });
@@ -85,15 +100,34 @@ function login(req, res) {
     }
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      logAudit(req, {
+        module: 'AUTH', action: 'LOGIN', status: 'FAILURE',
+        user_email: normalizedEmail || normalizedRegisterNumber,
+        details: { reason: 'User not found' },
+      });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const passwordMatch = bcrypt.compareSync(password, user.password);
     if (!passwordMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      logAudit(req, {
+        module: 'AUTH', action: 'LOGIN', status: 'FAILURE',
+        user_id: user.id, user_email: user.email, user_name: user.name, role: user.role,
+        details: { reason: 'Wrong password' },
+      });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role, register_number: user.register_number }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role, register_number: user.register_number },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    logAudit(req, {
+      module: 'AUTH', action: 'LOGIN', status: 'SUCCESS',
+      user_id: user.id, user_email: user.email, user_name: user.name, role: user.role,
+    });
 
     res.json({
       message: 'Login successful',

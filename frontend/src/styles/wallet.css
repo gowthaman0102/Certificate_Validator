@@ -1,0 +1,179 @@
+/* ============================================================
+   wallet.css — Digital Credential Wallet
+   Follows the EXACT design system of the existing application.
+   Only adds what does not already exist in index.css.
+   No new colours, no new fonts, no new shadows, no new radii.
+   ============================================================ */
+
+/* ── Stats row (4 info boxes like the existing info-grid pattern) ─── */
+.wallet-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0;
+}
+
+.wallet-stat-box {
+  background: #ffffff;
+  border: 1px solid #d8dde4;
+  border-radius: 6px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.wallet-stat-box-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0f2540;
+  font-family: Georgia, 'Times New Roman', serif;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.wallet-stat-box-label {
+  font-size: 0.78rem;
+  color: #7a8699;
+}
+
+/* ── Toolbar (search + filters, styled like .card inputs) ─── */
+.wallet-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.wallet-search-input {
+  flex: 1;
+  min-width: 200px;
+  background: #ffffff;
+  border: 1px solid #d8dde4;
+  border-radius: 4px;
+  padding: 0.6rem 0.75rem;
+  color: #1e2b3a;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.wallet-search-input::placeholder { color: #a3adb8; }
+.wallet-search-input:focus        { border-color: #c9a227; }
+
+.wallet-select {
+  background: #ffffff;
+  border: 1px solid #d8dde4;
+  border-radius: 4px;
+  padding: 0.6rem 0.75rem;
+  color: #1e2b3a;
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+
+.wallet-select:focus { border-color: #c9a227; }
+
+/* ── Signature verification badge — same shape as .status-badge ─── */
+.wallet-sig-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.wallet-sig-verified { background: #e6f2e8; color: #1e6b34; }
+.wallet-sig-checking { background: #fdf3e0; color: #8a6d1a; }
+.wallet-sig-failed   { background: #fdecea; color: #a02622; }
+
+/* ── History rows inside expanded cert (same as cert-item style) ─── */
+.wallet-hist-row {
+  background: #f7f8fa;
+  border: 1px solid #d8dde4;
+  border-radius: 4px;
+  padding: 0.4rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #3d4a5c;
+  margin-bottom: 0.35rem;
+}
+
+.wallet-hist-type {
+  padding: 0.12rem 0.45rem;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.wallet-hist-VIEW     { background: #eef1f5; color: #0f2540; }
+.wallet-hist-DOWNLOAD { background: #e6f2e8; color: #1e6b34; }
+.wallet-hist-SHARE    { background: #fdf3e0; color: #8a6d1a; }
+.wallet-hist-VERIFY   { background: #eef1f5; color: #3d4a5c; }
+
+.wallet-hist-time {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: #7a8699;
+}
+
+/* ── Share link box ─────────────────────────────────────── */
+.wallet-link-box {
+  background: #f7f8fa;
+  border: 1px solid #d8dde4;
+  border-radius: 4px;
+  padding: 0.6rem 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.wallet-link-url {
+  flex: 1;
+  font-family: 'Courier New', monospace;
+  font-size: 0.78rem;
+  color: #3d4a5c;
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+/* ── Copy button — exact style from UniversityDashboard ─── */
+.wallet-copy-btn {
+  background: transparent;
+  border: 1px solid #d8dde4;
+  border-radius: 3px;
+  color: #0f2540;
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.wallet-copy-btn:hover  { background: #eef1f5; }
+.wallet-copy-btn.copied { color: #1e6b34; border-color: #1e6b34; }
+
+/* ── Loading spinner — matches the app's plain-text loading ─ */
+.wallet-loading {
+  padding: 1.5rem 0;
+  color: #7a8699;
+  font-size: 0.9rem;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .wallet-stats-row { grid-template-columns: repeat(2, 1fr); }
+  .wallet-toolbar   { flex-direction: column; align-items: stretch; }
+  .wallet-search-input { min-width: unset; }
+}

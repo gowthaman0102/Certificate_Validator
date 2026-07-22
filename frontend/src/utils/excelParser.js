@@ -1,13 +1,15 @@
-﻿import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx';
 
 const HEADER_ALIASES = {
-  register_number: ['registernumber', 'register number', 'regno', 'reg no', 'registration number', 'register_number'],
-  student_name: ['name', 'studentname', 'student name', 'student_name'],
-  course: ['department', 'course', 'branch', 'dept'],
-  cgpa: ['cgpa', 'gpa'],
-  end_year: ['yearofpassing', 'year of passing', 'endyear', 'end year', 'passingyear', 'end_year'],
-  start_year: ['startyear', 'start year', 'yearofjoining', 'year of joining', 'start_year'],
-  student_email: ['email', 'studentemail', 'student email', 'student_email'],
+  register_number:      ['registernumber', 'register number', 'regno', 'reg no', 'registration number', 'register_number'],
+  student_name:         ['name', 'studentname', 'student name', 'student_name'],
+  course:               ['department', 'course', 'branch', 'dept'],
+  cgpa:                 ['cgpa', 'gpa'],
+  end_year:             ['yearofpassing', 'year of passing', 'endyear', 'end year', 'passingyear', 'end_year'],
+  start_year:           ['startyear', 'start year', 'yearofjoining', 'year of joining', 'start_year'],
+  student_email:        ['email', 'studentemail', 'student email', 'student_email'],
+  certificate_category: ['certificate category', 'certificatecategory', 'category', 'cert category', 'certificate_category'],
+  certificate_detail:   ['certificate detail', 'certificatedetail', 'detail', 'cert detail', 'course detail', 'certificate_detail'],
 };
 
 function normalizeHeader(header) {

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getStudentCertificates } from '../api/client';
 import CertificateTemplate from '../components/CertificateTemplate';
@@ -15,7 +15,12 @@ function StudentDashboard() {
   const hiddenCertRefs = useRef({});
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (!token || user.role !== 'STUDENT') {
+      navigate('/student-login');
+      return;
+    }
     if (user.email) {
       setUserEmail(user.email);
       setRegisterNumber(user.register_number || '');
@@ -70,7 +75,23 @@ function StudentDashboard() {
     <div className="dashboard">
       <div className="dashboard-header">
         <h2>My Certificates</h2>
-        <button className="logout-btn" onClick={handleLogout}>Logout</button>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <button
+            className="btn-primary"
+            onClick={() => navigate('/analytics/student')}
+            id="student-analytics-btn"
+          >
+            Analytics
+          </button>
+          <button
+            className="btn-primary"
+            onClick={() => navigate('/wallet')}
+            id="student-open-wallet-btn"
+          >
+            My Wallet
+          </button>
+          <button className="logout-btn" onClick={handleLogout}>Logout</button>
+        </div>
       </div>
 
       <div className="card">

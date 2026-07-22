@@ -1,4 +1,31 @@
-﻿async function importPublicKey(pemKey) {
+/**
+ * offlineCrypto.js
+ *
+ * Client-side cryptographic verification using the Web Crypto API.
+ * No network calls — works 100% offline once a public key is cached.
+ *
+ * Algorithm: RSA-PKCS1v1.5 with SHA-256  (matches backend crypto.js)
+ * Key format: RSA-2048 SPKI PEM
+ *
+ * Result shape returned by verifyOffline():
+ * {
+ *   result:          'VALID' | 'HASH_MISMATCH' | 'SIGNATURE_INVALID' | 'TAMPERED' | 'ERROR',
+ *   reason:          string,
+ *   message:         string (only on VALID),
+ *   algorithm:       'SHA256-RSA2048',
+ *   verifiedAt:      ISO string,
+ *   verificationMode:'OFFLINE',
+ *   hashStatus:      'MATCH' | 'MISMATCH' | 'UNCHECKED',
+ *   signatureStatus: 'VALID' | 'INVALID' | 'UNCHECKED' | 'ERROR',
+ *   certificate:     { ... } (only on VALID)
+ * }
+ */
+
+const ALGORITHM = 'SHA256-RSA2048';
+
+// ─── Internal crypto helpers ──────────────────────────────────────────────────
+
+async function importPublicKey(pemKey) {
   const pemContents = pemKey
     .replace('-----BEGIN PUBLIC KEY-----', '')
     .replace('-----END PUBLIC KEY-----', '')
@@ -51,72 +78,125 @@ async function verifyRsaSignature(data, signatureHex, publicKeyPem) {
   );
 }
 
+// ─── Payload normalization (must exactly match backend buildCertificatePayload) ─
+
 function normalizeValue(value) {
-  if (value === null || value === undefined) {
-    return '';
-  }
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    return trimmed === '' ? '' : trimmed;
-  }
-  if (typeof value === 'number' || typeof value === 'boolean') {
-    return String(value);
-  }
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') { const t = value.trim(); return t === '' ? '' : t; }
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   return String(value);
 }
 
 function buildNormalizedPayload(payload) {
   const normalized = {
-    id: normalizeValue(payload.id ?? payload.cert_id),
+    id:                 normalizeValue(payload.id ?? payload.cert_id),
     certificate_number: normalizeValue(payload.certificate_number),
-    register_number: normalizeValue(payload.register_number),
-    student_name: normalizeValue(payload.student_name),
-    course: normalizeValue(payload.course),
-    cgpa: normalizeValue(payload.cgpa),
-    start_year: normalizeValue(payload.start_year),
-    end_year: normalizeValue(payload.end_year),
-    issue_date: normalizeValue(payload.issue_date),
-    issuer_id: normalizeValue(payload.issuer_id),
+    register_number:    normalizeValue(payload.register_number),
+    student_name:       normalizeValue(payload.student_name),
+    course:             normalizeValue(payload.course),
+    cgpa:               normalizeValue(payload.cgpa),
+    start_year:         normalizeValue(payload.start_year),
+    end_year:           normalizeValue(payload.end_year),
+    issue_date:         normalizeValue(payload.issue_date),
+    issuer_id:          normalizeValue(payload.issuer_id),
   };
   return JSON.stringify(normalized);
 }
 
+// ─── Public API ───────────────────────────────────────────────────────────────
+
+/**
+ * Verifies a certificate QR payload entirely offline using the Web Crypto API.
+ *
+ * Steps performed:
+ *  1. Recompute SHA-256 hash from QR fields and compare with stored hash
+ *  2. Verify RSA-PKCS1v1.5 signature on the hash using the issuer's public key
+ *
+ * @param {Object} qrPayload   — Decoded QR JSON object
+ * @param {string} publicKeyPem — RSA-2048 SPKI PEM string
+ * @returns {Promise<Object>}  — Granular verification result
+ */
 export async function verifyOffline(qrPayload, publicKeyPem) {
-  const { cert_id, certificate_number, register_number, student_name, course, cgpa, start_year, end_year, issue_date, issuer_id, hash, signature } = qrPayload;
+  const verifiedAt = new Date().toISOString();
+  const base = {
+    algorithm:        ALGORITHM,
+    verifiedAt,
+    verificationMode: 'OFFLINE',
+  };
 
-  const recomputedPayload = buildNormalizedPayload({
-    cert_id,
-    certificate_number,
-    register_number,
-    student_name,
-    course,
-    cgpa,
-    start_year,
-    end_year,
-    issue_date,
-    issuer_id,
-  });
+  const {
+    cert_id, certificate_number, register_number,
+    student_name, course, cgpa, start_year, end_year,
+    issue_date, issuer_id, hash, signature,
+  } = qrPayload;
 
-  const recomputedHash = await sha256Hex(recomputedPayload);
+  // ── Step 1: Hash verification ──────────────────────────────────────────────
+  let hashStatus = 'UNCHECKED';
+  let recomputedHash;
 
-  if (recomputedHash !== hash) {
-    return { result: 'TAMPERED', reason: 'Certificate data does not match its hash' };
-  }
-
-  let signatureValid;
   try {
-    signatureValid = await verifyRsaSignature(hash, signature, publicKeyPem);
-  } catch (err) {
-    return { result: 'TAMPERED', reason: 'Signature verification failed - invalid signature or key format' };
+    const recomputedPayload = buildNormalizedPayload({
+      cert_id, certificate_number, register_number, student_name,
+      course, cgpa, start_year, end_year, issue_date, issuer_id,
+    });
+    recomputedHash = await sha256Hex(recomputedPayload);
+    hashStatus = recomputedHash === hash ? 'MATCH' : 'MISMATCH';
+  } catch (hashErr) {
+    return {
+      ...base,
+      result:          'ERROR',
+      reason:          'Hash computation failed: ' + hashErr.message,
+      hashStatus:      'UNCHECKED',
+      signatureStatus: 'UNCHECKED',
+    };
   }
 
-  if (!signatureValid) {
-    return { result: 'TAMPERED', reason: 'Digital signature is invalid' };
+  if (hashStatus === 'MISMATCH') {
+    return {
+      ...base,
+      result:          'HASH_MISMATCH',
+      reason:          'Certificate data has been tampered — SHA-256 hash does not match',
+      hashStatus,
+      signatureStatus: 'UNCHECKED',
+    };
   }
 
+  // ── Step 2: Signature verification ────────────────────────────────────────
+  let signatureStatus = 'UNCHECKED';
+
+  try {
+    const sigValid = await verifyRsaSignature(hash, signature, publicKeyPem);
+    signatureStatus = sigValid ? 'VALID' : 'INVALID';
+  } catch (sigErr) {
+    return {
+      ...base,
+      result:          'SIGNATURE_INVALID',
+      reason:          'Signature verification error — invalid key format or corrupted signature',
+      hashStatus,
+      signatureStatus: 'ERROR',
+    };
+  }
+
+  if (signatureStatus === 'INVALID') {
+    return {
+      ...base,
+      result:          'SIGNATURE_INVALID',
+      reason:          'Digital signature is invalid — certificate may not be from the stated issuer',
+      hashStatus,
+      signatureStatus,
+    };
+  }
+
+  // ── Both checks passed ─────────────────────────────────────────────────────
   return {
-    result: 'VALID',
-    message: 'Certificate is authentic and unmodified (verified offline)',
-    certificate: { cert_id, certificate_number, register_number, student_name, course, cgpa, start_year, end_year, issue_date, issuer_id },
+    ...base,
+    result:          'VALID',
+    message:         'Certificate is authentic and unmodified (verified offline)',
+    hashStatus,
+    signatureStatus,
+    certificate: {
+      cert_id, certificate_number, register_number, student_name,
+      course, cgpa, start_year, end_year, issue_date, issuer_id,
+    },
   };
 }

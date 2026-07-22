@@ -1,5 +1,6 @@
-﻿const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require('uuid');
 const { db } = require('../config/db');
+const { logAudit } = require('../utils/auditLogger');
 
 function revokeCertificate(req, res) {
   try {
@@ -33,6 +34,12 @@ function revokeCertificate(req, res) {
     db.prepare('UPDATE certificates SET status = ? WHERE id = ?').run('REVOKED', certificate_id);
     db.prepare('INSERT INTO revoked_certificates (id, certificate_id, reason) VALUES (?, ?, ?)')
       .run(revocationId, certificate_id, reason || 'No reason provided');
+
+    logAudit(req, {
+      module: 'REVOCATION', action: 'REVOKE', status: 'SUCCESS',
+      resource_id: certificate_id,
+      details: { certificate_number: cert.certificate_number, student_name: cert.student_name, reason: reason || 'No reason provided' },
+    });
 
     res.json({ message: 'Certificate revoked successfully', certificate_id, status: 'REVOKED' });
   } catch (err) {

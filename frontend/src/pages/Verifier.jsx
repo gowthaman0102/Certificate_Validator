@@ -1,10 +1,11 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { verifyCertificate, getPublicKey, getRevokedList, getCertificateByCertNumber } from '../api/client';
 import { verifyOffline } from '../utils/offlineCrypto';
 import { getCachedPublicKey, setCachedPublicKey } from '../utils/keyCache';
 import { cacheRevokedList, isCertRevokedLocally, getLastSyncTime } from '../utils/revocationCache';
 import { decodeQrFromCertificateFile } from '../utils/qrDecoder';
+import { getCategoryLabel } from '../utils/certificateCategory';
 
 function Verifier() {
   const [inputMode, setInputMode] = useState('qr');
@@ -20,6 +21,7 @@ function Verifier() {
   const [keySource, setKeySource] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState(getLastSyncTime());
+  const [bcCopied, setBcCopied] = useState(false);
 
   async function handleSync() {
     setSyncing(true);
@@ -116,14 +118,20 @@ function Verifier() {
         const revokedStatus = isCertRevokedLocally(payload.cert_id);
         if (revokedStatus === true) {
           setResult({
-            result: 'REVOKED',
-            reason: 'This certificate appears in the last synced revocation list.',
-            certificate: verifyResult.certificate,
+            result:          'REVOKED',
+            reason:          'This certificate appears in the last synced revocation list.',
+            certificate:     verifyResult.certificate,
+            // carry forward all granular fields
+            algorithm:       verifyResult.algorithm,
+            verifiedAt:      verifyResult.verifiedAt,
+            verificationMode:verifyResult.verificationMode,
+            hashStatus:      verifyResult.hashStatus,
+            signatureStatus: verifyResult.signatureStatus,
           });
         } else if (revokedStatus === null) {
           setResult({
             ...verifyResult,
-            message: verifyResult.message + ' (revocation status unknown - sync the revocation list to check)',
+            message: verifyResult.message + ' (revocation status unknown — sync the revocation list to check)',
           });
         } else {
           setResult(verifyResult);
@@ -166,8 +174,9 @@ function Verifier() {
 
   function resultClass() {
     if (!result) return '';
-    if (result.result === 'VALID') return 'result-valid';
-    if (result.result === 'REVOKED') return 'result-revoked';
+    if (result.result === 'VALID')              return 'result-valid';
+    if (result.result === 'REVOKED')            return 'result-revoked';
+    // HASH_MISMATCH, SIGNATURE_INVALID, TAMPERED, ERROR all map to tampered style
     return 'result-tampered';
   }
 
@@ -304,11 +313,15 @@ function Verifier() {
       {result && (
         <div className={resultClass()}>
           <h2 style={{marginBottom: '0.5rem'}}>
-            {result.result === 'VALID' && 'VALID'}
-            {result.result === 'TAMPERED' && 'TAMPERED'}
-            {result.result === 'REVOKED' && 'REVOKED'}
+            {result.result === 'VALID'              && '✅ VALID'}
+            {result.result === 'TAMPERED'           && '⛔ TAMPERED'}
+            {result.result === 'HASH_MISMATCH'      && '⛔ HASH MISMATCH'}
+            {result.result === 'SIGNATURE_INVALID'  && '⛔ INVALID SIGNATURE'}
+            {result.result === 'REVOKED'            && '🚫 REVOKED'}
+            {result.result === 'ERROR'              && '⚠️ VERIFICATION ERROR'}
           </h2>
           <p>{result.message || result.reason}</p>
+
           {result.certificate && (
             <div style={{marginTop: '1rem', textAlign: 'left', display: 'inline-block'}}>
               <p><strong>Student:</strong> {result.certificate.student_name}</p>
@@ -317,6 +330,127 @@ function Verifier() {
               {result.certificate.issuer && <p><strong>Issuer:</strong> {result.certificate.issuer}</p>}
               {result.certificate.issuer_id && <p><strong>Issuer Code:</strong> {result.certificate.issuer_id}</p>}
               {result.certificate.certificate_number && <p><strong>Certificate No.:</strong> {result.certificate.certificate_number}</p>}
+              {result.certificate.certificate_category && (
+                <p><strong>Certificate Category:</strong> {getCategoryLabel(result.certificate.certificate_category)}</p>
+              )}
+              {result.certificate.certificate_detail && (
+                <p><strong>Certificate Detail:</strong> {result.certificate.certificate_detail}</p>
+              )}
+            </div>
+          )}
+
+          {/* ── Cryptographic Verification Detail Panel ───────────────── */}
+          <div style={{ marginTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.25)', paddingTop: '1rem', textAlign: 'left', width: '100%' }}>
+            <p style={{ fontWeight: 700, marginBottom: '0.75rem', fontSize: '0.95rem' }}>🔐 Cryptographic Verification</p>
+
+            {/* Step-by-step checks */}
+            <div style={{ display: 'grid', gap: '0.45rem' }}>
+              {/* Hash Check */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.85rem' }}>
+                <span style={{ fontSize: '1rem' }}>
+                  {result.hashStatus === 'MATCH'     && '✅'}
+                  {result.hashStatus === 'MISMATCH'  && '❌'}
+                  {(!result.hashStatus || result.hashStatus === 'UNCHECKED') && '⚪'}
+                </span>
+                <span><strong>SHA-256 Hash:</strong>{' '}
+                  {result.hashStatus === 'MATCH'     && 'Verified — data is intact'}
+                  {result.hashStatus === 'MISMATCH'  && 'FAILED — data has been tampered'}
+                  {(!result.hashStatus || result.hashStatus === 'UNCHECKED') && 'Not checked'}
+                </span>
+              </div>
+
+              {/* Signature Check */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.85rem' }}>
+                <span style={{ fontSize: '1rem' }}>
+                  {result.signatureStatus === 'VALID'   && '✅'}
+                  {result.signatureStatus === 'INVALID' && '❌'}
+                  {result.signatureStatus === 'ERROR'   && '⚠️'}
+                  {(!result.signatureStatus || result.signatureStatus === 'UNCHECKED') && '⚪'}
+                </span>
+                <span><strong>RSA-2048 Signature:</strong>{' '}
+                  {result.signatureStatus === 'VALID'   && 'Valid — issued by the stated university'}
+                  {result.signatureStatus === 'INVALID' && 'FAILED — signature does not match issuer key'}
+                  {result.signatureStatus === 'ERROR'   && 'Error — invalid key or corrupted signature'}
+                  {(!result.signatureStatus || result.signatureStatus === 'UNCHECKED') && 'Not checked'}
+                </span>
+              </div>
+
+              {/* Revocation */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.85rem' }}>
+                <span style={{ fontSize: '1rem' }}>
+                  {result.result === 'VALID'   && '✅'}
+                  {result.result === 'REVOKED' && '❌'}
+                  {result.result !== 'VALID' && result.result !== 'REVOKED' && '⚪'}
+                </span>
+                <span><strong>Revocation Status:</strong>{' '}
+                  {result.result === 'VALID'   && (mode === 'online' ? 'Active — not revoked' : 'Active (locally cached list)')}
+                  {result.result === 'REVOKED' && 'REVOKED by issuer'}
+                  {result.result !== 'VALID' && result.result !== 'REVOKED' && 'Skipped (prior check failed)'}
+                </span>
+              </div>
+
+              {/* Blockchain (online only) */}
+              {mode === 'online' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.85rem' }}>
+                  <span style={{ fontSize: '1rem' }}>
+                    {result.blockchain?.verified ? '✅' : '⚪'}
+                  </span>
+                  <span><strong>Blockchain Anchor:</strong>{' '}
+                    {result.blockchain?.verified
+                      ? `Block #${result.blockchain.blockNumber} — ${result.blockchain.network}`
+                      : 'Not anchored on ledger'}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Technical metadata */}
+            <div style={{ marginTop: '0.85rem', borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '0.75rem', display: 'grid', gap: '0.3rem', fontSize: '0.8rem', opacity: 0.9 }}>
+              <p style={{ margin: 0 }}><strong>Algorithm:</strong> {result.algorithm || (mode === 'offline' ? 'SHA256-RSA2048' : '—')}</p>
+              <p style={{ margin: 0 }}><strong>Verification Mode:</strong> {result.verificationMode || (mode === 'offline' ? 'OFFLINE' : 'ONLINE')}</p>
+              <p style={{ margin: 0 }}><strong>Verified At:</strong> {result.verifiedAt ? new Date(result.verifiedAt).toLocaleString('en-IN', { hour12: false }) : new Date().toLocaleString('en-IN', { hour12: false })}</p>
+              {keySource && <p style={{ margin: 0 }}><strong>Public Key Source:</strong> {keySource}</p>}
+            </div>
+          </div>
+
+          {/* ── Blockchain Anchor Section (VALID only) ─────────────────── */}
+          {result.result === 'VALID' && (
+            <div style={{ marginTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.25)', paddingTop: '1rem', textAlign: 'left', width: '100%' }}>
+              <p style={{ fontWeight: 700, marginBottom: '0.5rem', fontSize: '0.95rem' }}>⛓ Blockchain Anchor</p>
+
+              {mode === 'offline' ? (
+                <p style={{ fontSize: '0.85rem', opacity: 0.85 }}>Blockchain status not checked — switch to Online Verify to confirm hash anchoring.</p>
+              ) : result.blockchain?.verified ? (
+                <div style={{ textAlign: 'left', display: 'inline-block' }}>
+                  <p><strong>✅ Hash anchored on-chain</strong></p>
+                  <p style={{ fontSize: '0.85rem' }}>
+                    <strong>Transaction ID:</strong>{' '}
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.78rem', wordBreak: 'break-all' }}>
+                      {result.blockchain.txId}
+                    </span>
+                    <button
+                      onClick={async () => {
+                        try { await navigator.clipboard.writeText(result.blockchain.txId); setBcCopied(true); setTimeout(() => setBcCopied(false), 1500); } catch {}
+                      }}
+                      style={{ marginLeft: '6px', background: 'transparent', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '3px', color: 'inherit', fontSize: '0.7rem', padding: '1px 6px', cursor: 'pointer' }}
+                    >
+                      {bcCopied ? '✓ Copied' : 'Copy'}
+                    </button>
+                  </p>
+                  <p style={{ fontSize: '0.85rem' }}><strong>Block Number:</strong> {result.blockchain.blockNumber}</p>
+                  <p style={{ fontSize: '0.85rem' }}><strong>Anchored At:</strong> {result.blockchain.anchoredAt ? new Date(result.blockchain.anchoredAt).toLocaleString('en-IN', { hour12: false }) : '—'}</p>
+                  <p style={{ fontSize: '0.85rem' }}><strong>Network:</strong> {result.blockchain.network}</p>
+                  <p style={{ fontSize: '0.85rem' }}><strong>Status:</strong> {result.blockchain.status}</p>
+                  <Link to="/blockchain-explorer" style={{ color: 'inherit', textDecoration: 'underline', fontSize: '0.82rem', opacity: 0.9 }}>
+                    View in Blockchain Explorer →
+                  </Link>
+                </div>
+              ) : (
+                <div>
+                  <p><strong>⚠️ Not anchored</strong></p>
+                  <p style={{ fontSize: '0.85rem', opacity: 0.85 }}>This certificate's hash was not found on the blockchain ledger. It may have been issued before blockchain anchoring was enabled.</p>
+                </div>
+              )}
             </div>
           )}
         </div>

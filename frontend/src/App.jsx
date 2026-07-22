@@ -1,4 +1,4 @@
-﻿import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import UniversityLogin from './pages/UniversityLogin';
 import StudentLogin from './pages/StudentLogin';
@@ -7,6 +7,12 @@ import StudentRegister from './pages/StudentRegister';
 import UniversityDashboard from './pages/UniversityDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import Verifier from './pages/Verifier';
+import WalletDashboard from './pages/WalletDashboard';
+import AuditLog from './pages/AuditLog';
+import UniversityAnalytics  from './pages/UniversityAnalytics';
+import StudentAnalytics     from './pages/StudentAnalytics';
+import VerificationAnalytics from './pages/VerificationAnalytics';
+import BlockchainExplorer   from './pages/BlockchainExplorer';
 
 function App() {
   return (
@@ -21,6 +27,12 @@ function App() {
         <Route path="/university" element={<UniversityDashboard />} />
         <Route path="/student" element={<StudentDashboard />} />
         <Route path="/verify" element={<Verifier />} />
+        <Route path="/wallet" element={<WalletDashboard />} />
+        <Route path="/audit"  element={<AuditLog />} />
+        <Route path="/analytics/university"   element={<UniversityAnalytics />} />
+        <Route path="/analytics/student"      element={<StudentAnalytics />} />
+        <Route path="/analytics/verification" element={<VerificationAnalytics />} />
+        <Route path="/blockchain-explorer"     element={<BlockchainExplorer />} />
       </Routes>
     </BrowserRouter>
   );

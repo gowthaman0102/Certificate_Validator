@@ -1,9 +1,9 @@
-﻿import { forwardRef } from 'react';
-import { getCertificateDescription } from '../utils/certificateTypes';
+import { forwardRef } from 'react';
+import { getCertificateBody } from '../utils/certificateCategory';
 
 const CertificateTemplate = forwardRef(function CertificateTemplate({ certificate, qrCodeUrl }, ref) {
-  const certType = certificate.certificate_type || 'COURSE_COMPLETION';
-  const description = getCertificateDescription(certType, certificate);
+  // Derives all dynamic text from the shared utility — one source of truth
+  const { heading, preText, prominentText, postText } = getCertificateBody(certificate);
 
   return (
     <div
@@ -22,9 +22,10 @@ const CertificateTemplate = forwardRef(function CertificateTemplate({ certificat
         boxSizing: 'border-box',
       }}
     >
+      {/* ── Header — now dynamic based on certificate category ── */}
       <div style={{ textAlign: 'center', marginBottom: '18px' }}>
         <div style={{ fontSize: '13px', letterSpacing: '3px', color: '#B98F33', marginBottom: '6px' }}>
-          CERTIFICATE OF COMPLETION
+          {heading}
         </div>
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '30px', fontWeight: 600, color: '#16233F' }}>
           {certificate.university_name || certificate.issuer_id}
@@ -32,6 +33,7 @@ const CertificateTemplate = forwardRef(function CertificateTemplate({ certificat
         <div style={{ width: '90px', height: '2px', background: '#B98F33', margin: '12px auto' }} />
       </div>
 
+      {/* ── Body — dynamic per category ── */}
       <div style={{ textAlign: 'center', marginBottom: '10px' }}>
         <div style={{ fontSize: '15px', color: '#2B3B5C' }}>This is to certify that</div>
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '38px', fontWeight: 700, color: '#6E1F2B', margin: '10px 0' }}>
@@ -40,18 +42,33 @@ const CertificateTemplate = forwardRef(function CertificateTemplate({ certificat
         <div style={{ fontSize: '13px', color: '#2B3B5C', marginBottom: '6px' }}>
           Register No: {certificate.register_number}
         </div>
+
+        {/* Pre-text sentence */}
         <div style={{ fontSize: '15px', color: '#2B3B5C', lineHeight: '1.6' }}>
-          {description}
+          {preText}
         </div>
+
+        {/* Prominent text — the course / detail / purpose */}
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '24px', fontWeight: 600, color: '#16233F', margin: '8px 0' }}>
-          {certificate.course}
+          {prominentText}
         </div>
-        <div style={{ fontSize: '14px', color: '#2B3B5C' }}>
-          {certificate.start_year ? `${certificate.start_year} — ` : ''}{certificate.end_year}
-          {certificate.cgpa ? ` | CGPA: ${certificate.cgpa}` : ''}
-        </div>
+
+        {/* CGPA — shown only when present */}
+        {certificate.cgpa && (
+          <div style={{ fontSize: '14px', color: '#2B3B5C' }}>
+            CGPA: {certificate.cgpa}
+          </div>
+        )}
+
+        {/* Post-text (year range, purpose line, etc.) — shown only when present */}
+        {postText && (
+          <div style={{ fontSize: '14px', color: '#2B3B5C', marginTop: '6px', fontStyle: 'italic' }}>
+            {postText}
+          </div>
+        )}
       </div>
 
+      {/* ── Footer — identical to original (cert ID, issue date, QR code) ── */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -66,6 +83,12 @@ const CertificateTemplate = forwardRef(function CertificateTemplate({ certificat
           </div>
           <div><strong>Issue Date:</strong> {certificate.issue_date}</div>
           <div><strong>Status:</strong> {certificate.status}</div>
+          {/* Show category in small print for context */}
+          {certificate.certificate_category && (
+            <div style={{ marginTop: '4px', color: '#5a6a7a', fontSize: '11px' }}>
+              {certificate.certificate_category}
+            </div>
+          )}
         </div>
 
         <div style={{ textAlign: 'center' }}>
