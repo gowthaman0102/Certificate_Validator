@@ -57,6 +57,7 @@ function hexToArrayBuffer(hex) {
   return bytes.buffer;
 }
 
+
 async function sha256Hex(text) {
   const encoder = new TextEncoder();
   const data = encoder.encode(text);
@@ -65,43 +66,44 @@ async function sha256Hex(text) {
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-async function verifyRsaSignature(data, signatureHex, publicKeyPem) {
+async function verifyRsaSignature(data, signatureRaw, publicKeyPem, sigEnc) {
   const publicKey = await importPublicKey(publicKeyPem);
-  const encoder = new TextEncoder();
+  const encoder   = new TextEncoder();
   const dataBuffer = encoder.encode(data);
-  const signatureBuffer = hexToArrayBuffer(signatureHex);
+  // Support both base64 (new QR format) and hex (legacy QR format)
+  const sigBuffer = sigEnc === 'b64'
+    ? base64ToArrayBuffer(signatureRaw)
+    : hexToArrayBuffer(signatureRaw);
   return window.crypto.subtle.verify(
     { name: 'RSASSA-PKCS1-v1_5' },
     publicKey,
-    signatureBuffer,
+    sigBuffer,
     dataBuffer
   );
 }
 
-// ─── Payload normalization (must exactly match backend buildCertificatePayload) ─
-
-function normalizeValue(value) {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'string') { const t = value.trim(); return t === '' ? '' : t; }
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  return String(value);
-}
+// ─── Payload builder — MUST be byte-for-byte identical to issuance ───────────
+// Issuance (certificateController.js lines 61-72) uses plain JSON.stringify
+// with explicit `cgpa || ''` and `start_year || ''` coercions and field order
+// exactly as shown below. Any deviation produces a different hash.
 
 function buildNormalizedPayload(payload) {
-  const normalized = {
-    id:                 normalizeValue(payload.id ?? payload.cert_id),
-    certificate_number: normalizeValue(payload.certificate_number),
-    register_number:    normalizeValue(payload.register_number),
-    student_name:       normalizeValue(payload.student_name),
-    course:             normalizeValue(payload.course),
-    cgpa:               normalizeValue(payload.cgpa),
-    start_year:         normalizeValue(payload.start_year),
-    end_year:           normalizeValue(payload.end_year),
-    issue_date:         normalizeValue(payload.issue_date),
-    issuer_id:          normalizeValue(payload.issuer_id),
-  };
-  return JSON.stringify(normalized);
+  // The QR already stores cgpa/start_year as '' (from issuance `|| ''` coercions)
+  // so they arrive here as strings. We still guard with ?? '' for safety.
+  return JSON.stringify({
+    id:                 payload.id ?? payload.cert_id,
+    certificate_number: payload.certificate_number,
+    register_number:    payload.register_number,
+    student_name:       payload.student_name,
+    course:             payload.course,
+    cgpa:               payload.cgpa       ?? '',
+    start_year:         payload.start_year ?? '',
+    end_year:           payload.end_year,
+    issue_date:         payload.issue_date,
+    issuer_id:          payload.issuer_id,
+  });
 }
+
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
@@ -128,6 +130,7 @@ export async function verifyOffline(qrPayload, publicKeyPem) {
     cert_id, certificate_number, register_number,
     student_name, course, cgpa, start_year, end_year,
     issue_date, issuer_id, hash, signature,
+    sig_enc,   // 'b64' for new QR codes, undefined/absent for legacy hex QR codes
   } = qrPayload;
 
   // ── Step 1: Hash verification ──────────────────────────────────────────────
@@ -165,7 +168,7 @@ export async function verifyOffline(qrPayload, publicKeyPem) {
   let signatureStatus = 'UNCHECKED';
 
   try {
-    const sigValid = await verifyRsaSignature(hash, signature, publicKeyPem);
+    const sigValid = await verifyRsaSignature(hash, signature, publicKeyPem, sig_enc);
     signatureStatus = sigValid ? 'VALID' : 'INVALID';
   } catch (sigErr) {
     return {

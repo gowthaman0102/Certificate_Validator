@@ -1,8 +1,11 @@
 import { forwardRef } from 'react';
 import { getCertificateBody } from '../utils/certificateCategory';
 
+/* Monochrome Crest — printable certificate
+   Black ink on white. Prata for display, EB Garamond for body.
+   Print-safe: no color fills, only black/white/gray. */
+
 const CertificateTemplate = forwardRef(function CertificateTemplate({ certificate, qrCodeUrl }, ref) {
-  // Derives all dynamic text from the shared utility — one source of truth
   const { heading, preText, prominentText, postText } = getCertificateBody(certificate);
 
   return (
@@ -11,105 +14,57 @@ const CertificateTemplate = forwardRef(function CertificateTemplate({ certificat
       style={{
         width: '800px',
         minHeight: '560px',
-        background: '#F8F3E7',
-        border: '10px solid #16233F',
-        outline: '2px solid #B98F33',
-        outlineOffset: '-16px',
+        background: '#ffffff',
+        border: '10px solid #0a0a0a',
+        outline: '2px solid #0a0a0a',
+        outlineOffset: '-18px',
         padding: '48px 56px',
         fontFamily: "'EB Garamond', serif",
-        color: '#16233F',
+        color: '#0a0a0a',
         position: 'relative',
         boxSizing: 'border-box',
       }}
     >
-      {/* ── Header — now dynamic based on certificate category ── */}
+      {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '18px' }}>
-        <div style={{ fontSize: '13px', letterSpacing: '3px', color: '#B98F33', marginBottom: '6px' }}>
+        <div style={{ fontSize: '13px', letterSpacing: '4px', color: '#666666', marginBottom: '6px', textTransform: 'uppercase' }}>
           {heading}
         </div>
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '30px', fontWeight: 600, color: '#16233F' }}>
+        <div style={{ fontFamily: "'Prata', serif", fontSize: '30px', fontWeight: 400, color: '#0a0a0a' }}>
           {certificate.university_name || certificate.issuer_id}
         </div>
-        <div style={{ width: '90px', height: '2px', background: '#B98F33', margin: '12px auto' }} />
+        <div style={{ width: '90px', height: '2px', background: '#0a0a0a', margin: '12px auto' }} />
       </div>
 
-      {/* ── Body — dynamic per category ── */}
+      {/* Body */}
       <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-        <div style={{ fontSize: '15px', color: '#2B3B5C' }}>This is to certify that</div>
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '38px', fontWeight: 700, color: '#6E1F2B', margin: '10px 0' }}>
+        <div style={{ fontSize: '15px', color: '#444444' }}>This is to certify that</div>
+        <div style={{ fontFamily: "'Prata', serif", fontSize: '38px', fontWeight: 400, color: '#0a0a0a', margin: '10px 0' }}>
           {certificate.student_name}
         </div>
-        <div style={{ fontSize: '13px', color: '#2B3B5C', marginBottom: '6px' }}>
-          Register No: {certificate.register_number}
-        </div>
-
-        {/* Pre-text sentence */}
-        <div style={{ fontSize: '15px', color: '#2B3B5C', lineHeight: '1.6' }}>
-          {preText}
-        </div>
-
-        {/* Prominent text — the course / detail / purpose */}
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '24px', fontWeight: 600, color: '#16233F', margin: '8px 0' }}>
+        <div style={{ fontSize: '13px', color: '#666666', marginBottom: '6px' }}>Register No: {certificate.register_number}</div>
+        <div style={{ fontSize: '15px', color: '#333333', lineHeight: '1.6' }}>{preText}</div>
+        <div style={{ fontFamily: "'Prata', serif", fontSize: '24px', fontWeight: 400, color: '#0a0a0a', margin: '8px 0' }}>
           {prominentText}
         </div>
-
-        {/* CGPA — shown only when present */}
-        {certificate.cgpa && (
-          <div style={{ fontSize: '14px', color: '#2B3B5C' }}>
-            CGPA: {certificate.cgpa}
-          </div>
-        )}
-
-        {/* Post-text (year range, purpose line, etc.) — shown only when present */}
-        {postText && (
-          <div style={{ fontSize: '14px', color: '#2B3B5C', marginTop: '6px', fontStyle: 'italic' }}>
-            {postText}
-          </div>
-        )}
+        {certificate.cgpa && <div style={{ fontSize: '14px', color: '#444444' }}>CGPA: {certificate.cgpa}</div>}
+        {postText && <div style={{ fontSize: '14px', color: '#555555', marginTop: '6px', fontStyle: 'italic' }}>{postText}</div>}
       </div>
 
-      {/* ── Footer — identical to original (cert ID, issue date, QR code) ── */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-end',
-        marginTop: '32px',
-        paddingTop: '20px',
-        borderTop: '1px solid #C9BFA4',
-      }}>
-        <div style={{ fontSize: '13px', color: '#2B3B5C', lineHeight: '1.8' }}>
-          <div style={{ fontSize: '15px', fontWeight: 700, color: '#16233F' }}>
-            Certificate ID: {certificate.certificate_number}
-          </div>
+      {/* Footer */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '32px', paddingTop: '20px', borderTop: '1px solid #0a0a0a' }}>
+        <div style={{ fontSize: '13px', color: '#444444', lineHeight: '1.8' }}>
+          <div style={{ fontSize: '15px', fontWeight: 700, color: '#0a0a0a' }}>Certificate ID: {certificate.certificate_number}</div>
           <div><strong>Issue Date:</strong> {certificate.issue_date}</div>
           <div><strong>Status:</strong> {certificate.status}</div>
-          {/* Show category in small print for context */}
-          {certificate.certificate_category && (
-            <div style={{ marginTop: '4px', color: '#5a6a7a', fontSize: '11px' }}>
-              {certificate.certificate_category}
-            </div>
-          )}
+          {certificate.certificate_category && <div style={{ marginTop: '4px', color: '#666666', fontSize: '11px' }}>{certificate.certificate_category}</div>}
         </div>
-
         <div style={{ textAlign: 'center' }}>
           {qrCodeUrl && (
-            <img
-              src={qrCodeUrl}
-              alt="Certificate QR Code"
-              crossOrigin="anonymous"
-              style={{
-                width: '150px',
-                height: '150px',
-                display: 'block',
-                margin: '0 auto 6px',
-                imageRendering: 'pixelated',
-                background: '#ffffff',
-                padding: '6px',
-                border: '1px solid #C9BFA4',
-              }}
-            />
+            <img src={qrCodeUrl} alt="Certificate QR Code" crossOrigin="anonymous"
+              style={{ width: '200px', height: '200px', display: 'block', margin: '0 auto 6px', imageRendering: 'pixelated', background: '#ffffff', padding: '8px', border: '1px solid #0a0a0a' }} />
           )}
-          <div style={{ fontSize: '11px', color: '#2B3B5C' }}>Scan to verify</div>
+          <div style={{ fontSize: '11px', color: '#666666' }}>Scan to verify</div>
         </div>
       </div>
     </div>

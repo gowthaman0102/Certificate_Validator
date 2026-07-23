@@ -74,29 +74,29 @@ async function uploadCertificate(req, res) {
     const certificateHash = generateHash(certPayload);
     const signature = signData(certificateHash, university.private_key);
 
+    // Encode signature as base64 (saves ~168 chars vs hex, keeping QR density low)
+    const signatureB64 = Buffer.from(signature, 'hex').toString('base64');
+
     const qrPayload = {
-      cert_id: certificateId,
+      cert_id:            certificateId,
       certificate_number: certificateNumber,
-      register_number: normalizedRegNo,
+      register_number:    normalizedRegNo,
       student_name,
       course,
-      cgpa: cgpa || '',
-      start_year: start_year || '',
+      cgpa:               cgpa || '',
+      start_year:         start_year || '',
       end_year,
       issue_date,
-      issuer_id: university.issuer_code,
-      certificate_category: certCategory,
-      certificate_detail:   certDetail,
-      hash: certificateHash,
-      signature: signature,
-      alg: 'SHA256-RSA2048',
-      ver: '1'
+      issuer_id:          university.issuer_code,
+      hash:               certificateHash,
+      signature:          signatureB64,
+      sig_enc:            'b64',
     };
     const qrData = JSON.stringify(qrPayload);
 
     const qrFileName = `qr_${certificateId}.png`;
     const qrFilePath = path.join(__dirname, '..', 'uploads', qrFileName);
-    await QRCode.toFile(qrFilePath, qrData, { width: 400 });
+    await QRCode.toFile(qrFilePath, qrData, { width: 1200, errorCorrectionLevel: 'H' });
 
     db.prepare(`
       INSERT INTO certificates
@@ -323,9 +323,9 @@ async function bulkUploadCertificates(req, res) {
           register_number: normalizedRegNo,
           student_name,
           course,
-          cgpa: cgpa ? String(cgpa) : '',
-          start_year: String(start_year),
-          end_year: String(end_year),
+          cgpa: cgpa || '',           // MUST match single-upload: cgpa || ''
+          start_year: start_year || '', // MUST match single-upload: start_year || ''
+          end_year,                   // plain value, no String() cast
           issue_date,
           issuer_id: university.issuer_code
         });
@@ -333,29 +333,29 @@ async function bulkUploadCertificates(req, res) {
         const certificateHash = generateHash(certPayload);
         const signature = signData(certificateHash, university.private_key);
 
+        // Encode signature as base64 for compact QR
+        const signatureB64 = Buffer.from(signature, 'hex').toString('base64');
+
         const qrPayload = {
-          cert_id: certificateId,
+          cert_id:            certificateId,
           certificate_number: certificateNumber,
-          register_number: normalizedRegNo,
+          register_number:    normalizedRegNo,
           student_name,
           course,
-          cgpa: cgpa ? String(cgpa) : '',
-          start_year: String(start_year),
-          end_year: String(end_year),
+          cgpa:               cgpa || '',           // matches certPayload
+          start_year:         start_year || '',     // matches certPayload
+          end_year,                                 // plain value
           issue_date,
-          issuer_id: university.issuer_code,
-          certificate_category: certCategory,
-          certificate_detail:   certDetail,
-          hash: certificateHash,
-          signature: signature,
-          alg: 'SHA256-RSA2048',
-          ver: '1'
+          issuer_id:          university.issuer_code,
+          hash:               certificateHash,
+          signature:          signatureB64,
+          sig_enc:            'b64',
         };
         const qrData = JSON.stringify(qrPayload);
 
         const qrFileName = `qr_${certificateId}.png`;
         const qrFilePath = path.join(__dirname, '..', 'uploads', qrFileName);
-        await QRCode.toFile(qrFilePath, qrData, { width: 400 });
+        await QRCode.toFile(qrFilePath, qrData, { width: 1200, errorCorrectionLevel: 'H' });
 
         db.prepare(`
           INSERT INTO certificates
@@ -365,7 +365,7 @@ async function bulkUploadCertificates(req, res) {
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'VALID', ?, ?)
         `).run(
           certificateId, certificateNumber, normalizedRegNo, student_name, normalizedEmail,
-          course, cgpa ? String(cgpa) : null, String(start_year), String(end_year), issue_date,
+          course, cgpa || null, start_year || null, end_year, issue_date,
           certificateHash, signature, university.id, null, qrData,
           certCategory, certDetail || null
         );

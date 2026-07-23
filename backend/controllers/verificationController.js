@@ -5,11 +5,24 @@ const { verifyOnBlockchain } = require('../utils/blockchain');
 
 const ALGORITHM = 'SHA256-RSA2048';
 
+/**
+ * Normalise the signature to hex regardless of how it arrived.
+ * New QR codes embed the signature as base64 (sig_enc:'b64') to save space.
+ * Legacy QR codes and the certId flow always use hex.
+ */
+function normaliseSignatureToHex(signature, sigEnc) {
+  if (sigEnc === 'b64') {
+    return Buffer.from(signature, 'base64').toString('hex');
+  }
+  return signature; // already hex
+}
+
 function verifyCertificate(req, res) {
   try {
     const {
       cert_id, certificate_number, register_number, student_name, course,
-      cgpa, start_year, end_year, issue_date, issuer_id, hash, signature
+      cgpa, start_year, end_year, issue_date, issuer_id, hash, signature,
+      sig_enc,
     } = req.body;
 
     const verifiedAt       = new Date().toISOString();
@@ -30,9 +43,20 @@ function verifyCertificate(req, res) {
     }
 
     // ── Step 1: Hash verification ─────────────────────────────────────────────
+    // CRITICAL: must be IDENTICAL to the JSON.stringify used at issuance time
+    // (certificateController.js lines 61-72). The issuance code uses plain
+    // JSON.stringify + explicit '||''' coercions — NOT buildCertificatePayload.
     const recomputedPayload = JSON.stringify({
-      id: cert_id, certificate_number, register_number, student_name, course,
-      cgpa: cgpa || '', start_year: start_year || '', end_year, issue_date, issuer_id
+      id:                 cert_id,
+      certificate_number: certificate_number,
+      register_number:    register_number,
+      student_name:       student_name,
+      course:             course,
+      cgpa:               cgpa        ?? '',   // null from DB → '' to match issuance
+      start_year:         start_year  ?? '',   // null from DB → '' to match issuance
+      end_year:           end_year,
+      issue_date:         issue_date,
+      issuer_id:          issuer_id,
     });
     const recomputedHash = generateHash(recomputedPayload);
     const hashStatus     = recomputedHash === hash ? 'MATCH' : 'MISMATCH';
@@ -48,9 +72,11 @@ function verifyCertificate(req, res) {
     }
 
     // ── Step 2: Signature verification ────────────────────────────────────────
+    // Normalise to hex — new QR codes use base64 to save space (sig_enc:'b64')
+    const signatureHex = normaliseSignatureToHex(signature, sig_enc);
     let signatureStatus;
     try {
-      const sigValid = verifySignature(hash, signature, university.public_key);
+      const sigValid = verifySignature(hash, signatureHex, university.public_key);
       signatureStatus = sigValid ? 'VALID' : 'INVALID';
     } catch (sigErr) {
       return res.json({

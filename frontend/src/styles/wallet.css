@@ -1,11 +1,11 @@
 /* ============================================================
    wallet.css — Digital Credential Wallet
-   Follows the EXACT design system of the existing application.
-   Only adds what does not already exist in index.css.
-   No new colours, no new fonts, no new shadows, no new radii.
+   Monochrome Crest theme: black / white / gray only.
+   No hue, no color fills — only black (#0a0a0a), white (#ffffff),
+   and the single permitted mid-gray (#8c8c8c).
    ============================================================ */
 
-/* ── Stats row (4 info boxes like the existing info-grid pattern) ─── */
+/* ── Stats row (4 info boxes) ──────────────────────────────── */
 .wallet-stats-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -14,9 +14,9 @@
 }
 
 .wallet-stat-box {
-  background: #ffffff;
-  border: 1px solid #d8dde4;
-  border-radius: 6px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
   padding: 1rem;
   text-align: center;
 }
@@ -24,18 +24,21 @@
 .wallet-stat-box-value {
   font-size: 1.6rem;
   font-weight: 700;
-  color: #0f2540;
-  font-family: Georgia, 'Times New Roman', serif;
+  color: var(--color-ink);
+  font-family: var(--font-heading);
   line-height: 1;
   margin-bottom: 4px;
 }
 
 .wallet-stat-box-label {
   font-size: 0.78rem;
-  color: #7a8699;
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-/* ── Toolbar (search + filters, styled like .card inputs) ─── */
+/* ── Toolbar (search + filters) ────────────────────────────── */
 .wallet-toolbar {
   display: flex;
   gap: 0.5rem;
@@ -47,89 +50,119 @@
 .wallet-search-input {
   flex: 1;
   min-width: 200px;
-  background: #ffffff;
-  border: 1px solid #d8dde4;
-  border-radius: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
   padding: 0.6rem 0.75rem;
-  color: #1e2b3a;
+  color: var(--color-ink);
   font-size: 0.9rem;
-  font-family: inherit;
+  font-family: var(--font-body);
   outline: none;
 }
 
-.wallet-search-input::placeholder { color: #a3adb8; }
-.wallet-search-input:focus        { border-color: #c9a227; }
+.wallet-search-input::placeholder { color: var(--color-subtle); }
+.wallet-search-input:focus        {
+  outline: 2px solid var(--color-ink);
+  outline-offset: -2px;
+}
 
 .wallet-select {
-  background: #ffffff;
-  border: 1px solid #d8dde4;
-  border-radius: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
   padding: 0.6rem 0.75rem;
-  color: #1e2b3a;
+  color: var(--color-ink);
   font-size: 0.85rem;
-  font-family: inherit;
+  font-family: var(--font-body);
   outline: none;
   cursor: pointer;
 }
 
-.wallet-select:focus { border-color: #c9a227; }
+.wallet-select:focus {
+  outline: 2px solid var(--color-ink);
+  outline-offset: -2px;
+}
 
-/* ── Signature verification badge — same shape as .status-badge ─── */
+/* ── Signature verification badge ─────────────────────────── */
 .wallet-sig-badge {
   display: inline-flex;
   align-items: center;
   gap: 3px;
   padding: 0.2rem 0.6rem;
-  border-radius: 3px;
+  border-radius: 0;
   font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.3px;
+  font-family: var(--font-body);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border);
 }
 
-.wallet-sig-verified { background: #e6f2e8; color: #1e6b34; }
-.wallet-sig-checking { background: #fdf3e0; color: #8a6d1a; }
-.wallet-sig-failed   { background: #fdecea; color: #a02622; }
+/* Verified: white bg, black text, normal 1px border */
+.wallet-sig-verified {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
+}
 
-/* ── History rows inside expanded cert (same as cert-item style) ─── */
+/* Checking: mid-gray bg, white text */
+.wallet-sig-checking {
+  background: var(--color-fill-mid);
+  color: var(--color-inverse-text);
+  border: 1px solid var(--color-fill-mid);
+}
+
+/* Failed / Revoked: black bg, white text, 2px border */
+.wallet-sig-failed {
+  background: var(--color-inverse-bg);
+  color: var(--color-inverse-text);
+  border: 2px solid var(--color-ink);
+}
+
+/* ── History rows inside expanded cert ─────────────────────── */
 .wallet-hist-row {
-  background: #f7f8fa;
-  border: 1px solid #d8dde4;
-  border-radius: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
   padding: 0.4rem 0.75rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-size: 0.8rem;
-  color: #3d4a5c;
+  color: var(--color-body-text);
   margin-bottom: 0.35rem;
+  font-family: var(--font-body);
 }
 
 .wallet-hist-type {
   padding: 0.12rem 0.45rem;
-  border-radius: 3px;
+  border-radius: 0;
   font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   flex-shrink: 0;
+  border: 1px solid var(--color-border);
 }
 
-.wallet-hist-VIEW     { background: #eef1f5; color: #0f2540; }
-.wallet-hist-DOWNLOAD { background: #e6f2e8; color: #1e6b34; }
-.wallet-hist-SHARE    { background: #fdf3e0; color: #8a6d1a; }
-.wallet-hist-VERIFY   { background: #eef1f5; color: #3d4a5c; }
+/* All history type badges: monochrome only */
+.wallet-hist-VIEW     { background: var(--color-surface); color: var(--color-ink); }
+.wallet-hist-DOWNLOAD { background: var(--color-ink);     color: var(--color-inverse-text); }
+.wallet-hist-SHARE    { background: var(--color-fill-mid); color: var(--color-inverse-text); }
+.wallet-hist-VERIFY   { background: var(--color-surface); color: var(--color-muted); }
 
 .wallet-hist-time {
   margin-left: auto;
   font-size: 0.7rem;
-  color: #7a8699;
+  color: var(--color-subtle);
+  font-family: var(--font-body);
 }
 
-/* ── Share link box ─────────────────────────────────────── */
+/* ── Share link box ────────────────────────────────────────── */
 .wallet-link-box {
-  background: #f7f8fa;
-  border: 1px solid #d8dde4;
-  border-radius: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
   padding: 0.6rem 0.85rem;
   display: flex;
   align-items: center;
@@ -141,37 +174,38 @@
   flex: 1;
   font-family: 'Courier New', monospace;
   font-size: 0.78rem;
-  color: #3d4a5c;
+  color: var(--color-body-text);
   word-break: break-all;
   line-height: 1.4;
 }
 
-/* ── Copy button — exact style from UniversityDashboard ─── */
+/* ── Copy button ───────────────────────────────────────────── */
 .wallet-copy-btn {
   background: transparent;
-  border: 1px solid #d8dde4;
-  border-radius: 3px;
-  color: #0f2540;
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  color: var(--color-ink);
   font-size: 0.7rem;
   padding: 1px 6px;
   cursor: pointer;
-  font-family: inherit;
+  font-family: var(--font-body);
   white-space: nowrap;
   flex-shrink: 0;
-  transition: background 0.15s;
+  transition: opacity 0.15s;
 }
 
-.wallet-copy-btn:hover  { background: #eef1f5; }
-.wallet-copy-btn.copied { color: #1e6b34; border-color: #1e6b34; }
+.wallet-copy-btn:hover   { opacity: 0.7; }
+.wallet-copy-btn.copied  { opacity: 0.6; }
 
-/* ── Loading spinner — matches the app's plain-text loading ─ */
+/* ── Loading ───────────────────────────────────────────────── */
 .wallet-loading {
   padding: 1.5rem 0;
-  color: #7a8699;
+  color: var(--color-muted);
   font-size: 0.9rem;
+  font-family: var(--font-body);
 }
 
-/* ── Responsive ─────────────────────────────────────────── */
+/* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .wallet-stats-row { grid-template-columns: repeat(2, 1fr); }
   .wallet-toolbar   { flex-direction: column; align-items: stretch; }
