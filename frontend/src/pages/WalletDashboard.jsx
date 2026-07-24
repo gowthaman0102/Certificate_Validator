@@ -5,6 +5,7 @@ import { recordWalletEvent, fetchWalletStats } from '../api/wallet';
 import { recordEvent, getStats }             from '../utils/walletStore';
 import WalletStats    from '../components/wallet/WalletStats';
 import WalletCertCard from '../components/wallet/WalletCertCard';
+import WalletDashboardDecorations from '../components/decorations/WalletDashboardDecorations';
 
 const GS = { ink: '#0a0a0a', muted: '#666666', subtle: '#999999', border: '#0a0a0a', bg: '#ffffff', mid: '#8c8c8c' };
 
@@ -51,10 +52,11 @@ function WalletDashboard() {
     .filter((c) => { if (!search.trim()) return true; const q = search.trim().toLowerCase(); return c.student_name?.toLowerCase().includes(q) || c.course?.toLowerCase().includes(q) || c.certificate_number?.toLowerCase().includes(q) || (c.university_name || '').toLowerCase().includes(q); })
     .sort((a, b) => { if (sortBy === 'date_desc') return new Date(b.created_at) - new Date(a.created_at); if (sortBy === 'date_asc') return new Date(a.created_at) - new Date(b.created_at); if (sortBy === 'name_asc') return (a.course || '').localeCompare(b.course || ''); return 0; });
 
-  if (loading) return <div className="dashboard"><p style={{ color: GS.muted }}>Loading your credential wallet…</p></div>;
+  if (loading) return <div className="dashboard"><WalletDashboardDecorations /><p style={{ color: GS.muted }}>Loading your credential wallet…</p></div>;
 
   return (
     <div className="dashboard">
+      <WalletDashboardDecorations />
       <div className="dashboard-header">
         <h2>My Credential Wallet</h2>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>

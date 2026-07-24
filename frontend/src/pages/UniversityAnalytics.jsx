@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { fetchUniversityAnalytics } from '../api/analytics';
+import UniversityAnalyticsDecorations from '../components/decorations/UniversityAnalyticsDecorations';
 
 const GS = { ink: '#0a0a0a', muted: '#666666', subtle: '#999999', border: '#0a0a0a', bg: '#ffffff', mid: '#8c8c8c' };
 
@@ -15,9 +16,9 @@ const tooltipStyle = { background: GS.bg, border: `1px solid ${GS.border}`, bord
 
 function StatBox({ label, value }) {
   return (
-    <div style={{ background: GS.bg, border: `1px solid ${GS.border}`, padding: '1rem', textAlign: 'center' }}>
-      <div style={{ fontSize: '1.6rem', fontWeight: 400, color: GS.ink, fontFamily: "'Prata', serif", lineHeight: 1, marginBottom: '4px' }}>{value ?? '—'}</div>
-      <div style={{ fontSize: '0.78rem', color: GS.muted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+    <div style={{ background: GS.bg, border: `1px solid ${GS.border}`, padding: '0.85rem 0.75rem', textAlign: 'center' }}>
+      <div style={{ fontSize: '1.4rem', fontWeight: 400, color: GS.ink, fontFamily: "'Prata', serif", lineHeight: 1, marginBottom: '6px' }}>{value ?? '—'}</div>
+      <div style={{ fontSize: '0.72rem', color: GS.muted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
     </div>
   );
 }
@@ -79,7 +80,7 @@ function UniversityAnalytics() {
 
   if (loading) return (
     <div className="dashboard" id="univ-analytics-container">
-      <AnalyticsDecorations />
+      <UniversityAnalyticsDecorations />
       <div className="dashboard-header"><h2>University Analytics</h2></div>
       <div className="card"><p style={{ color: GS.muted }}>Loading analytics…</p></div>
     </div>
@@ -87,6 +88,7 @@ function UniversityAnalytics() {
 
   return (
     <div className="dashboard" ref={pageRef}>
+      <UniversityAnalyticsDecorations />
       <div className="dashboard-header">
         <h2>University Analytics</h2>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -105,7 +107,7 @@ function UniversityAnalytics() {
       {data?.summary && (
         <div className="card">
           <h3>Overview</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
             <StatBox label="Total Issued" value={data.summary.total} />
             <StatBox label="Active" value={data.summary.active} />
             <StatBox label="Revoked" value={data.summary.revoked} />
@@ -123,13 +125,13 @@ function UniversityAnalytics() {
           <button className="btn-secondary" onClick={() => { setDateFrom(defaultFrom); setDateTo(new Date().toISOString().slice(0,10)); }} style={{ alignSelf: 'flex-end' }} id="analytics-reset-btn">Reset</button>
         </div>
         {data?.monthly?.length > 0 ? (
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={data.monthly} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GS.mid} />
+          <ResponsiveContainer width="100%" height={230}>
+            <BarChart data={data.monthly} margin={{ top: 10, right: 15, left: -10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: GS.muted }} />
               <YAxis tick={{ fontSize: 11, fill: GS.muted }} allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="count" name="Certificates Issued" fill={GS.ink} />
+              <Bar dataKey="count" name="Certificates Issued" fill="#0a0a0a" maxBarSize={38} radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : <p style={{ color: GS.muted }}>No issuance data for the selected date range.</p>}
@@ -137,13 +139,13 @@ function UniversityAnalytics() {
       {data?.departments?.length > 0 && (
         <div className="card">
           <h3>Top Departments / Courses</h3>
-          <ResponsiveContainer width="100%" height={Math.max(180, data.departments.length * 36)}>
+          <ResponsiveContainer width="100%" height={Math.max(180, data.departments.length * 38)}>
             <BarChart data={data.departments} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GS.mid} horizontal={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 11, fill: GS.muted }} allowDecimals={false} />
               <YAxis type="category" dataKey="course" width={130} tick={{ fontSize: 11, fill: GS.muted }} />
               <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="count" name="Certificates" fill={GS.mid} />
+              <Bar dataKey="count" name="Certificates" fill="#4f46e5" maxBarSize={28} radius={[0, 3, 3, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

@@ -16,6 +16,7 @@ import {
   fetchAnchorByTxId,
   searchBlockchainAnchors,
 } from '../api/blockchain';
+import BlockchainExplorerDecorations from '../components/decorations/BlockchainExplorerDecorations';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -164,6 +165,7 @@ function BlockchainExplorer() {
 
   return (
     <div className="dashboard">
+      <BlockchainExplorerDecorations />
       <div className="dashboard-header">
         <div>
           <h2>⛓ Blockchain Explorer</h2>

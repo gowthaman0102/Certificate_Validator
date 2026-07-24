@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchAuditLogs, fetchAuditStats, downloadAuditCSV } from '../api/audit';
+import AuditLogDecorations from '../components/AuditLogDecorations';
 
 const MODULES  = ['', 'AUTH', 'CERTIFICATE', 'VERIFICATION', 'REVOCATION', 'WALLET'];
 const ACTIONS  = ['', 'LOGIN', 'LOGOUT', 'REGISTER', 'ISSUE', 'BULK_ISSUE', 'VERIFY', 'REVOKE', 'DOWNLOAD', 'SHARE', 'VIEW'];
@@ -128,6 +129,7 @@ function AuditLog() {
 
   return (
     <div className="dashboard">
+      <AuditLogDecorations />
       <div className="dashboard-header">
         <h2>Audit Log</h2>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>

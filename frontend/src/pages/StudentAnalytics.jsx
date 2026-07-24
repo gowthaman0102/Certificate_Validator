@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { fetchStudentAnalytics } from '../api/analytics';
+import StudentAnalyticsDecorations from '../components/decorations/StudentAnalyticsDecorations';
 
 const GS = { ink: '#0a0a0a', muted: '#666666', subtle: '#999999', border: '#0a0a0a', bg: '#ffffff', mid: '#8c8c8c' };
 const tooltipStyle = { background: GS.bg, border: `1px solid ${GS.border}`, borderRadius: '0', fontSize: '0.8rem', color: GS.ink };
@@ -77,6 +78,7 @@ function StudentAnalytics() {
 
   return (
     <div className="dashboard" ref={pageRef}>
+      <StudentAnalyticsDecorations />
       <div className="dashboard-header">
         <h2>My Analytics</h2>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -111,13 +113,13 @@ function StudentAnalytics() {
       {data?.timeline?.length > 0 && (
         <div className="card">
           <h3>Certificate Receipt Timeline</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={data.timeline} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GS.mid} />
+          <ResponsiveContainer width="100%" height={210}>
+            <BarChart data={data.timeline} margin={{ top: 10, right: 15, left: -10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: GS.muted }} />
               <YAxis tick={{ fontSize: 11, fill: GS.muted }} allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="count" name="Certificates" fill={GS.ink} />
+              <Bar dataKey="count" name="Certificates" fill="#0a0a0a" maxBarSize={38} radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

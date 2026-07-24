@@ -5,15 +5,16 @@ import * as XLSX from 'xlsx';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { fetchVerificationAnalytics } from '../api/analytics';
+import VerificationAnalyticsDecorations from '../components/decorations/VerificationAnalyticsDecorations';
 
 const GS = { ink: '#0a0a0a', muted: '#666666', subtle: '#999999', border: '#0a0a0a', bg: '#ffffff', mid: '#8c8c8c' };
 const tooltipStyle = { background: GS.bg, border: `1px solid ${GS.border}`, borderRadius: '0', fontSize: '0.8rem', color: GS.ink };
 
 function StatBox({ label, value }) {
   return (
-    <div style={{ background: GS.bg, border: `1px solid ${GS.border}`, padding: '1rem', textAlign: 'center' }}>
-      <div style={{ fontSize: '1.6rem', fontWeight: 400, color: GS.ink, fontFamily: "'Prata', serif", lineHeight: 1, marginBottom: '4px' }}>{value ?? '—'}</div>
-      <div style={{ fontSize: '0.78rem', color: GS.muted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+    <div style={{ background: GS.bg, border: `1px solid ${GS.border}`, padding: '0.85rem 0.75rem', textAlign: 'center' }}>
+      <div style={{ fontSize: '1.4rem', fontWeight: 400, color: GS.ink, fontFamily: "'Prata', serif", lineHeight: 1, marginBottom: '6px' }}>{value ?? '—'}</div>
+      <div style={{ fontSize: '0.72rem', color: GS.muted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
     </div>
   );
 }
@@ -78,6 +79,7 @@ function VerificationAnalytics() {
 
   return (
     <div className="dashboard" ref={pageRef}>
+      <VerificationAnalyticsDecorations />
       <div className="dashboard-header">
         <h2>Verification Analytics</h2>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -113,17 +115,17 @@ function VerificationAnalytics() {
       {data?.monthly?.length > 0 && (
         <div className="card">
           <h3>Monthly Verification Trend (Last 12 Months)</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={data.monthly} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GS.mid} />
+          <ResponsiveContainer width="100%" height={230}>
+            <LineChart data={data.monthly} margin={{ top: 10, right: 15, left: -10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: GS.muted }} />
               <YAxis tick={{ fontSize: 11, fill: GS.muted }} allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} />
               <Legend wrapperStyle={{ fontSize: '0.78rem' }} />
-              <Line type="monotone" dataKey="total" name="Total" stroke={GS.ink} strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="valid_count" name="Valid" stroke={GS.mid} strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="tampered_count" name="Tampered" stroke={GS.ink} strokeWidth={2} dot={false} strokeDasharray="4 2" />
-              <Line type="monotone" dataKey="revoked_count" name="Revoked" stroke={GS.mid} strokeWidth={2} dot={false} strokeDasharray="4 2" />
+              <Line type="monotone" dataKey="total" name="Total" stroke="#0a0a0a" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="valid_count" name="Valid" stroke="#4f46e5" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="tampered_count" name="Tampered" stroke="#dc2626" strokeWidth={2} dot={{ r: 3 }} strokeDasharray="4 2" />
+              <Line type="monotone" dataKey="revoked_count" name="Revoked" stroke="#d97706" strokeWidth={2} dot={{ r: 3 }} strokeDasharray="4 2" />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -131,16 +133,16 @@ function VerificationAnalytics() {
       {data?.monthly?.length > 0 && (
         <div className="card">
           <h3>Result Breakdown by Month</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={data.monthly} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GS.mid} />
+          <ResponsiveContainer width="100%" height={230}>
+            <BarChart data={data.monthly} margin={{ top: 10, right: 15, left: -10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: GS.muted }} />
               <YAxis tick={{ fontSize: 11, fill: GS.muted }} allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} />
               <Legend wrapperStyle={{ fontSize: '0.78rem' }} />
-              <Bar dataKey="valid_count" name="Valid" fill={GS.mid} stackId="a" />
-              <Bar dataKey="revoked_count" name="Revoked" fill={GS.ink} stackId="a" />
-              <Bar dataKey="tampered_count" name="Tampered" fill={GS.ink} stackId="a" />
+              <Bar dataKey="valid_count" name="Valid" fill="#4f46e5" maxBarSize={38} radius={[3, 3, 0, 0]} stackId="a" />
+              <Bar dataKey="revoked_count" name="Revoked" fill="#d97706" maxBarSize={38} radius={[3, 3, 0, 0]} stackId="a" />
+              <Bar dataKey="tampered_count" name="Tampered" fill="#dc2626" maxBarSize={38} radius={[3, 3, 0, 0]} stackId="a" />
             </BarChart>
           </ResponsiveContainer>
         </div>

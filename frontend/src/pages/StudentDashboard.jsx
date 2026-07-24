@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getStudentCertificates } from '../api/client';
 import CertificateTemplate from '../components/CertificateTemplate';
 import { downloadCertificateAsPDF } from '../utils/certificatePdf';
+import StudentDashboardDecorations from '../components/StudentDashboardDecorations';
 
 const GS = { ink: '#0a0a0a', muted: '#666666', subtle: '#999999', border: '#0a0a0a', bg: '#ffffff' };
 
@@ -59,6 +60,7 @@ function StudentDashboard() {
 
   return (
     <div className="dashboard">
+      <StudentDashboardDecorations />
       <div className="dashboard-header">
         <h2>My Certificates</h2>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>

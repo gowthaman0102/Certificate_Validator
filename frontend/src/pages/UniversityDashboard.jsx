@@ -8,6 +8,7 @@ import CertificateTemplate from '../components/CertificateTemplate';
 import { downloadCertificateAsPDF } from '../utils/certificatePdf';
 import { parseCertificateExcel } from '../utils/excelParser';
 import { CATEGORIES, NEEDS_DETAIL } from '../utils/certificateCategory';
+import UniversityDashboardDecorations from '../components/UniversityDashboardDecorations';
 
 const GS = {
   ink:    '#0a0a0a',
@@ -175,6 +176,7 @@ function UniversityDashboard() {
 
   return (
     <div className="dashboard">
+      <UniversityDashboardDecorations />
       <div className="dashboard-header">
         <h2>{university.name}</h2>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
