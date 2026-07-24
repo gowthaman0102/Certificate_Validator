@@ -16,8 +16,8 @@
 .wallet-stat-box {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0;
-  padding: 1rem;
+  border-radius: 25px !important;
+  padding: 1.1rem;
   text-align: center;
 }
 
@@ -52,8 +52,8 @@
   min-width: 200px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0;
-  padding: 0.6rem 0.75rem;
+  border-radius: 25px !important;
+  padding: 0.6rem 1.25rem;
   color: var(--color-ink);
   font-size: 0.9rem;
   font-family: var(--font-body);
@@ -64,13 +64,14 @@
 .wallet-search-input:focus        {
   outline: 2px solid var(--color-ink);
   outline-offset: -2px;
+  border-radius: 25px !important;
 }
 
 .wallet-select {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0;
-  padding: 0.6rem 0.75rem;
+  border-radius: 25px !important;
+  padding: 0.6rem 1.25rem;
   color: var(--color-ink);
   font-size: 0.85rem;
   font-family: var(--font-body);
@@ -81,6 +82,7 @@
 .wallet-select:focus {
   outline: 2px solid var(--color-ink);
   outline-offset: -2px;
+  border-radius: 25px !important;
 }
 
 /* ── Signature verification badge ─────────────────────────── */
@@ -88,8 +90,8 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 0.2rem 0.6rem;
-  border-radius: 0;
+  padding: 0.25rem 0.85rem;
+  border-radius: 25px !important;
   font-size: 0.72rem;
   font-weight: 600;
   font-family: var(--font-body);
@@ -123,8 +125,8 @@
 .wallet-hist-row {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0;
-  padding: 0.4rem 0.75rem;
+  border-radius: 25px !important;
+  padding: 0.5rem 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -135,8 +137,8 @@
 }
 
 .wallet-hist-type {
-  padding: 0.12rem 0.45rem;
-  border-radius: 0;
+  padding: 0.15rem 0.65rem;
+  border-radius: 25px !important;
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -162,8 +164,8 @@
 .wallet-link-box {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0;
-  padding: 0.6rem 0.85rem;
+  border-radius: 25px !important;
+  padding: 0.6rem 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -183,10 +185,10 @@
 .wallet-copy-btn {
   background: transparent;
   border: 1px solid var(--color-border);
-  border-radius: 0;
+  border-radius: 25px !important;
   color: var(--color-ink);
   font-size: 0.7rem;
-  padding: 1px 6px;
+  padding: 3px 12px;
   cursor: pointer;
   font-family: var(--font-body);
   white-space: nowrap;

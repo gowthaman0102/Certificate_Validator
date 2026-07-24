@@ -98,7 +98,7 @@ function WalletDashboard() {
         {certificates.length > 0 && filtered.length === 0 && <p style={{ color: GS.muted }}>No certificates match your search or filter.</p>}
         <div className="cert-list">
           {filtered.map((cert) => (
-            <WalletCertCard key={cert.id} cert={cert} onDownload={handleDownload} onShare={handleShare} onCopyLink={handleShare} />
+            <WalletCertCard key={cert.id} cert={cert} onDownload={handleDownload} />
           ))}
         </div>
       </div>

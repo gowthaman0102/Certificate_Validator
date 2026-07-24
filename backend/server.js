@@ -12,6 +12,10 @@ const walletRoutes = require('./routes/walletRoutes');
 const auditRoutes      = require('./routes/auditRoutes');
 const analyticsRoutes  = require('./routes/analyticsRoutes');
 const blockchainRoutes = require('./routes/blockchainRoutes');
+const fraudRoutes      = require('./routes/fraudRoutes');
+const chatRoutes       = require('./routes/chatAssistantRoutes');
+const passportRoutes   = require('./routes/passportRoutes');
+const templateRoutes   = require('./routes/templateRoutes');
 
 const app = express();
 
@@ -34,6 +38,10 @@ app.use('/api', walletRoutes);
 app.use('/api', auditRoutes);
 app.use('/api', analyticsRoutes);
 app.use('/api', blockchainRoutes);
+app.use('/api', fraudRoutes);
+app.use('/api', chatRoutes);
+app.use('/api/passport', passportRoutes);
+app.use('/api/templates', templateRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

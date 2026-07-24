@@ -5,6 +5,7 @@ import {
   bulkUploadCertificates, getCertificatesByUniversity, revokeCertificate,
 } from '../api/client';
 import CertificateTemplate from '../components/CertificateTemplate';
+import CategoryCertificateTemplate from '../components/templates/CategoryCertificateTemplate';
 import { downloadCertificateAsPDF } from '../utils/certificatePdf';
 import { parseCertificateExcel } from '../utils/excelParser';
 import { CATEGORIES, NEEDS_DETAIL } from '../utils/certificateCategory';
@@ -57,7 +58,9 @@ function UniversityDashboard() {
   const [bulkProcessing, setBulkProcessing] = useState(false);
   const [bulkResults, setBulkResults] = useState(null);
   const [bulkError, setBulkError] = useState('');
+  const [selectedCert, setSelectedCert] = useState(null);
   const hiddenCertRef = useRef(null);
+  const modalCertRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -180,6 +183,7 @@ function UniversityDashboard() {
       <div className="dashboard-header">
         <h2>{university.name}</h2>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button className="btn" onClick={() => navigate('/university/templates')} id="university-templates-btn">Certificate Templates</button>
           <button className="btn" onClick={() => navigate('/analytics/university')} id="university-analytics-btn">Analytics</button>
           <button className="btn" onClick={() => navigate('/analytics/verification')} id="university-verification-analytics-btn">Verification Stats</button>
           <button className="btn" onClick={() => navigate('/audit')} id="university-audit-btn">Audit Logs</button>
@@ -188,13 +192,21 @@ function UniversityDashboard() {
       </div>
 
       <div className="card">
-        <h3>University Info</h3>
-        <p><strong>Issuer Code:</strong> {university.issuer_code}</p>
-        <p><strong>University ID:</strong> {university.id}</p>
+        <h3 style={{ fontWeight: 700, fontSize: '1.2rem', color: '#0a0a0a', borderBottom: '2px solid #0a0a0a', paddingBottom: '0.4rem', marginBottom: '1.2rem' }}>University Info</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span style={{ fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.06em', background: '#0a0a0a', color: '#ffffff', padding: '0.2rem 0.55rem' }}>Issuer Code</span>
+            <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '1.05rem', color: '#0a0a0a', letterSpacing: '0.05em' }}>{university.issuer_code}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span style={{ fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.06em', background: '#0a0a0a', color: '#ffffff', padding: '0.2rem 0.55rem' }}>University ID</span>
+            <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.92rem', color: '#0a0a0a', wordBreak: 'break-all' }}>{university.id}</span>
+          </div>
+        </div>
       </div>
 
       <div className="card">
-        <h3>Issue New Certificate</h3>
+        <h3 style={{ fontWeight: 700, fontSize: '1.2rem', color: '#0a0a0a', borderBottom: '2px solid #0a0a0a', paddingBottom: '0.4rem', marginBottom: '1.2rem' }}>Issue New Certificate</h3>
         {error && <div className="error-msg">{error}</div>}
         <form onSubmit={handleIssueCertificate}>
           <label>Student Name</label>
@@ -210,8 +222,16 @@ function UniversityDashboard() {
             <div style={{ flex: 1 }}><label>Start Year (optional)</label><input type="number" min="1950" max="2100" value={startYear} onChange={(e) => setStartYear(e.target.value)} placeholder="2022" /></div>
             <div style={{ flex: 1 }}><label>Year of Passing</label><input type="number" min="1950" max="2100" value={endYear} onChange={(e) => setEndYear(e.target.value)} required placeholder="2026" /></div>
           </div>
-          <label>Issue Date</label>
-          <input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} required />
+          <label style={{ cursor: 'pointer' }} onClick={(e) => { const el = e.currentTarget.nextElementSibling; if (el) { try { el.showPicker(); } catch { el.focus(); } } }}>Issue Date</label>
+          <input
+            type="date"
+            value={issueDate}
+            onChange={(e) => setIssueDate(e.target.value)}
+            onClick={(e) => { try { e.target.showPicker(); } catch {} }}
+            onFocus={(e) => { try { e.target.showPicker(); } catch {} }}
+            required
+            style={{ cursor: 'pointer' }}
+          />
           <label>Certificate Category</label>
           <select value={certCategory} onChange={(e) => { setCertCategory(e.target.value); setCertDetail(''); }} required id="cert-category-select">
             {CATEGORIES.map((cat) => <option key={cat.value} value={cat.value}>{cat.label}</option>)}
@@ -249,21 +269,21 @@ function UniversityDashboard() {
             </div>
             <div style={{ overflowX: 'auto', display: 'flex', justifyContent: 'center' }}>
               <div style={{ transform: 'scale(0.55)', transformOrigin: 'top center', marginBottom: '-250px' }}>
-                <CertificateTemplate certificate={lastIssued} qrCodeUrl={`http://localhost:5000${lastIssued.qr_code_url}`} />
+                <CategoryCertificateTemplate certificate={{ ...lastIssued, university_name: university?.name }} qrCodeUrl={`http://localhost:5000${lastIssued.qr_code_url}`} />
               </div>
             </div>
             <div style={{ textAlign: 'center', marginTop: '1rem' }}>
               <button className="btn" onClick={handleDownloadPdf}>Download Certificate PDF</button>
             </div>
             <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-              <CertificateTemplate ref={hiddenCertRef} certificate={lastIssued} qrCodeUrl={`http://localhost:5000${lastIssued.qr_code_url}`} />
+              <CategoryCertificateTemplate ref={hiddenCertRef} certificate={{ ...lastIssued, university_name: university?.name }} qrCodeUrl={`http://localhost:5000${lastIssued.qr_code_url}`} />
             </div>
           </div>
         )}
       </div>
 
       <div className="card">
-        <h3>Bulk Issue Certificates</h3>
+        <h3 style={{ fontWeight: 700, fontSize: '1.2rem', color: '#0a0a0a', borderBottom: '2px solid #0a0a0a', paddingBottom: '0.4rem', marginBottom: '1.2rem' }}>Bulk Issue Certificates</h3>
         <p style={{ color: GS.muted, fontSize: '0.85rem', marginBottom: '1rem' }}>
           Upload an Excel file (.xlsx) with columns: Register Number, Name, Department / Course, CGPA, Year of Passing.
           Certificate Category and Certificate Detail are optional columns. Start Year, Email, and Issue Date are also optional.
@@ -293,16 +313,24 @@ function UniversityDashboard() {
       </div>
 
       <div className="card">
-        <h3>Issued Certificates ({certificates.length})</h3>
+        <h3 style={{ fontWeight: 700, fontSize: '1.2rem', color: '#0a0a0a', borderBottom: '2px solid #0a0a0a', paddingBottom: '0.4rem', marginBottom: '1.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>Issued Certificates</span>
+          <span style={{ fontSize: '0.82rem', fontWeight: 700, background: '#0a0a0a', color: '#ffffff', padding: '0.15rem 0.65rem', fontFamily: 'monospace' }}>{certificates.length}</span>
+        </h3>
         <div className="cert-list">
           {certificates.length === 0 && <p style={{ color: GS.muted }}>No certificates issued yet.</p>}
           {certificates.map((cert) => (
-            <div className="cert-item" key={cert.id}>
+            <div
+              className="cert-item"
+              key={cert.id}
+              style={{ cursor: 'pointer', transition: 'background 0.15s ease' }}
+              onClick={() => setSelectedCert(cert)}
+            >
               <div>
                 <strong>{cert.student_name}</strong> — {cert.course}
                 <div style={{ fontSize: '0.8rem', color: GS.muted, display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginTop: '2px' }}>
                   <span>{cert.certificate_number}</span>
-                  <button onClick={() => handleCopyId(cert.certificate_number)} style={copyBtnStyle}>
+                  <button onClick={(e) => { e.stopPropagation(); handleCopyId(cert.certificate_number); }} style={copyBtnStyle}>
                     {copiedId === cert.certificate_number ? 'Copied!' : 'Copy'}
                   </button>
                   <span>| Reg: {cert.register_number} | {cert.end_year}</span>
@@ -311,13 +339,95 @@ function UniversityDashboard() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <span className={`status-badge ${cert.status === 'VALID' ? 'status-valid' : 'status-revoked'}`}>{cert.status}</span>
                 {cert.status === 'VALID' && (
-                  <button className="btn-secondary" onClick={() => handleRevoke(cert.id)} style={{ fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}>Revoke</button>
+                  <button
+                    className="btn-secondary"
+                    onClick={(e) => { e.stopPropagation(); handleRevoke(cert.id); }}
+                    style={{ fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}
+                  >
+                    Revoke
+                  </button>
                 )}
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* ── CERTIFICATE PREVIEW MODAL ───────────────────────────────────── */}
+      {selectedCert && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0,0,0,0.65)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+          }}
+          onClick={() => setSelectedCert(null)}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              border: '2px solid #0a0a0a',
+              borderRadius: '16px',
+              maxWidth: '920px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '1.75rem',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '2px solid #0a0a0a', paddingBottom: '0.75rem' }}>
+              <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1.3rem', color: '#0a0a0a' }}>
+                Certificate Preview — {selectedCert.certificate_number}
+              </h3>
+              <button
+                onClick={() => setSelectedCert(null)}
+                style={{ background: '#0a0a0a', color: '#ffffff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontWeight: 700, fontSize: '1.1rem' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Visual Certificate Template Display */}
+            <div style={{ overflowX: 'auto', background: '#e2e8f0', padding: '1.5rem', borderRadius: '12px', marginBottom: '1.25rem', display: 'flex', justifyContent: 'center' }}>
+              <CategoryCertificateTemplate
+                certificate={{
+                  ...selectedCert,
+                  university_name: university?.name || 'Issuing University',
+                }}
+                qrCodeUrl={`http://localhost:5000/uploads/qr_${selectedCert.id}.png`}
+              />
+            </div>
+
+            {/* Modal Footer Controls */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button
+                className="btn"
+                onClick={async () => {
+                  await downloadCertificateAsPDF(modalCertRef, `certificate_${selectedCert.certificate_number}`);
+                }}
+              >
+                📄 Download Certificate PDF
+              </button>
+              <button className="btn-secondary" onClick={() => setSelectedCert(null)}>Close</button>
+            </div>
+
+            {/* Hidden Ref for High-Res PDF Export */}
+            <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+              <CategoryCertificateTemplate ref={modalCertRef} certificate={{ ...selectedCert, university_name: university?.name }} qrCodeUrl={`http://localhost:5000/uploads/qr_${selectedCert.id}.png`} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

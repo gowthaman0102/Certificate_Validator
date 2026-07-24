@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import UniversityLogin from './pages/UniversityLogin';
@@ -13,6 +14,11 @@ import UniversityAnalytics  from './pages/UniversityAnalytics';
 import StudentAnalytics     from './pages/StudentAnalytics';
 import VerificationAnalytics from './pages/VerificationAnalytics';
 import BlockchainExplorer   from './pages/BlockchainExplorer';
+import DigitalSkillPassport from './pages/DigitalSkillPassport';
+import PublicSkillPassport  from './pages/PublicSkillPassport';
+import TemplateManager     from './pages/TemplateManager';
+
+const FloatingAIButton = lazy(() => import('./components/AIChat/FloatingAIButton'));
 
 function App() {
   return (
@@ -25,7 +31,11 @@ function App() {
         <Route path="/student-register" element={<StudentRegister />} />
         <Route path="/university-register" element={<UniversityRegister />} />
         <Route path="/university" element={<UniversityDashboard />} />
+        <Route path="/university/templates" element={<TemplateManager />} />
         <Route path="/student" element={<StudentDashboard />} />
+        <Route path="/student-dashboard" element={<StudentDashboard />} />
+        <Route path="/passport" element={<DigitalSkillPassport />} />
+        <Route path="/student/profile/:id" element={<PublicSkillPassport />} />
         <Route path="/verify" element={<Verifier />} />
         <Route path="/wallet" element={<WalletDashboard />} />
         <Route path="/audit"  element={<AuditLog />} />
@@ -34,6 +44,9 @@ function App() {
         <Route path="/analytics/verification" element={<VerificationAnalytics />} />
         <Route path="/blockchain-explorer"     element={<BlockchainExplorer />} />
       </Routes>
+      <Suspense fallback={null}>
+        <FloatingAIButton />
+      </Suspense>
     </BrowserRouter>
   );
 }

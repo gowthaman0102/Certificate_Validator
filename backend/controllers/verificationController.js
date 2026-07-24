@@ -61,6 +61,24 @@ function verifyCertificate(req, res) {
     const recomputedHash = generateHash(recomputedPayload);
     const hashStatus     = recomputedHash === hash ? 'MATCH' : 'MISMATCH';
 
+    const certRecord = db.prepare('SELECT * FROM certificates WHERE id = ? OR certificate_number = ?').get(cert_id, certificate_number);
+    const certDetails = {
+      id:                 cert_id || certRecord?.id,
+      cert_id,
+      certificate_number,
+      register_number,
+      student_name,
+      course,
+      cgpa,
+      start_year,
+      end_year,
+      issue_date,
+      issuer:               university?.name || 'Issuing University',
+      issuer_id:            university?.issuer_code || issuer_id,
+      certificate_category: certRecord?.certificate_category || '',
+      certificate_detail:   certRecord?.certificate_detail   || '',
+    };
+
     if (hashStatus === 'MISMATCH') {
       logAudit(req, { module: 'VERIFICATION', action: 'VERIFY', status: 'FAILURE', resource_id: certificate_number, details: { result: 'HASH_MISMATCH' } });
       return res.json({
@@ -68,6 +86,7 @@ function verifyCertificate(req, res) {
         reason: 'Certificate data has been tampered — SHA-256 hash does not match',
         algorithm: ALGORITHM, verifiedAt, verificationMode,
         hashStatus: 'MISMATCH', signatureStatus: 'UNCHECKED',
+        certificate: certDetails,
       });
     }
 
@@ -84,6 +103,7 @@ function verifyCertificate(req, res) {
         reason: 'Signature verification error — invalid key format or corrupted signature',
         algorithm: ALGORITHM, verifiedAt, verificationMode,
         hashStatus: 'MATCH', signatureStatus: 'ERROR',
+        certificate: certDetails,
       });
     }
 
@@ -94,17 +114,19 @@ function verifyCertificate(req, res) {
         reason: 'Digital signature is invalid — certificate may not be from the stated issuer',
         algorithm: ALGORITHM, verifiedAt, verificationMode,
         hashStatus: 'MATCH', signatureStatus: 'INVALID',
+        certificate: certDetails,
       });
     }
 
     // ── Step 3: Revocation check ──────────────────────────────────────────────
-    const cert = db.prepare('SELECT * FROM certificates WHERE id = ?').get(cert_id);
+    const cert = certRecord || db.prepare('SELECT * FROM certificates WHERE id = ?').get(cert_id);
     if (cert && cert.status === 'REVOKED') {
       logAudit(req, { module: 'VERIFICATION', action: 'VERIFY', status: 'SUCCESS', resource_id: certificate_number, details: { result: 'REVOKED', student_name, course } });
       return res.json({
         result: 'REVOKED', reason: 'This certificate has been revoked by the issuer',
         algorithm: ALGORITHM, verifiedAt, verificationMode,
         hashStatus: 'MATCH', signatureStatus: 'VALID',
+        certificate: certDetails,
       });
     }
 

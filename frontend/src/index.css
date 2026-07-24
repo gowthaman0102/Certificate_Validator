@@ -35,24 +35,32 @@ html, body {
   color: var(--color-body-text);
 }
 
-/* Typography Defaults */
+/* Typography Defaults — Bold All Headings in All Modules */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  font-weight: 400;
+  font-weight: 700 !important;
+  text-transform: none !important;
   color: var(--color-ink);
+}
+
+.dashboard-header h2,
+.card h3,
+.card h4 {
+  font-weight: 700 !important;
+  text-transform: none !important;
 }
 
 p, span, label, input, button, select, textarea, td, th {
   font-family: var(--font-body);
 }
 
-/* Buttons System - Strict 0px Border Radius */
+/* Buttons System — Option 2: Full Pill Capsule (25px rounded ends) */
 .btn, button.btn {
   background: var(--color-ink) !important;
   color: var(--color-inverse-text) !important;
   border: 1px solid var(--color-ink) !important;
-  border-radius: 0 !important;
-  padding: 0.65rem 1.35rem;
+  border-radius: 25px !important;
+  padding: 0.65rem 1.5rem;
   font-family: var(--font-body);
   font-size: 0.88rem;
   font-weight: 500;
@@ -78,8 +86,8 @@ p, span, label, input, button, select, textarea, td, th {
   background: var(--color-surface) !important;
   color: var(--color-ink) !important;
   border: 1px solid var(--color-ink) !important;
-  border-radius: 0 !important;
-  padding: 0.65rem 1.35rem;
+  border-radius: 25px !important;
+  padding: 0.65rem 1.5rem;
   font-family: var(--font-body);
   font-size: 0.88rem;
   font-weight: 500;
@@ -100,7 +108,7 @@ p, span, label, input, button, select, textarea, td, th {
   background: var(--color-ink) !important;
   color: var(--color-inverse-text) !important;
   border: 1px solid var(--color-ink) !important;
-  border-radius: 0 !important;
+  border-radius: 25px !important;
   padding: 0.65rem 1.35rem;
   font-family: var(--font-body);
   font-size: 0.88rem;
@@ -112,7 +120,7 @@ p, span, label, input, button, select, textarea, td, th {
   background: var(--color-surface) !important;
   border: 1px solid var(--color-ink) !important;
   color: var(--color-ink) !important;
-  border-radius: 0 !important;
+  border-radius: 25px !important;
   padding: 0.4rem 0.9rem;
   cursor: pointer;
   font-size: 0.82rem;
@@ -128,7 +136,7 @@ p, span, label, input, button, select, textarea, td, th {
   background: var(--color-surface);
   color: var(--color-ink);
   border: 1px solid var(--color-ink);
-  border-radius: 0;
+  border-radius: 25px !important;
   padding: 0.45rem 1rem;
   font-family: var(--font-body);
   font-size: 0.82rem;
@@ -155,7 +163,7 @@ p, span, label, input, button, select, textarea, td, th {
 .auth-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0;
+  border-radius: 25px !important;
   padding: 2.75rem 2.5rem;
   width: 100%;
   max-width: 440px;
@@ -284,10 +292,10 @@ p, span, label, input, button, select, textarea, td, th {
 .auth-card .form-group input,
 .auth-card .form-group select {
   width: 100%;
-  padding: 0.75rem 0.9rem;
+  padding: 0.75rem 1.25rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0;
+  border-radius: 25px !important;
   font-family: var(--font-body);
   font-size: 0.92rem;
   color: var(--color-ink);
@@ -301,6 +309,7 @@ p, span, label, input, button, select, textarea, td, th {
 .auth-card .form-group select:focus {
   outline: 2px solid var(--color-ink);
   outline-offset: -2px;
+  border-radius: 25px !important;
 }
 
 .auth-card form button[type="submit"],
@@ -308,11 +317,11 @@ p, span, label, input, button, select, textarea, td, th {
   width: 100%;
   margin-top: 1.25rem;
   margin-bottom: 1rem;
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1.5rem;
   background: var(--color-ink);
   color: var(--color-inverse-text);
   border: 1px solid var(--color-ink);
-  border-radius: 0;
+  border-radius: 25px !important;
   font-family: var(--font-body);
   font-size: 0.92rem;
   font-weight: 500;
@@ -431,7 +440,7 @@ p, span, label, input, button, select, textarea, td, th {
 .card {
   background: #ffffff !important;
   border: 1px solid var(--color-border);
-  border-radius: 0;
+  border-radius: 25px !important;
   padding: 1.75rem;
   margin: 0 auto 1.5rem auto;
   max-width: 980px;
@@ -462,12 +471,23 @@ p, span, label, input, button, select, textarea, td, th {
 }
 
 .card input,
-.card select,
+.card select {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 25px !important;
+  padding: 0.65rem 1.25rem;
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  width: 100%;
+  outline: none;
+}
+
 .card textarea {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0;
-  padding: 0.65rem 0.85rem;
+  border-radius: 25px !important;
+  padding: 0.85rem 1.25rem;
   color: var(--color-ink);
   font-family: var(--font-body);
   font-size: 0.9rem;
@@ -480,6 +500,21 @@ p, span, label, input, button, select, textarea, td, th {
 .card textarea:focus {
   outline: 2px solid var(--color-ink);
   outline-offset: -2px;
+  border-radius: 25px !important;
+}
+
+input[type="date"] {
+  cursor: pointer !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-inner-spin-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .cert-list {
@@ -491,8 +526,8 @@ p, span, label, input, button, select, textarea, td, th {
 .cert-item {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0;
-  padding: 1.1rem 1.25rem;
+  border-radius: 25px !important;
+  padding: 1.1rem 1.4rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -500,10 +535,10 @@ p, span, label, input, button, select, textarea, td, th {
   gap: 0.5rem;
 }
 
-/* -- Status Badges (Monochrome) ----------------------------- */
+/* -- Status Badges (Monochrome Pill) ----------------------------- */
 .status-badge {
-  padding: 0.25rem 0.7rem;
-  border-radius: 0;
+  padding: 0.25rem 0.85rem;
+  border-radius: 25px !important;
   font-size: 0.72rem;
   font-weight: 600;
   font-family: var(--font-body);
@@ -532,16 +567,16 @@ p, span, label, input, button, select, textarea, td, th {
   border: 2px solid var(--color-ink);
   color: var(--color-ink);
   padding: 1.75rem;
-  border-radius: 0;
+  border-radius: 25px !important;
   text-align: center;
 }
 
 .result-tampered {
-  background: var(--color-ink);
+  background: var(--color-surface);
   border: 2px solid var(--color-ink);
-  color: var(--color-inverse-text);
+  color: var(--color-ink);
   padding: 1.75rem;
-  border-radius: 0;
+  border-radius: 25px !important;
   text-align: center;
 }
 
@@ -550,7 +585,7 @@ p, span, label, input, button, select, textarea, td, th {
   border: 2px solid var(--color-ink);
   color: var(--color-ink);
   padding: 1.75rem;
-  border-radius: 0;
+  border-radius: 25px !important;
   text-align: center;
 }
 
@@ -1002,4 +1037,18 @@ p, span, label, input, button, select, textarea, td, th {
   .portal-block {
     border-right: none;
   }
+}
+
+/* ============================================================
+   Universal Full Pill Capsule System (25px Rounded Ends)
+   Applies across ALL modules, containers, inputs, cards & items
+   ============================================================ */
+.card, .auth-card, .stat-card, .info-box, .cert-item, .cert-card,
+.file-box, .dropzone-box, .status-badge, .category-badge, .wallet-stat-box,
+.wallet-hist-row, .wallet-link-box, .wallet-search-input, .wallet-select,
+.table-container, .modal-card, .filter-box, .search-box, .nav-tab,
+input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+input[type="date"], input[type="file"], select, textarea,
+.btn, .btn-primary, .btn-secondary, .btn-danger, .logout-btn, .wallet-copy-btn {
+  border-radius: 25px !important;
 }

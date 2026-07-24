@@ -154,6 +154,20 @@ export async function verifyOffline(qrPayload, publicKeyPem) {
     };
   }
 
+  const certDetails = {
+    id: cert_id,
+    cert_id,
+    certificate_number,
+    register_number,
+    student_name,
+    course,
+    cgpa,
+    start_year,
+    end_year,
+    issue_date,
+    issuer_id,
+  };
+
   if (hashStatus === 'MISMATCH') {
     return {
       ...base,
@@ -161,6 +175,7 @@ export async function verifyOffline(qrPayload, publicKeyPem) {
       reason:          'Certificate data has been tampered — SHA-256 hash does not match',
       hashStatus,
       signatureStatus: 'UNCHECKED',
+      certificate: certDetails,
     };
   }
 
@@ -177,6 +192,7 @@ export async function verifyOffline(qrPayload, publicKeyPem) {
       reason:          'Signature verification error — invalid key format or corrupted signature',
       hashStatus,
       signatureStatus: 'ERROR',
+      certificate: certDetails,
     };
   }
 
@@ -187,6 +203,7 @@ export async function verifyOffline(qrPayload, publicKeyPem) {
       reason:          'Digital signature is invalid — certificate may not be from the stated issuer',
       hashStatus,
       signatureStatus,
+      certificate: certDetails,
     };
   }
 
@@ -197,9 +214,6 @@ export async function verifyOffline(qrPayload, publicKeyPem) {
     message:         'Certificate is authentic and unmodified (verified offline)',
     hashStatus,
     signatureStatus,
-    certificate: {
-      cert_id, certificate_number, register_number, student_name,
-      course, cgpa, start_year, end_year, issue_date, issuer_id,
-    },
+    certificate: certDetails,
   };
 }

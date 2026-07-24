@@ -64,6 +64,7 @@ function StudentDashboard() {
       <div className="dashboard-header">
         <h2>My Certificates</h2>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <button className="btn" onClick={() => navigate('/passport')} id="student-passport-btn">Digital Skill Passport</button>
           <button className="btn" onClick={() => navigate('/analytics/student')} id="student-analytics-btn">Analytics</button>
           <button className="btn" onClick={() => navigate('/wallet')} id="student-open-wallet-btn">My Wallet</button>
           <button className="logout-btn" onClick={handleLogout}>Logout</button>

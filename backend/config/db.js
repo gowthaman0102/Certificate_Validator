@@ -139,6 +139,176 @@ function initDB() {
     CREATE INDEX IF NOT EXISTS idx_bc_issuer      ON blockchain_anchors(issuer_code);
   `);
 
+  // AI Fraud Analysis table - append-only, never modifies existing tables
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS fraud_analysis (
+      id             TEXT PRIMARY KEY,
+      certificate_id TEXT NOT NULL,
+      risk_score     INTEGER NOT NULL,
+      risk_level     TEXT NOT NULL,
+      analysis_json  TEXT NOT NULL,
+      recommendation TEXT NOT NULL,
+      created_at     TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_fraud_cert_id ON fraud_analysis(certificate_id);
+  `);
+
+  // AI Chat Assistant history table - append-only, never modifies existing tables
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS chat_history (
+      id          TEXT PRIMARY KEY,
+      user_id     TEXT,
+      role        TEXT NOT NULL,
+      message     TEXT NOT NULL,
+      response    TEXT NOT NULL,
+      session_id  TEXT NOT NULL,
+      created_at  TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_chat_user_id ON chat_history(user_id);
+    CREATE INDEX IF NOT EXISTS idx_chat_session ON chat_history(session_id);
+  `);
+
+  // Verified Digital Skill Passport tables — append-only, never modifies existing tables
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS student_profile (
+      id                 TEXT PRIMARY KEY,
+      user_id            TEXT NOT NULL UNIQUE,
+      profile_picture    TEXT,
+      bio                TEXT,
+      headline           TEXT,
+      department         TEXT,
+      program            TEXT,
+      graduation_year    TEXT,
+      career_interests   TEXT,
+      is_public          INTEGER DEFAULT 1 CHECK(is_public IN (0, 1)),
+      created_at         TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at         TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS skills (
+      id           TEXT PRIMARY KEY,
+      student_id   TEXT NOT NULL,
+      skill_name   TEXT NOT NULL,
+      category     TEXT NOT NULL,
+      proficiency  TEXT NOT NULL CHECK(proficiency IN ('Beginner', 'Intermediate', 'Advanced', 'Expert')),
+      verified     INTEGER DEFAULT 0 CHECK(verified IN (0, 1)),
+      created_at   TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (student_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS projects (
+      id                  TEXT PRIMARY KEY,
+      student_id          TEXT NOT NULL,
+      project_name        TEXT NOT NULL,
+      description         TEXT NOT NULL,
+      tech_stack          TEXT NOT NULL,
+      github_url          TEXT,
+      demo_url            TEXT,
+      image_url           TEXT,
+      start_date          TEXT,
+      end_date            TEXT,
+      status              TEXT DEFAULT 'Completed',
+      associated_cert_id  TEXT,
+      created_at          TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (student_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS internships (
+      id                  TEXT PRIMARY KEY,
+      student_id          TEXT NOT NULL,
+      company             TEXT NOT NULL,
+      role                TEXT NOT NULL,
+      duration            TEXT NOT NULL,
+      description         TEXT,
+      cert_link           TEXT,
+      verification_status TEXT DEFAULT 'PENDING',
+      created_at          TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (student_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS publications (
+      id           TEXT PRIMARY KEY,
+      student_id   TEXT NOT NULL,
+      title        TEXT NOT NULL,
+      type         TEXT NOT NULL,
+      publisher    TEXT,
+      date         TEXT,
+      doi          TEXT,
+      url          TEXT,
+      created_at   TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (student_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS achievements (
+      id           TEXT PRIMARY KEY,
+      student_id   TEXT NOT NULL,
+      title        TEXT NOT NULL,
+      category     TEXT NOT NULL,
+      organization TEXT,
+      date         TEXT,
+      description  TEXT,
+      created_at   TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (student_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS licenses (
+      id             TEXT PRIMARY KEY,
+      student_id     TEXT NOT NULL,
+      name           TEXT NOT NULL,
+      issuer         TEXT NOT NULL,
+      issue_date     TEXT,
+      expiry_date    TEXT,
+      credential_id  TEXT,
+      url            TEXT,
+      created_at     TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (student_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS portfolio_settings (
+      id                      TEXT PRIMARY KEY,
+      student_id              TEXT NOT NULL UNIQUE,
+      section_visibility_json TEXT NOT NULL,
+      updated_at              TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (student_id) REFERENCES users(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_skills_student       ON skills(student_id);
+    CREATE INDEX IF NOT EXISTS idx_projects_student     ON projects(student_id);
+    CREATE INDEX IF NOT EXISTS idx_internships_student  ON internships(student_id);
+    CREATE INDEX IF NOT EXISTS idx_publications_student ON publications(student_id);
+    CREATE INDEX IF NOT EXISTS idx_achievements_student ON achievements(student_id);
+    CREATE INDEX IF NOT EXISTS idx_licenses_student     ON licenses(student_id);
+  `);
+
+  // Certificate Category Templates tables — append-only
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS certificate_templates (
+      id               TEXT PRIMARY KEY,
+      template_key     TEXT UNIQUE NOT NULL,
+      template_name    TEXT NOT NULL,
+      category         TEXT NOT NULL,
+      primary_color    TEXT NOT NULL,
+      secondary_color  TEXT NOT NULL,
+      accent_color     TEXT NOT NULL,
+      bg_gradient      TEXT,
+      border_style     TEXT,
+      watermark_text   TEXT,
+      is_default       INTEGER DEFAULT 0 CHECK(is_default IN (0, 1)),
+      created_at       TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS template_assignments (
+      id               TEXT PRIMARY KEY,
+      university_id    TEXT NOT NULL,
+      category         TEXT NOT NULL,
+      template_key     TEXT NOT NULL,
+      updated_at       TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(university_id, category)
+    );
+    CREATE INDEX IF NOT EXISTS idx_tmpl_assign_uni ON template_assignments(university_id);
+  `);
+
   console.log('DB tables ready');
 }
 

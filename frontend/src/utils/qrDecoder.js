@@ -28,21 +28,7 @@ import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
-// ─── Tuning constants ─────────────────────────────────────────────────────────
-
-// The QR code sits in the bottom-right corner of our CertificateTemplate.
-// These fractions define the crop window (relative to page dimensions).
-const QR_CROP_X = 0.58;   // start at 58% from left
-const QR_CROP_Y = 0.55;   // start at 55% from top
-
-// Target minimum side-length (px) for the crop before jsQR sees it.
-// Our 1200-px source QR has ~80 modules; we want ≥8 px/module → 640 px minimum.
-const CROP_TARGET_MIN_PX = 700;
-
-// PDF render scales to attempt.  Scale 3 is the primary; 2 is the fast fallback.
-const PDF_SCALES = [3, 2];
-
-// ─── Canvas helpers ───────────────────────────────────────────────────────────
+// ─── Canvas & Image Processing Helpers ────────────────────────────────────────
 
 function makeCanvas(width, height) {
   const canvas = document.createElement('canvas');
@@ -55,10 +41,32 @@ function makeCanvas(width, height) {
 
 /** Run jsQR on a canvas — returns jsQR result or null. */
 function scanCanvas(canvas) {
-  if (canvas.width < 10 || canvas.height < 10) return null;
+  if (!canvas || canvas.width < 10 || canvas.height < 10) return null;
   const ctx  = canvas.getContext('2d');
   const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
   return jsQR(data.data, data.width, data.height, { inversionAttempts: 'attemptBoth' });
+}
+
+/** Binarize canvas to pure black & white for low-contrast or blurred renders. */
+function binarizeCanvas(srcCanvas, threshold = 140) {
+  const w = srcCanvas.width;
+  const h = srcCanvas.height;
+  const dst = makeCanvas(w, h);
+  const ctx = dst.getContext('2d');
+  ctx.drawImage(srcCanvas, 0, 0);
+
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const d = imgData.data;
+  for (let i = 0; i < d.length; i += 4) {
+    // Grayscale conversion
+    const v = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    const bw = v < threshold ? 0 : 255;
+    d[i]     = bw;
+    d[i + 1] = bw;
+    d[i + 2] = bw;
+  }
+  ctx.putImageData(imgData, 0, 0);
+  return dst;
 }
 
 /** Crop a rectangular region of a canvas into a new canvas. */
@@ -68,11 +76,8 @@ function cropCanvas(src, x, y, w, h) {
   return dst;
 }
 
-/**
- * Scale a canvas up so its shorter side is at least `minPx`.
- * If already large enough, returns the original canvas unchanged (zero cost).
- */
-function ensureMinSize(canvas, minPx) {
+/** Scale canvas up to ensure minimum side-length in pixels for jsQR module detection. */
+function ensureMinSize(canvas, minPx = 700) {
   const shorter = Math.min(canvas.width, canvas.height);
   if (shorter >= minPx) return canvas;
   const factor = Math.ceil(minPx / shorter);
@@ -83,38 +88,59 @@ function ensureMinSize(canvas, minPx) {
   return dst;
 }
 
-// ─── Core scan strategy ───────────────────────────────────────────────────────
+// ─── Multi-Region & Multi-Contrast QR Detection Strategy ──────────────────────
 
-/**
- * Given a rendered page (or image) canvas, tries to locate and scan the QR.
- *
- * Scan order (fastest to slowest):
- *   1. Bottom-right crop → upscaled to CROP_TARGET_MIN_PX  (tiny area, fast jsQR)
- *   2. Full canvas                                          (fallback, no extra render)
- *
- * Returns a jsQR result or null.
- */
 function scanCanvas_withStrategy(canvas) {
   const w = canvas.width;
   const h = canvas.height;
 
-  // ── 1. Crop the QR region ──────────────────────────────────────────────────
-  const cropX = Math.floor(w * QR_CROP_X);
-  const cropY = Math.floor(h * QR_CROP_Y);
-  const cropW = w - cropX;
-  const cropH = h - cropY;
+  // Region 1: Bottom-Left (CategoryCertificateTemplate location)
+  const blW = Math.floor(w * 0.55);
+  const blH = Math.floor(h * 0.50);
+  const blY = Math.floor(h * 0.50);
+  const cropBL = ensureMinSize(cropCanvas(canvas, 0, blY, blW, blH), 700);
 
-  const crop      = cropCanvas(canvas, cropX, cropY, cropW, cropH);
-  const cropReady = ensureMinSize(crop, CROP_TARGET_MIN_PX);
+  let res = scanCanvas(cropBL);
+  if (res) return res;
 
-  const r1 = scanCanvas(cropReady);
-  if (r1) return r1;
+  // Binarized Bottom-Left
+  res = scanCanvas(binarizeCanvas(cropBL));
+  if (res) return res;
 
-  // ── 2. Full page (same already-rendered canvas, no re-render cost) ─────────
-  return scanCanvas(canvas);
+  // Region 2: Bottom-Right (Standard template location)
+  const brX = Math.floor(w * 0.45);
+  const brY = Math.floor(h * 0.45);
+  const brW = w - brX;
+  const brH = h - brY;
+  const cropBR = ensureMinSize(cropCanvas(canvas, brX, brY, brW, brH), 700);
+
+  res = scanCanvas(cropBR);
+  if (res) return res;
+
+  res = scanCanvas(binarizeCanvas(cropBR));
+  if (res) return res;
+
+  // Region 3: Full Bottom Half
+  const bhY = Math.floor(h * 0.40);
+  const cropBH = ensureMinSize(cropCanvas(canvas, 0, bhY, w, h - bhY), 800);
+
+  res = scanCanvas(cropBH);
+  if (res) return res;
+
+  res = scanCanvas(binarizeCanvas(cropBH));
+  if (res) return res;
+
+  // Region 4: Full Page Raw
+  res = scanCanvas(canvas);
+  if (res) return res;
+
+  // Region 5: Full Page Binarized
+  return scanCanvas(binarizeCanvas(canvas));
 }
 
 // ─── PDF handling ─────────────────────────────────────────────────────────────
+
+const PDF_SCALES = [2.5, 3.5, 1.8];
 
 async function renderPdfPage(page, scale) {
   const viewport = page.getViewport({ scale });
@@ -129,26 +155,17 @@ async function decodeFromPdfFile(file) {
   const arrayBuffer = await file.arrayBuffer();
   const pdf         = await pdfjsLib.getDocument({
     data: arrayBuffer,
-    // Disable streaming fetch; we already have the full buffer in memory
     disableAutoFetch: true,
     disableStream:    true,
   }).promise;
 
-  // Certificates are always 1-page — only check page 1
-  const page = await pdf.getPage(1);
-
-  for (const scale of PDF_SCALES) {
-    const canvas = await renderPdfPage(page, scale);
-    const code   = scanCanvas_withStrategy(canvas);
-    if (code) return code;
-  }
-
-  // If page 1 failed at both scales, check page 2 (just in case of multi-page PDFs)
-  if (pdf.numPages >= 2) {
-    const page2  = await pdf.getPage(2);
-    const canvas = await renderPdfPage(page2, PDF_SCALES[0]);
-    const code   = scanCanvas_withStrategy(canvas);
-    if (code) return code;
+  for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, 3); pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    for (const scale of PDF_SCALES) {
+      const canvas = await renderPdfPage(page, scale);
+      const code   = scanCanvas_withStrategy(canvas);
+      if (code) return code;
+    }
   }
 
   return null;
@@ -197,6 +214,40 @@ export async function debugRenderPdfFirstPage(file) {
   };
 }
 
+// ─── Text Content & Filename Fallback ─────────────────────────────────────────
+
+async function extractFallbackFromTextOrName(file) {
+  try {
+    // Check filename pattern (e.g. certificate_ABC001-2026-808A.pdf or ABC001-2026-808A.pdf)
+    const nameMatch = file.name.match(/([A-Z0-9]{3,10}-\d{4}-[A-Z0-9]{3,10})/i);
+    if (nameMatch) {
+      return { cert_id_from_name: nameMatch[1].toUpperCase() };
+    }
+
+    // Check PDF text stream content
+    if (file.type === 'application/pdf') {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer, disableAutoFetch: true, disableStream: true }).promise;
+      const page = await pdf.getPage(1);
+      const textContent = await page.getTextContent();
+      const fullText = textContent.items.map((item) => item.str).join(' ');
+
+      const jsonMatch = fullText.match(/\{[\s\S]*"cert_id"[\s\S]*\}/);
+      if (jsonMatch) {
+        try { return JSON.parse(jsonMatch[0]); } catch {}
+      }
+
+      const textCertMatch = fullText.match(/([A-Z0-9]{3,10}-\d{4}-[A-Z0-9]{3,10})/i);
+      if (textCertMatch) {
+        return { cert_id_from_name: textCertMatch[1].toUpperCase() };
+      }
+    }
+  } catch (err) {
+    console.warn('[qrDecoder] Fallback text/filename extraction failed:', err.message);
+  }
+  return null;
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export async function decodeQrFromCertificateFile(file) {
@@ -210,13 +261,19 @@ export async function decodeQrFromCertificateFile(file) {
     throw new Error('Unsupported file type. Please upload a PDF or image (PNG/JPG) of the certificate.');
   }
 
-  if (!code) {
-    throw new Error('No QR code found in the uploaded file. You can also verify using the Certificate ID printed on the certificate instead.');
+  if (code && code.data) {
+    try {
+      return JSON.parse(code.data);
+    } catch (err) {
+      // Continue to fallback if JSON parse fails
+    }
   }
 
-  try {
-    return JSON.parse(code.data);
-  } catch (err) {
-    throw new Error('QR code found, but its contents are not valid certificate data.');
+  // Fallback to text/filename extraction if visual QR scan failed
+  const fallbackPayload = await extractFallbackFromTextOrName(file);
+  if (fallbackPayload) {
+    return fallbackPayload;
   }
+
+  throw new Error('No QR code or valid Certificate ID found in the uploaded file. You can also verify using the Certificate ID printed on the certificate instead.');
 }
