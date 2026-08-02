@@ -110,8 +110,32 @@ function Verifier() {
       setBatchFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'verifying' } : f));
 
       try {
-        const qrDataText = await decodeQrFromCertificateFile(item.file);
-        const payload = JSON.parse(qrDataText);
+        let payload = await decodeQrFromCertificateFile(item.file);
+
+        if (payload && payload.cert_id_from_name) {
+          const res = await getCertificateByCertNumber(payload.cert_id_from_name);
+          const cert = res.data;
+          payload = {
+            cert_id: cert.id,
+            certificate_number: cert.certificate_number,
+            register_number: cert.register_number,
+            student_name: cert.student_name,
+            course: cert.course,
+            cgpa: cert.cgpa ?? '',
+            start_year: cert.start_year ?? '',
+            end_year: cert.end_year,
+            issue_date: cert.issue_date,
+            issuer_id: cert.issuer_code,
+            hash: cert.certificate_hash,
+            signature: cert.signature,
+          };
+        } else if (typeof payload === 'string') {
+          try { payload = JSON.parse(payload); } catch {}
+        }
+
+        if (!payload || typeof payload !== 'object' || !payload.hash || !payload.signature) {
+          throw new Error('No QR payload found in file');
+        }
 
         if (mode === 'online') {
           const res = await verifyCertificate(payload);
@@ -514,7 +538,7 @@ function Verifier() {
                           📄 {item.name}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: GS.muted, marginTop: '2px' }}>
-                          Size: {item.size} KB {item.result?.certificate?.student_name ? `· Student: ${item.result.certificate.student_name}` : ''}
+                          Size: {item.size} KB {item.result?.certificate?.student_name ? ` · Student: ${item.result.certificate.student_name} (${item.result.certificate.certificate_number || ''})` : item.error ? ` · Error: ${item.error}` : ''}
                         </div>
                       </div>
 

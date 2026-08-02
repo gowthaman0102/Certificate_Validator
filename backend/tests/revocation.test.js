@@ -56,7 +56,43 @@ test('9. Cryptographic Certificate Revocation & Blockchain Anchoring', () => {
   assert.equal(record.reason, reason);
   assert.equal(record.signature, signature);
 
-  // Verify RSA signature
+  // Verify RSA signature on original payload
   const isValidSig = verifySignature(revHash, record.signature, uni.public_key);
   assert.equal(isValidSig, true);
+});
+
+test('12. Tampered Revocation Payload Fails Signature Verification', () => {
+  const uni = db.prepare('SELECT * FROM universities LIMIT 1').get();
+  assert.ok(uni);
+
+  const certId = uuidv4();
+  const certNumber = `REVTEST-TAMPER-${Date.now()}`;
+  const originalReason = 'Administrative dismissal';
+  const tamperedReason = 'Voluntary withdrawal';
+  const revokedAt = new Date().toISOString();
+
+  // Create original payload and sign it
+  const originalPayload = JSON.stringify({
+    certificate_id: certId,
+    certificate_number: certNumber,
+    reason: originalReason,
+    revoked_at: revokedAt,
+    revoked_by: uni.issuer_code,
+  });
+  const originalHash = generateHash(originalPayload);
+  const signature = signData(originalHash, uni.private_key);
+
+  // Re-construct tampered payload (changed reason)
+  const tamperedPayload = JSON.stringify({
+    certificate_id: certId,
+    certificate_number: certNumber,
+    reason: tamperedReason,
+    revoked_at: revokedAt,
+    revoked_by: uni.issuer_code,
+  });
+  const tamperedHash = generateHash(tamperedPayload);
+
+  // Verify signature against tampered hash — MUST FAIL
+  const isTamperedSigValid = verifySignature(tamperedHash, signature, uni.public_key);
+  assert.equal(isTamperedSigValid, false, 'Tampered revocation payload must fail signature verification');
 });

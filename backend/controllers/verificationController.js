@@ -144,7 +144,24 @@ function verifyCertificate(req, res) {
     const revocationRecord = db.prepare('SELECT * FROM revoked_certificates WHERE certificate_id = ? OR certificate_id = ?').get(cert_id, cert?.id);
 
     if ((cert && cert.status === 'REVOKED') || revocationRecord) {
-      logAudit(req, { module: 'VERIFICATION', action: 'VERIFY', status: 'SUCCESS', resource_id: certificate_number, details: { result: 'REVOKED', student_name, course, reason: revocationRecord?.reason } });
+      let revocationSigValid = true;
+      if (revocationRecord && revocationRecord.signature) {
+        try {
+          const revPayload = JSON.stringify({
+            certificate_id: cert?.id || cert_id,
+            certificate_number: cert?.certificate_number || certificate_number,
+            reason: revocationRecord.reason,
+            revoked_at: revocationRecord.revoked_at,
+            revoked_by: university.issuer_code,
+          });
+          const revHash = generateHash(revPayload);
+          revocationSigValid = verifySignature(revHash, revocationRecord.signature, university.public_key);
+        } catch {
+          revocationSigValid = false;
+        }
+      }
+
+      logAudit(req, { module: 'VERIFICATION', action: 'VERIFY', status: 'SUCCESS', resource_id: certificate_number, details: { result: 'REVOKED', student_name, course, reason: revocationRecord?.reason, revocationSigValid } });
       return res.json({
         result: 'REVOKED',
         reason: revocationRecord?.reason || 'This certificate has been revoked by the issuing university',
@@ -152,7 +169,7 @@ function verifyCertificate(req, res) {
         verifiedAt,
         verificationMode,
         hashStatus: 'MATCH',
-        signatureStatus: 'VALID',
+        signatureStatus: revocationSigValid ? 'VALID' : 'REVOCATION_SIGNATURE_INVALID',
         certificate: certDetails,
         revocation: {
           isRevoked: true,
@@ -160,6 +177,7 @@ function verifyCertificate(req, res) {
           revokedBy: university?.name || 'Issuing University',
           reason: revocationRecord?.reason || 'Certificate revoked by issuer',
           signature: revocationRecord?.signature || null,
+          signatureVerified: revocationSigValid,
           txId: revocationRecord?.tx_id || null,
           blockNumber: revocationRecord?.block_number || null,
         },

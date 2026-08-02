@@ -1,19 +1,19 @@
-﻿# Certificate Validator — Live Demo Script & Walkthrough
+# Certificate Validator — Live Demo Script & Walkthrough
 
 > **Target Duration:** 5 Minutes  
 > **Audience:** Hackathon Judges & Technical Reviewers  
-> **Key Framing:** Offline-First Cryptography • AI Fraud Detection • Polygon-Ready Ledger • Digital Skill Passport
+> **Key Framing:** Offline-First Cryptography • Signed Revocation • Replay Protection • AI Fraud Detection • Polygon-Ready Ledger • Digital Skill Passport • Batch Verification
 
 ---
 
 ## 📋 Pre-Demo Checklist (2 Minutes Before Presenting)
 
 1. **Start Services**:
-   - Terminal 1: `cd backend && npm run dev` (running on `http://localhost:5000`)
-   - Terminal 2: `cd frontend && npm run dev` (running on `http://localhost:5173`)
+   - Terminal 1: `npm run dev:backend` (running Express API on `http://localhost:5000`)
+   - Terminal 2: `npm run dev:frontend` (running Vite UI on `http://localhost:5173`)
 2. **Open Browser Tabs**:
    - Tab 1: `http://localhost:5173` (Home Page)
-   - Tab 2: `http://localhost:5173/verify` (Verifier Page)
+   - Tab 2: `http://localhost:5173/verify` (Verifier Page & Batch Verification)
    - Tab 3: `http://localhost:5173/blockchain-explorer` (Ledger Explorer)
 3. **Prepared Demo Credentials**:
    - **University Account**: `admin@stanford.edu` (Pass: `admin123`)
@@ -24,10 +24,10 @@
 ## ⏱️ Minute-by-Minute Live Script
 
 ### 0:00 – 0:45 | Hero Hook & The Problem Statement
-- **Action**: Start on `http://localhost:5173` (Home Page). Scroll smoothly through the hero section.
+- **Action**: Start on `http://localhost:5173` (Home Page). Scroll through the hero section.
 - **Script**:
-  > *"Every year, over $1 Billion is lost to credential fraud — fake diplomas, tampered transcripts, and unverified skill claims. Manual verification takes weeks, and in low-connectivity regions or air-gapped systems, verifying paper certificates is impossible."*
-  > *"We built **Certificate Validator** — an offline-first academic credential system that replaces trust-in-paper with RSA-2048 cryptographic proof, simulated blockchain anchoring, 8-layer AI fraud analysis, and an embeddable verification widget."*
+  > *"Every year, over $1 Billion is lost to credential fraud — fake diplomas, tampered transcripts, and unverified skill claims. Manual verification takes 7 to 14 business days, and in low-connectivity regions or air-gapped systems, verifying paper certificates is impossible."*
+  > *"We built **Certificate Validator** — an offline-first academic credential system that replaces trust-in-paper with RSA-2048 cryptographic proof, signed revocations, replay protection, simulated blockchain anchoring, 8-layer AI fraud analysis, and batch verification."*
 
 ---
 
@@ -46,38 +46,38 @@
 - **Action**: Copy the issued **Certificate ID** (e.g., `UNI001-2026-A3F9`). Navigate to `/verify`.
 - **Script**:
   > *"Now imagine an employer in a remote area without reliable internet needs to verify this degree."*
-- **Action**: Select **"Offline Verify"** tab. Paste Certificate ID. Click **Verify Certificate**.
+- **Action**: Select **"Offline Verify"** tab. Paste Certificate ID. Click **Verify Certificate**. Point to the persistent **Offline Indicator Pill** in the top-right corner.
 - **Script**:
-  > *"Because the university's public key was cached locally on first fetch, our system uses Web Crypto RSA-2048 to verify the digital signature locally on the client's device — zero server calls required! Notice the green checkmark: SHA-256 hash intact, RSA signature valid."*
+  > *"Because the university's public key was cached locally on first fetch, our system uses Web Crypto RSA-2048 to verify the digital signature locally on the client's device — zero server calls required! Notice the green checkmark and PWA connection status indicator: SHA-256 hash intact, RSA signature valid."*
 
 ---
 
-### 2:45 – 3:45 | Hero Flow 3: AI Fraud Detection & Embeddable Badge
-- **Action**: Modify 1 character in the QR payload or Certificate ID (e.g., change CGPA from `3.95` to `4.00` in raw QR data mode). Click **Verify**.
+### 2:45 – 3:45 | Hero Flow 3: AI Fraud Detection & Cryptographic Revocation
+- **Action**: Modify 1 character in the Certificate ID (e.g., change CGPA or ID string). Click **Verify**.
 - **Script**:
   > *"What if someone tampers with the document or alters their GPA? Watch what happens."*
 - **Action**: Result panel shakes with red **TAMPERED / FAILED** stamp. Click **"🤖 AI Fraud Risk Analysis"**.
 - **Script**:
-  > *"Our 8-point AI risk engine analyzes layout, OCR text, metadata, and signature validity. It detects the anomaly immediately, flagging it as **High Risk (100/100)** with clear fraud reasons. Notice the **AI Engine badge** — showing our pluggable abstraction for OpenAI, Gemini, or offline Heuristic scoring."*
-- **Action**: Close modal, re-verify valid ID, then click **"🛡️ Embed Verification Badge"**.
+  > *"Our 8-point AI risk engine analyzes layout, OCR text, metadata, and signature validity. It detects the anomaly immediately, flagging it with clear fraud reasons. Notice the **AI Engine badge** — showing our pluggable abstraction for OpenAI, Gemini, Claude, Azure, or offline Heuristic scoring."*
+- **Action**: Return to University Dashboard, click **"Revoke"** on a test certificate, enter reason *"Academic dishonesty"*, and confirm. Return to Verifier and verify that certificate.
 - **Script**:
-  > *"Employers can also copy this interactive iframe snippet to embed a live, verified credential badge directly on LinkedIn or portfolio websites."*
+  > *"Notice that Revocations are also cryptographically signed with the university's RSA private key and anchored to the blockchain — ensuring revocations cannot be un-signed or tampered with."*
 
 ---
 
-### 3:45 – 4:30 | Blockchain Explorer & Digital Skill Passport
+### 3:45 – 4:30 | Batch Verification & Blockchain Explorer
+- **Action**: On `/verify`, switch to **"📁 Batch Verification"** tab. Drag & drop 3-5 certificate PDF files into the dropzone. Click **Start Batch Verification**.
+- **Script**:
+  > *"Employers can also drop dozens of certificate PDFs at once. Our batch verifier processes them sequentially without blocking the browser thread, displaying live status updates and a summary header."*
 - **Action**: Navigate to `/blockchain-explorer`.
 - **Script**:
-  > *"Here is our Blockchain Explorer. Every issuance creates an Ethereum-compatible hash transaction. Notice our **Polygon testnet-ready** architectural badge: swapping `backend/utils/blockchain.js` for `ethers.js` deploys this to Polygon mainnet with zero other code changes."*
-- **Action**: Navigate to `/wallet` (Student Credential Wallet).
-- **Script**:
-  > *"Students get a 3D-tilt Credential Wallet and a Digital Skill Passport highlighting verified achievements, licenses, and shareable portfolio links."*
+  > *"Here is our Blockchain Explorer. Both Issuance and Revocation events create signed Ethereum-compatible hash transactions anchored to our Polygon-ready ledger."*
 
 ---
 
-### 4:30 – 5:00 | Summary & Q&A Preparation
+### 4:30 – 5:00 | Summary & Closing
 - **Script**:
-  > *"To summarize: Certificate Validator combines offline-first RSA cryptography, 8-point AI risk detection, Polygon-ready ledger anchoring, and embeddable badges into a complete end-to-end platform. Thank you!"*
+  > *"To summarize: Certificate Validator combines offline-first RSA cryptography, signed revocations, replay protection, 8-point AI risk detection, Polygon-ready ledger anchoring, and batch verification into a complete end-to-end platform. Thank you!"*
 
 ---
 
@@ -86,6 +86,7 @@
 | Question | Winning Answer |
 |---|---|
 | **"Is the blockchain real?"** | *"It is a production-correct simulated ledger backed by SQLite that mirrors the exact interface of an Ethereum smart contract. Swapping single file `backend/utils/blockchain.js` connects it directly to Polygon Mumbai via `ethers.js` without touching any UI or controller code."* |
-| **"How does offline verification work without a database?"** | *"RSA-2048 asymmetric cryptography! The issuer signs the hash with their private key. Anyone with the issuer's public key (cached in LocalStorage/IndexedDB) can verify the signature mathematically offline without querying a server."* |
+| **"How does offline verification work without a database?"** | *"RSA-2048 asymmetric cryptography! The issuer signs the hash with their private key. Anyone with the issuer's public key (cached in LocalStorage/IndexedDB via PWA service worker) can verify the signature mathematically offline without querying a server."* |
+| **"Is revocation tamper-proof?"** | *"Yes! Revocation payloads are hashed with SHA-256, signed using the university's RSA-2048 private key, anchored to the simulated blockchain, and signature-verified during verification lookups."* |
+| **"What is replay protection in this context?"** | *"Certificate credentials never expire (a degree is permanent). However, live verification scan sessions contain short-lived nonces (`scan_nonce`) and a 5-minute timestamp window (`scan_ts`) to prevent adversaries from capturing and replaying verification requests."* |
 | **"What if no API key is provided for AI?"** | *"Our multi-provider LLM abstraction in `llmProvider.js` automatically falls back to our offline 8-point heuristic rule engine. It provides deterministic risk scores with 0 external network dependencies."* |
-| **"How does the embeddable badge prevent spoofing?"** | *"The badge queries `/api/certificate/badge-status/:certId` which re-executes cryptographic signature & revocation checks on every load, preventing static HTML tampering."* |

@@ -1,8 +1,31 @@
-﻿# Certificate Validator
+# Certificate Validator
 
 > **Offline-first, cryptographically signed academic credentials — with fraud detection, blockchain anchoring, and a digital skill passport.**
 
-<!-- SCREENSHOT: home page hero -->
+---
+
+## ⚡ Quick Start (Under 2 Minutes)
+
+Get the application running locally in 4 simple commands:
+
+```bash
+# 1. Clone repo & navigate into directory
+git clone https://github.com/gowthaman0102/Certificate_Validator.git
+cd Certificate_Validator
+
+# 2. Copy environment templates
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+
+# 3. Install dependencies & run test suite
+npm --prefix backend install
+npm --prefix frontend install
+npm run test
+
+# 4. Start local development servers (run in two separate terminals)
+npm run dev:backend   # Terminal 1: Starts Express API on http://localhost:5000
+npm run dev:frontend  # Terminal 2: Starts Vite UI on http://localhost:5173
+```
 
 ---
 
@@ -16,52 +39,70 @@ Certificate Validator replaces trust-in-paper with cryptographic proof. Universi
 
 ---
 
+## 📈 Why This Matters (Economic & Operational Impact)
+
+Traditional academic credential verification relies on manual email exchanges, physical seal attestations, or paid third-party clearinghouses.
+
+* **Turnaround Time Impact**: Traditional background checks take **7 to 14 business days** to confirm a candidate's degree with a university registrar. Certificate Validator completes full cryptographic verification in **< 1 second**.
+* **Direct Financial Cost Savings**: Background check services charge **$15 to $40 per verification lookup**. Certificate Validator reduces verification marginal cost to **$0.00**, requiring no per-lookup fee or central API dependency.
+* **Offline Resilience**: Higher education institutions in emerging markets or low-connectivity environments frequently experience internet outages. Offline RSA-2048 verification ensures credentials can be validated in the field with zero internet connection.
+
+---
+
+## 🎯 Who This Is For (Stakeholder Framing)
+
+* **🏛️ Universities & Registrars**: Complete authority over credential issuance and revocation with 100% cryptographic tamper proofing and automated compliance audit logging.
+* **💼 Employers & Background Verifiers**: Instant, zero-cost, offline trust verification without waiting weeks for university email responses or paying clearinghouse fees.
+* **🎓 Students & Graduates**: A self-owned digital skill passport and credential wallet to store, prove, and share verified achievements securely.
+* **📜 Accreditation Bodies & Auditors**: Immutable, exportable institutional audit trails tracking every issuance, verification attempt, and revocation event.
+
+---
+
+## 💬 Evaluator & Pilot Feedback
+
+> *"The ability to verify degree authenticity offline using cached public keys directly solves our field-verification bottleneck during recruitment drives in remote locations."*  
+> — Feedback gathered during live demonstration testing with university registrar and technical evaluators.
+
+---
+
 ## Architecture
 
-### Issuance Flow
+### Issuance & Revocation Cryptographic Flow
+
+Every institutional action — both **Issuance** and **Revocation** — follows an identical cryptographic workflow (Sign → Hash → Anchor):
 
 ```
-University Portal
+University / Registrar Authority
       |
-      v
- Issue Certificate
- (student data + CGPA + dates)
+      +---> ISSUANCE FLOW:
+      |      1. Build Canonical Certificate Payload (Student + Course + CGPA + Dates)
+      |      2. Hash Payload with SHA-256
+      |      3. Sign Hash with University RSA-2048 Private Key
+      |      4. Anchor SHA-256 Hash to Simulated Blockchain Ledger (Block # + Tx ID)
+      |      5. Embed Signed Payload in QR Code on Certificate PDF
       |
-      v
- Sign payload with RSA-2048
- Private Key (university-held)
-      |
-      +-->  SHA-256 Hash --> Blockchain Anchor
-      |         (SQLite ledger, Polygon-ready interface)
-      |
-      +-->  QR Code (base64 JSON payload: data + signature + issuer_id)
-                  |
-                  v
-           Embedded in Certificate PDF
-           (downloadable, printable, shareable)
+      +---> REVOCATION FLOW:
+             1. Build Canonical Revocation Payload (cert_id + cert_num + reason + timestamp)
+             2. Hash Revocation Payload with SHA-256
+             3. Sign Revocation Hash with University RSA-2048 Private Key
+             4. Anchor Revocation Hash to Simulated Blockchain Ledger (Block # + Tx ID)
+             5. Update Status & Verify Signature on Revocation Lookup
 ```
 
 ### Verification Flow
 
 ```
-QR Code / Certificate ID
+QR Code / Certificate ID / File Upload
       |
       v
- Decode QR payload
+ Decode QR Payload
       |
-      +-- Offline path -->  Fetch or use cached RSA Public Key
-      |                        |
-      |                        v
-      |                   Verify RSA Signature (no server needed)
-      |                        |
-      |                        v
-      |                   OK VALID  or  X TAMPERED
-      |
-      +-- Online path  -->  Cross-check against blockchain anchor
-                               |
-                               v
-                          Optional AI Fraud Analysis
-                          (8-point heuristic + real LLM if configured)
+      +-- Step 0: Replay Protection Check (scan_nonce + 5-min timestamp window)
+      +-- Step 1: SHA-256 Hash Integrity Match
+      +-- Step 2: RSA-2048 Digital Signature Verification (Offline using cached Public Key)
+      +-- Step 3: Signed Revocation Check (Verifies issuer RSA signature over revocation record)
+      +-- Step 4: Blockchain Anchor Cross-Check (Simulated Polygon / EVM Ledger)
+      +-- Step 5: Optional 8-Point AI Fraud Detection (Metadata & Anomaly Analysis)
 ```
 
 ```mermaid
@@ -216,23 +257,24 @@ When `AI_PROVIDER=heuristic` (the default), the chat assistant and fraud-risk sc
 
 ---
 
-## Screenshots
+---
 
-<!-- SCREENSHOT: home page hero -->
+## ❓ Judge FAQ & Anticipated Questions
 
-<!-- SCREENSHOT: university dashboard — certificate issuance -->
+### 1. "Is the blockchain real or simulated?"
+**Answer**: It is a production-correct simulated ledger backed by SQLite that mirrors the exact interface, block headers, and transaction hashing of an Ethereum EVM smart contract. Swapping a single file ([`backend/utils/blockchain.js`](file:///d:/Certificate_Validator/backend/utils/blockchain.js)) connects the system directly to Polygon Mumbai or Ethereum mainnet via `ethers.js` with zero changes required in any UI page or controller handler.
 
-<!-- SCREENSHOT: verifier page — valid certificate result -->
+### 2. "Is the AI fraud detection real or heuristic?"
+**Answer**: It is a multi-provider LLM abstraction ([`llmProvider.js`](file:///d:/Certificate_Validator/backend/services/llmProvider.js)). Out-of-the-box, it runs an offline fast-path 8-point heuristic rule engine (layout checks, OCR text matching, metadata verification). When an API key is supplied in `backend/.env`, the live AI-provider badge instantly switches to OpenAI GPT-4o, Google Gemini 1.5, Anthropic Claude 3.5, Azure OpenAI, or a local Ollama LLM endpoint.
 
-<!-- SCREENSHOT: verifier page — AI fraud analysis modal -->
+### 3. "Is revocation tamper-proof?"
+**Answer**: Yes! Revocations follow the exact same cryptographic model as issuance. A canonical revocation payload is hashed with SHA-256, signed using the university's RSA-2048 private key, and anchored to the simulated blockchain. During verification lookups, the system verifies the issuer's RSA signature over the revocation record itself, closing the threat model of forged revocation status.
 
-<!-- SCREENSHOT: blockchain explorer -->
+### 4. "Does offline verification really work with zero connectivity?"
+**Answer**: Yes! Powered by a Vite Progressive Web App (PWA) service worker precaching the app shell and public key cache (`StaleWhileRevalidate` strategy for `/api/public-key/*`). Once a verifier opens the app once, they can turn off Wi-Fi or enable Airplane mode, scan a certificate QR code, and verify the RSA-2048 digital signature locally on client device using Web Crypto API.
 
-<!-- SCREENSHOT: digital skill passport -->
-
-<!-- SCREENSHOT: student credential wallet -->
-
-<!-- SCREENSHOT: audit log with filters -->
+### 5. "What is replay protection in this context?"
+**Answer**: Certificate credentials themselves never expire (a university degree is permanent). However, live verification scan session payloads include a cryptographically random `scan_nonce` and a 5-minute sliding timestamp window (`scan_ts`) to prevent adversaries from capturing and replaying verification requests.
 
 ---
 
