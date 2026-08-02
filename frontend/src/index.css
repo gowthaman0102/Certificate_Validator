@@ -19,6 +19,19 @@
   --font-body:          'Inter', sans-serif;
 }
 
+/* Accessibility: Visible Keyboard Focus Ring */
+*:focus-visible {
+  outline: 2px solid var(--color-ink) !important;
+  outline-offset: 2px !important;
+}
+
+/* Mobile Responsiveness Pass: Minimum 44px Touch Targets on Small Screens */
+@media (max-width: 480px) {
+  button, .btn, .btn-secondary, input, select {
+    min-height: 44px !important;
+  }
+}
+
 /* Global Reset */
 * {
   box-sizing: border-box;

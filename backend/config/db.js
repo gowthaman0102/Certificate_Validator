@@ -55,13 +55,27 @@ function initDB() {
     CREATE TABLE IF NOT EXISTS revoked_certificates (
       id TEXT PRIMARY KEY,
       certificate_id TEXT NOT NULL UNIQUE,
+      revoked_by TEXT,
       reason TEXT,
       revoked_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      signature TEXT,
+      block_number INTEGER,
+      tx_id TEXT,
       FOREIGN KEY (certificate_id) REFERENCES certificates(id)
     );
 
     CREATE INDEX IF NOT EXISTS idx_certificates_register_number ON certificates(register_number);
   `);
+
+  // Migration: add cryptographic columns to revoked_certificates table if missing
+  const revokedCols = db.pragma('table_info(revoked_certificates)').map((c) => c.name);
+  if (!revokedCols.includes('revoked_by')) {
+    try { db.exec('ALTER TABLE revoked_certificates ADD COLUMN revoked_by TEXT;'); } catch (e) {}
+    try { db.exec('ALTER TABLE revoked_certificates ADD COLUMN signature TEXT;'); } catch (e) {}
+    try { db.exec('ALTER TABLE revoked_certificates ADD COLUMN block_number INTEGER;'); } catch (e) {}
+    try { db.exec('ALTER TABLE revoked_certificates ADD COLUMN tx_id TEXT;'); } catch (e) {}
+    console.log('Migration: added cryptographic revocation columns to revoked_certificates');
+  }
 
   // Migration: add register_number to users table if it doesn't exist yet
   const userColumns = db.pragma('table_info(users)').map((c) => c.name);
@@ -70,7 +84,7 @@ function initDB() {
     console.log('Migration: added register_number column to users table');
   }
 
-  // Wallet events table (new — safe to add without touching existing tables)
+  // Wallet events table
   db.exec(`
     CREATE TABLE IF NOT EXISTS wallet_events (
       id TEXT PRIMARY KEY,
@@ -82,6 +96,20 @@ function initDB() {
     );
     CREATE INDEX IF NOT EXISTS idx_wallet_events_user ON wallet_events(student_user_id);
     CREATE INDEX IF NOT EXISTS idx_wallet_events_cert ON wallet_events(certificate_id);
+
+    CREATE TABLE IF NOT EXISTS verification_events (
+      id TEXT PRIMARY KEY,
+      university_id TEXT NOT NULL,
+      certificate_id TEXT NOT NULL,
+      certificate_number TEXT NOT NULL,
+      student_name TEXT,
+      verifier_org TEXT DEFAULT 'Anonymous Verifier',
+      verification_result TEXT NOT NULL,
+      verified_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (university_id) REFERENCES universities(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_verif_events_uni ON verification_events(university_id);
+    CREATE INDEX IF NOT EXISTS idx_verif_events_cert ON verification_events(certificate_id);
   `);
 
   // Audit log table — safe migration, never modifies existing tables

@@ -45,9 +45,11 @@ export const getStudentCertificates = ({ email, registerNumber }) => {
 // ---- Verification ----
 export const verifyCertificate = (data) => client.post('/verify', data);
 export const getPublicKey = (issuerId) => client.get(`/public-key/${issuerId}`);
+export const getUniversityVerifications = () => client.get('/university/verifications');
 
 // ---- Revocation ----
-export const revokeCertificate = (data) => client.post('/certificate/revoke', data);
+export const revokeCertificate = (id, reason) => client.post(`/certificate/${id}/revoke`, { reason });
+export const getRevocationStatus = (id) => client.get(`/certificate/${id}/revocation-status`);
 export const getRevokedList = () => client.get('/revoked/list');
 
 export default client;

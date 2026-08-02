@@ -119,31 +119,77 @@ function exportCSV(req, res) {
       return res.status(403).json({ error: 'Access restricted to university accounts' });
     }
 
-    const { where, params } = buildWhere(req.query);
-
-    const rows = db.prepare(
-      `SELECT * FROM audit_logs ${where} ORDER BY timestamp DESC LIMIT 5000`
-    ).all(...params);
-
-    const header = ['id','timestamp','user_email','user_name','role','module','action','status','ip_address','resource_id','details'];
     const escape = (v) => {
       if (v === null || v === undefined) return '';
       const s = String(v).replace(/"/g, '""');
       return /[",\n\r]/.test(s) ? `"${s}"` : s;
     };
 
-    const lines = [
-      header.join(','),
-      ...rows.map((r) => header.map((h) => escape(r[h])).join(',')),
+    const row = (cols, obj) => cols.map((h) => escape(obj[h])).join(',');
+
+    // ── Section 1: Audit Log Events ──────────────────────────────────────────
+    const { where, params } = buildWhere(req.query);
+    const auditRows = db.prepare(
+      `SELECT * FROM audit_logs ${where} ORDER BY timestamp DESC LIMIT 5000`
+    ).all(...params);
+
+    const auditHeader = ['id','timestamp','user_email','user_name','role','module','action','status','ip_address','resource_id','details'];
+    const auditSection = [
+      '# SECTION 1: AUDIT LOG EVENTS',
+      auditHeader.join(','),
+      ...auditRows.map((r) => row(auditHeader, r)),
+    ];
+
+    // ── Section 2: Revocation Events ─────────────────────────────────────────
+    const revocationRows = db.prepare(`
+      SELECT
+        r.id, r.revoked_at AS timestamp, r.certificate_id, r.reason,
+        r.signature, r.tx_id AS blockchain_tx_id, r.block_number,
+        c.certificate_number, c.student_name, c.course,
+        u.name AS issuing_university, u.issuer_code
+      FROM revoked_certificates r
+      LEFT JOIN certificates c ON c.id = r.certificate_id
+      LEFT JOIN universities u ON u.id = r.revoked_by
+      ORDER BY r.revoked_at DESC
+    `).all();
+
+    const revHeader = ['id','timestamp','certificate_number','student_name','course','reason','issuing_university','issuer_code','blockchain_tx_id','block_number','certificate_id','signature'];
+    const revSection = [
+      '',
+      '# SECTION 2: REVOCATION EVENTS',
+      revHeader.join(','),
+      ...revocationRows.map((r) => row(revHeader, r)),
+    ];
+
+    // ── Section 3: Verification Activity Events ───────────────────────────────
+    const verifRows = db.prepare(`
+      SELECT
+        ve.id, ve.verified_at AS timestamp, ve.certificate_number,
+        ve.student_name, ve.verifier_org, ve.verification_result,
+        u.name AS issuing_university
+      FROM verification_events ve
+      LEFT JOIN universities u ON u.id = ve.university_id
+      ORDER BY ve.verified_at DESC
+      LIMIT 5000
+    `).all();
+
+    const verifHeader = ['id','timestamp','certificate_number','student_name','verifier_org','verification_result','issuing_university'];
+    const verifSection = [
+      '',
+      '# SECTION 3: VERIFICATION ACTIVITY EVENTS',
+      verifHeader.join(','),
+      ...verifRows.map((r) => row(verifHeader, r)),
     ];
 
     const ts = new Date().toISOString().slice(0, 10);
+    const allLines = [...auditSection, ...revSection, ...verifSection];
+
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="audit_logs_${ts}.csv"`);
-    res.send(lines.join('\r\n'));
+    res.setHeader('Content-Disposition', `attachment; filename="institutional_audit_report_${ts}.csv"`);
+    res.send(allLines.join('\r\n'));
   } catch (err) {
     console.error('[auditController] exportCSV:', err);
-    res.status(500).json({ error: 'Failed to export audit logs' });
+    res.status(500).json({ error: 'Failed to export audit report' });
   }
 }
 

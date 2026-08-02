@@ -128,19 +128,38 @@ function StudentDashboard() {
             <p style={{ color: GS.muted }}>No certificates found for your email.</p>
           )}
           <div className="cert-list">
-            {certificates.map((cert, index) => (
-              <motion.div
-                key={cert.id}
-                className="card-lift"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: index * 0.04, ease: PREMIUM }}
-                style={{ background: GS.bg, border: `1px solid ${GS.border}`, padding: "1.25rem", marginBottom: "0.75rem" }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
-                  <div style={{ fontSize: "1.05rem", fontWeight: 600, color: GS.ink }}>{cert.student_name}</div>
-                  <span className={`status-badge ${cert.status === "VALID" ? "status-valid" : "status-revoked"}`}>{cert.status}</span>
-                </div>
+            {certificates.map((cert, index) => {
+              const isRevoked = cert.status === "REVOKED";
+              return (
+                <motion.div
+                  key={cert.id}
+                  className="card-lift"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: index * 0.04, ease: PREMIUM }}
+                  style={{
+                    background: GS.bg,
+                    border: `1.5px solid ${isRevoked ? "#0a0a0a" : GS.border}`,
+                    padding: "1.25rem",
+                    marginBottom: "0.75rem",
+                    opacity: isRevoked ? 0.75 : 1,
+                    filter: isRevoked ? "grayscale(0.8)" : "none",
+                    position: "relative",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
+                    <div>
+                      <div style={{ fontSize: "1.05rem", fontWeight: 600, color: GS.ink }}>{cert.student_name}</div>
+                      {isRevoked && (
+                        <div style={{ fontSize: "0.75rem", color: "#dc2626", fontWeight: 700, marginTop: "2px" }}>
+                          ⚠️ Certificate Revoked by Issuing University
+                        </div>
+                      )}
+                    </div>
+                    <span className={`status-badge ${isRevoked ? "status-revoked" : "status-valid"}`} style={isRevoked ? { background: "#0a0a0a", color: "#ffffff", border: "1px solid #0a0a0a" } : {}}>
+                      {isRevoked ? "REVOKED" : cert.status}
+                    </span>
+                  </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.6rem 1.5rem", background: GS.bg, border: `1px solid ${GS.border}`, padding: "1rem", marginBottom: "1.25rem", fontSize: "0.85rem" }}>
                   <div><span style={{ color: GS.muted }}>Course</span><br /><strong style={{ color: GS.ink }}>{cert.course}</strong></div>
                   <div><span style={{ color: GS.muted }}>Duration</span><br /><strong style={{ color: GS.ink }}>{cert.start_year} - {cert.end_year}</strong></div>
@@ -196,7 +215,8 @@ function StudentDashboard() {
                   <CertificateTemplate ref={getHiddenRef(cert.id)} certificate={cert} qrCodeUrl={`http://localhost:5000/uploads/qr_${cert.id}.png`} />
                 </div>
               </motion.div>
-            ))}
+            );
+          })}
           </div>
         </motion.div>
       )}

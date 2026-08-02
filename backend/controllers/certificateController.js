@@ -571,5 +571,156 @@ function getCertificatesByIdentity(req, res) {
   }
 }
 
-module.exports = { uploadCertificate, getCertificate, getCertificateByCertNumber, getCertificatesByUniversity, getCertificatesByEmail, getCertificatesByRegisterNumber, bulkUploadCertificates, getCertificatesByIdentity };
+async function revokeCertificate(req, res) {
+  try {
+    const userId = req.user.id;
+    const certId = req.params.id || req.body.certificate_id;
+    const reason = (req.body.reason || 'Revoked by issuing university').trim();
+
+    if (!certId) {
+      return res.status(400).json({ error: 'Certificate ID is required' });
+    }
+
+    const university = db.prepare('SELECT * FROM universities WHERE user_id = ?').get(userId);
+    if (!university) {
+      return res.status(403).json({ error: 'Only registered universities can revoke certificates' });
+    }
+
+    const cert = db.prepare(`
+      SELECT c.*, u.issuer_code, u.name as university_name
+      FROM certificates c
+      JOIN universities u ON c.university_id = u.id
+      WHERE c.id = ? OR c.certificate_number = ?
+    `).get(certId, certId);
+
+    if (!cert) {
+      return res.status(404).json({ error: 'Certificate not found' });
+    }
+
+    if (cert.university_id !== university.id) {
+      return res.status(403).json({ error: 'You are not authorized to revoke certificates issued by another university' });
+    }
+
+    const existingRevocation = db.prepare('SELECT * FROM revoked_certificates WHERE certificate_id = ?').get(cert.id);
+    if (cert.status === 'REVOKED' || existingRevocation) {
+      return res.status(400).json({ error: 'Certificate is already revoked', revocation: existingRevocation });
+    }
+
+    const revocationId = uuidv4();
+    const revokedAt = new Date().toISOString();
+
+    // RSA-2048 Cryptographic signature over certificateId + reason + revokedAt
+    const revocationPayload = JSON.stringify({
+      certificate_id: cert.id,
+      certificate_number: cert.certificate_number,
+      reason,
+      revoked_at: revokedAt,
+      revoked_by: university.issuer_code,
+    });
+    const revHash = generateHash(revocationPayload);
+    const signature = signData(revHash, university.private_key);
+
+    // Anchor revocation transaction to simulated blockchain ledger
+    let bcAnchor = null;
+    try {
+      bcAnchor = anchorToBlockchain({
+        certHash: revHash,
+        certId: cert.id,
+        certNumber: cert.certificate_number,
+        issuerCode: university.issuer_code,
+        universityName: university.name,
+      });
+    } catch (bcErr) {
+      console.error('[blockchain] Revocation anchor error:', bcErr.message);
+    }
+
+    db.prepare('UPDATE certificates SET status = "REVOKED" WHERE id = ?').run(cert.id);
+    db.prepare(`
+      INSERT INTO revoked_certificates
+        (id, certificate_id, revoked_by, reason, revoked_at, signature, block_number, tx_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      revocationId,
+      cert.id,
+      university.id,
+      reason,
+      revokedAt,
+      signature,
+      bcAnchor?.blockNumber || null,
+      bcAnchor?.txId || null
+    );
+
+    logAudit(req, {
+      module: 'CERTIFICATE',
+      action: 'REVOKE',
+      status: 'SUCCESS',
+      resource_id: cert.certificate_number,
+      details: { reason, university: university.name, revokedAt, txId: bcAnchor?.txId },
+    });
+
+    res.json({
+      message: 'Certificate successfully revoked',
+      revocation: {
+        id: revocationId,
+        certificate_id: cert.id,
+        certificate_number: cert.certificate_number,
+        reason,
+        revoked_at: revokedAt,
+        signature,
+        blockchain: bcAnchor ? { anchored: true, txId: bcAnchor.txId, blockNumber: bcAnchor.blockNumber } : { anchored: false },
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to revoke certificate', debug: err.message });
+  }
+}
+
+function getRevocationStatus(req, res) {
+  try {
+    const certId = req.params.id;
+    const cert = db.prepare(`
+      SELECT c.*, u.name as university_name, u.issuer_code
+      FROM certificates c
+      JOIN universities u ON c.university_id = u.id
+      WHERE c.id = ? OR c.certificate_number = ?
+    `).get(certId, certId);
+
+    if (!cert) {
+      return res.status(404).json({ is_revoked: false, error: 'Certificate not found' });
+    }
+
+    const revocation = db.prepare('SELECT * FROM revoked_certificates WHERE certificate_id = ?').get(cert.id);
+    if (!revocation && cert.status !== 'REVOKED') {
+      return res.json({ is_revoked: false, certificate_number: cert.certificate_number });
+    }
+
+    res.json({
+      is_revoked: true,
+      certificate_id: cert.id,
+      certificate_number: cert.certificate_number,
+      reason: revocation?.reason || 'Certificate revoked by issuer',
+      revoked_at: revocation?.revoked_at || cert.created_at,
+      signature: revocation?.signature,
+      block_number: revocation?.block_number,
+      tx_id: revocation?.tx_id,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch revocation status' });
+  }
+}
+
+module.exports = {
+  uploadCertificate,
+  getCertificate,
+  getCertificateByCertNumber,
+  getCertificatesByUniversity,
+  getCertificatesByEmail,
+  getCertificatesByRegisterNumber,
+  bulkUploadCertificates,
+  getCertificatesByIdentity,
+  revokeCertificate,
+  getRevocationStatus,
+};
 

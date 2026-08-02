@@ -1,7 +1,8 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchAuditLogs, fetchAuditStats, downloadAuditCSV } from "../api/audit";
+import { getUniversityVerifications } from "../api/client";
 import AuditLogDecorations from "../components/AuditLogDecorations";
 import { CountUp, SkeletonCard } from "../components/motion";
 
@@ -113,9 +114,10 @@ function AuditLog() {
   function handleSearch(e) { e.preventDefault(); setPage(1); loadLogs(); }
   function handleClear() { setSearch(""); setModule(""); setAction(""); setStatus(""); setRole(""); setDateFrom(""); setDateTo(""); setPage(1); }
 
-  function handleExport() {
+  async function handleExport() {
     setExporting(true);
     try {
+      // Primary: server-side export includes audit_logs + revocations + verification_events
       const params = {};
       if (search.trim()) params.search = search.trim();
       if (module)   params.module    = module;
@@ -125,7 +127,41 @@ function AuditLog() {
       if (dateFrom) params.date_from = dateFrom;
       if (dateTo)   params.date_to   = dateTo;
       downloadAuditCSV(params);
-    } finally { setTimeout(() => setExporting(false), 1500); }
+    } catch {
+      // Fallback: client-side CSV from currently loaded rows + verification events
+      const escape = (v) => {
+        if (v === null || v === undefined) return '';
+        const s = String(v).replace(/"/g, '""');
+        return /["\n\r,]/.test(s) ? `"${s}"` : s;
+      };
+      const csvRow = (cols, obj) => cols.map((h) => escape(obj[h])).join(',');
+      const auditHeader = ['id','timestamp','user_email','user_name','role','module','action','status','ip_address','resource_id','details'];
+
+      let verifSection = ['', '# SECTION 3: VERIFICATION ACTIVITY EVENTS (client-side snapshot)', 'id,timestamp,certificate_number,student_name,verifier_org,verification_result'];
+      try {
+        const verifRes = await getUniversityVerifications();
+        const verifHeader = ['id','verified_at','certificate_number','student_name','verifier_org','verification_result'];
+        const verifRows = verifRes.data?.verifications || [];
+        verifSection = verifSection.concat(verifRows.map((r) => csvRow(verifHeader, r)));
+      } catch { /* ignore */ }
+
+      const lines = [
+        '# SECTION 1: AUDIT LOG EVENTS (client-side snapshot — current page)',
+        auditHeader.join(','),
+        ...rows.map((r) => csvRow(auditHeader, r)),
+        ...verifSection,
+      ];
+
+      const blob = new Blob([lines.join('\r\n')], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `institutional_audit_report_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setTimeout(() => setExporting(false), 1500);
+    }
   }
 
   function handleLogout() { localStorage.removeItem("token"); localStorage.removeItem("user"); navigate("/"); }
@@ -151,7 +187,7 @@ function AuditLog() {
       <div className="dashboard-header">
         <h2>Audit Log</h2>
         <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
-          <button className="btn" onClick={handleExport} disabled={exporting} id="audit-export-btn">{exporting ? "Exporting…" : "Export CSV"}</button>
+          <button className="btn" onClick={handleExport} disabled={exporting} id="audit-export-btn" title="Exports Audit Events + Revocation Events + Verification Activity as a unified institutional compliance report">{exporting ? "Exporting…" : "⬇ Download Audit Report"}</button>
           <button className="btn-secondary" onClick={() => navigate("/university")} id="audit-back-btn">← Dashboard</button>
           <button className="logout-btn" onClick={handleLogout} id="audit-logout-btn">Logout</button>
         </div>

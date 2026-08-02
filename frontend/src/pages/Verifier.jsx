@@ -73,6 +73,79 @@ function Verifier() {
   const fileInputRef = useRef(null);
   const [showFraudModal, setShowFraudModal] = useState(false);
 
+  /* ── Batch Verification State (Phase 6) ── */
+  const [batchFiles, setBatchFiles] = useState([]);
+  const [batchProcessing, setBatchProcessing] = useState(false);
+  const batchFileInputRef = useRef(null);
+
+  function handleBatchFileSelect(filesList) {
+    const files = Array.from(filesList);
+    const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    const filtered = files.filter(f => validTypes.includes(f.type) || f.type.startsWith('image/'));
+
+    if (filtered.length === 0) {
+      setError('No valid PDF or Image files selected.');
+      return;
+    }
+
+    setError('');
+    setBatchFiles(filtered.map((f, i) => ({
+      id: `batch-${Date.now()}-${i}`,
+      file: f,
+      name: f.name,
+      size: (f.size / 1024).toFixed(0),
+      status: 'pending',
+      result: null,
+      error: null,
+    })));
+  }
+
+  async function handleBatchVerify() {
+    if (batchFiles.length === 0 || batchProcessing) return;
+    setBatchProcessing(true);
+    setError('');
+
+    for (let i = 0; i < batchFiles.length; i++) {
+      const item = batchFiles[i];
+      setBatchFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'verifying' } : f));
+
+      try {
+        const qrDataText = await decodeQrFromCertificateFile(item.file);
+        const payload = JSON.parse(qrDataText);
+
+        if (mode === 'online') {
+          const res = await verifyCertificate(payload);
+          setBatchFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'completed', result: res.data } : f));
+        } else {
+          const cached = getCachedPublicKey(payload.issuer_id);
+          let publicKeyPem;
+          if (cached) { publicKeyPem = cached.public_key; }
+          else {
+            const res = await getPublicKey(payload.issuer_id);
+            publicKeyPem = res.data.public_key;
+            setCachedPublicKey(payload.issuer_id, res.data.name, publicKeyPem);
+          }
+          const verifyResult = await verifyOffline(payload, publicKeyPem);
+          if (verifyResult.result === 'VALID') {
+            const revokedStatus = isCertRevokedLocally(payload.cert_id);
+            if (revokedStatus === true) {
+              setBatchFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'completed', result: { result: 'REVOKED', reason: 'Appears in revocation list', certificate: verifyResult.certificate } } : f));
+            } else {
+              setBatchFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'completed', result: verifyResult } : f));
+            }
+          } else {
+            setBatchFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'completed', result: verifyResult } : f));
+          }
+        }
+      } catch (err) {
+        const errReason = err.response?.data?.error || err.message || 'Could not extract or verify QR code';
+        setBatchFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'error', error: errReason, result: { result: 'ERROR', reason: errReason } } : f));
+      }
+    }
+
+    setBatchProcessing(false);
+  }
+
   /* ── Get QR Data Modal State ── */
   const [showGetQrModal, setShowGetQrModal]   = useState(false);
   const [helperTab, setHelperTab]             = useState('certId');
@@ -292,10 +365,11 @@ function Verifier() {
         )}
 
         <h3>How would you like to verify?</h3>
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
           <div style={inputMode === 'certId' ? tabActive : tabInactive} onClick={() => { setInputMode('certId'); setResult(null); setError(''); }}>Certificate ID</div>
           <div style={inputMode === 'qr'     ? tabActive : tabInactive} onClick={() => { setInputMode('qr');     setResult(null); setError(''); }}>Paste QR Data</div>
           <div style={inputMode === 'file'   ? tabActive : tabInactive} onClick={() => { setInputMode('file');   setResult(null); setError(''); }}>Upload Certificate</div>
+          <div style={inputMode === 'batch'  ? tabActive : tabInactive} onClick={() => { setInputMode('batch');  setResult(null); setError(''); }}>📁 Batch Verification</div>
         </div>
 
         {/* ── QR Input — with animated scan-line ── */}
@@ -361,10 +435,129 @@ function Verifier() {
           </>
         )}
 
-        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
-          <button className="btn" onClick={handleVerify} disabled={loading || !canVerify()}>{loading ? 'Verifying...' : 'Verify Certificate'}</button>
-          <button className="btn-secondary" onClick={handleClear}>Clear</button>
-        </div>
+        {/* ── Batch Verification Mode (Phase 6) ── */}
+        {inputMode === 'batch' && (
+          <>
+            <p style={{ color: GS.muted, fontSize: '0.85rem', marginBottom: '1rem' }}>
+              Drag and drop multiple certificate files (PDFs/Images) to verify them sequentially with individual status updates and summary statistics.
+            </p>
+            <div
+              onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files?.length) handleBatchFileSelect(e.dataTransfer.files); }}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onClick={() => batchFileInputRef.current?.click()}
+              style={{
+                border: `2px dashed ${isDragging ? GS.ink : GS.mid}`,
+                borderRadius: '16px',
+                padding: '2rem 1.5rem',
+                textAlign: 'center',
+                cursor: 'pointer',
+                background: isDragging ? '#f5f5f5' : GS.bg,
+                transition: 'all 0.18s ease',
+                marginBottom: '1.25rem',
+              }}
+            >
+              <div style={{ fontSize: '2.2rem', marginBottom: '0.5rem' }}>📚</div>
+              <div style={{ fontWeight: 700, color: GS.ink, fontSize: '0.95rem', marginBottom: '0.2rem' }}>
+                {isDragging ? 'Release to upload files' : 'Drop multiple certificates here'}
+              </div>
+              <div style={{ color: GS.muted, fontSize: '0.8rem', marginBottom: '0.8rem' }}>or click to select multiple files</div>
+              <div style={{ display: 'inline-block', background: GS.ink, color: '#ffffff', fontSize: '0.8rem', fontWeight: 600, padding: '0.4rem 1.2rem', borderRadius: '20px', pointerEvents: 'none' }}>
+                Select Files
+              </div>
+              <input
+                ref={batchFileInputRef}
+                type="file"
+                accept="application/pdf,image/*"
+                multiple
+                onChange={(e) => { if (e.target.files?.length) handleBatchFileSelect(e.target.files); }}
+                style={{ display: 'none' }}
+              />
+            </div>
+
+            {batchFiles.length > 0 && (
+              <div>
+                {/* Batch Summary Header */}
+                {batchFiles.some(f => f.status === 'completed' || f.status === 'error') && (
+                  <div style={{ background: '#0a0a0a', color: '#ffffff', padding: '0.75rem 1.25rem', borderRadius: '12px', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+                      SUMMARY: {batchFiles.filter(f => f.result?.result === 'VALID').length} Valid, {batchFiles.filter(f => f.result?.result === 'REVOKED').length} Revoked, {batchFiles.filter(f => f.result && f.result.result !== 'VALID' && f.result.result !== 'REVOKED').length} Tampered / Error
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#8c8c8c' }}>
+                      Progress: {batchFiles.filter(f => f.status === 'completed' || f.status === 'error').length} / {batchFiles.length}
+                    </div>
+                  </div>
+                )}
+
+                {/* Per-File Sequential Cascade Row List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {batchFiles.map((item, idx) => (
+                    <motion.div
+                      key={item.id || idx}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: idx * 0.04, ease: PREMIUM }}
+                      style={{
+                        background: '#ffffff',
+                        border: `1.5px solid ${GS.border}`,
+                        borderRadius: '10px',
+                        padding: '0.75rem 1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '0.5rem',
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.88rem', color: GS.ink, wordBreak: 'break-all' }}>
+                          📄 {item.name}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: GS.muted, marginTop: '2px' }}>
+                          Size: {item.size} KB {item.result?.certificate?.student_name ? `· Student: ${item.result.certificate.student_name}` : ''}
+                        </div>
+                      </div>
+
+                      <div>
+                        {item.status === 'pending' && (
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: GS.muted, background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
+                            PENDING
+                          </span>
+                        )}
+                        {item.status === 'verifying' && (
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ffffff', background: '#0a0a0a', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
+                            VERIFYING...
+                          </span>
+                        )}
+                        {(item.status === 'completed' || item.status === 'error') && (
+                          <span className={`status-badge ${item.result?.result === 'VALID' ? 'status-valid' : 'status-revoked'}`} style={item.result?.result === 'REVOKED' ? { background: '#0a0a0a', color: '#ffffff' } : {}}>
+                            {item.result?.result || 'ERROR'}
+                          </span>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem' }}>
+                  <button className="btn" onClick={handleBatchVerify} disabled={batchProcessing}>
+                    {batchProcessing ? 'Processing Batch...' : 'Start Batch Verification'}
+                  </button>
+                  <button className="btn-secondary" onClick={() => setBatchFiles([])} disabled={batchProcessing}>
+                    Clear Batch
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {inputMode !== 'batch' && (
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
+            <button className="btn" onClick={handleVerify} disabled={loading || !canVerify()}>{loading ? 'Verifying...' : 'Verify Certificate'}</button>
+            <button className="btn-secondary" onClick={handleClear}>Clear</button>
+          </div>
+        )}
         {error && <div className="error-msg" style={{ marginTop: '1rem' }}>{error}</div>}
         {keySource && <p style={{ color: GS.muted, fontSize: '0.8rem', marginTop: '0.75rem' }}>Public key source: {keySource}</p>}
       </div>
@@ -459,7 +652,7 @@ function Verifier() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem', borderBottom: '2px solid #0a0a0a', paddingBottom: '0.75rem' }}>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                {/* Success checkmark SVG — only on VALID */}
+                {/* Success checkmark SVG — on VALID */}
                 {isValid && (
                   <motion.div
                     variants={checkCircleVariants}
@@ -468,9 +661,7 @@ function Verifier() {
                     style={{ width: 36, height: 36, flexShrink: 0 }}
                   >
                     <svg width="36" height="36" viewBox="0 0 36 36">
-                      {/* Filled black circle */}
                       <circle cx="18" cy="18" r="17" fill="#0a0a0a" />
-                      {/* Animated white checkmark */}
                       <motion.path
                         d="M10 18 L15.5 23.5 L26 12"
                         stroke="#ffffff"
@@ -478,6 +669,30 @@ function Verifier() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         fill="none"
+                        variants={checkPathVariants}
+                        initial="hidden"
+                        animate="visible"
+                      />
+                    </svg>
+                  </motion.div>
+                )}
+
+                {/* Revoked Strike-through Seal SVG — on REVOKED */}
+                {isRevoked && (
+                  <motion.div
+                    variants={checkCircleVariants}
+                    initial="hidden"
+                    animate="visible"
+                    style={{ width: 36, height: 36, flexShrink: 0 }}
+                  >
+                    <svg width="36" height="36" viewBox="0 0 36 36">
+                      <circle cx="18" cy="18" r="17" fill="#0a0a0a" />
+                      <circle cx="18" cy="18" r="9" fill="none" stroke="#ffffff" strokeWidth="2.2" />
+                      <motion.path
+                        d="M10 10 L26 26"
+                        stroke="#ffffff"
+                        strokeWidth="2.8"
+                        strokeLinecap="round"
                         variants={checkPathVariants}
                         initial="hidden"
                         animate="visible"
@@ -496,7 +711,7 @@ function Verifier() {
                 </h2>
               </div>
 
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, padding: '0.25rem 0.85rem', borderRadius: '25px', background: isValid ? '#10B981' : '#EF4444', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, padding: '0.25rem 0.85rem', borderRadius: '25px', background: isValid ? '#10B981' : (isRevoked ? '#0a0a0a' : '#EF4444'), color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 STATUS: {result.result}
               </span>
             </div>

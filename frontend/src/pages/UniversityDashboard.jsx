@@ -1,9 +1,10 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getMyUniversity, createUniversity, uploadCertificate,
   bulkUploadCertificates, getCertificatesByUniversity, revokeCertificate,
+  getUniversityVerifications,
 } from "../api/client";
 import CategoryCertificateTemplate from "../components/templates/CategoryCertificateTemplate";
 import { downloadCertificateAsPDF } from "../utils/certificatePdf";
@@ -79,6 +80,11 @@ function UniversityDashboard() {
   const hiddenCertRef = useRef(null);
   const modalCertRef = useRef(null);
 
+  const [verifications, setVerifications] = useState([]);
+  const [totalVerificationsMonth, setTotalVerificationsMonth] = useState(0);
+  const [emailNotify, setEmailNotify] = useState(false);
+  const [notifyMsg, setNotifyMsg] = useState("");
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -92,8 +98,17 @@ function UniversityDashboard() {
       const res = await getMyUniversity();
       setUniversity(res.data);
       loadCertificates(res.data.id);
+      loadVerificationActivity();
     } catch { setUniversity(null); }
     finally { setLoading(false); }
+  }
+
+  async function loadVerificationActivity() {
+    try {
+      const res = await getUniversityVerifications();
+      setVerifications(res.data.verifications || []);
+      setTotalVerificationsMonth(res.data.totalThisMonth || 0);
+    } catch (e) { console.error(e); }
   }
 
   async function loadCertificates(universityId) {
@@ -133,10 +148,27 @@ function UniversityDashboard() {
     finally { setIssuing(false); }
   }
 
-  async function handleRevoke(certificateId) {
-    if (!confirm("Are you sure you want to revoke this certificate?")) return;
-    try { await revokeCertificate({ certificate_id: certificateId, reason: "Revoked by issuer" }); loadCertificates(university.id); }
-    catch (err) { alert(err.response?.data?.error || "Failed to revoke certificate"); }
+  const [revokeTarget, setRevokeTarget] = useState(null);
+  const [revokeReason, setRevokeReason] = useState("");
+  const [revoking, setRevoking] = useState(false);
+
+  async function confirmRevoke() {
+    if (!revokeTarget) return;
+    if (!revokeReason.trim()) {
+      alert("Please provide a reason for revoking this certificate.");
+      return;
+    }
+    setRevoking(true);
+    try {
+      await revokeCertificate(revokeTarget.id, revokeReason.trim());
+      setRevokeTarget(null);
+      setRevokeReason("");
+      loadCertificates(university.id);
+    } catch (err) {
+      alert(err.response?.data?.error || "Failed to revoke certificate");
+    } finally {
+      setRevoking(false);
+    }
   }
 
   function handleLogout() { localStorage.removeItem("token"); localStorage.removeItem("user"); navigate("/"); }
@@ -426,7 +458,7 @@ function UniversityDashboard() {
                 {cert.status === "VALID" && (
                   <button
                     className="btn-secondary"
-                    onClick={(e) => { e.stopPropagation(); handleRevoke(cert.id); }}
+                    onClick={(e) => { e.stopPropagation(); setRevokeTarget(cert); setRevokeReason(""); }}
                     style={{ fontSize: "0.8rem", padding: "0.3rem 0.8rem" }}
                   >
                     Revoke
@@ -435,6 +467,78 @@ function UniversityDashboard() {
               </div>
             </motion.div>
           ))}
+        </div>
+      </motion.div>
+
+      {/* ── VERIFICATION ACTIVITY FEED (Phase 2) ────────────────────────────── */}
+      <motion.div className="card" variants={cardVariants}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2px solid #0a0a0a", paddingBottom: "0.5rem", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
+          <div>
+            <h3 style={{ margin: 0, fontWeight: 700, fontSize: "1.2rem", color: GS.ink }}>
+              Verification Activity
+            </h3>
+            <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: GS.muted }}>
+              Real-time feed of verifiers checking your institution's credentials.
+            </p>
+          </div>
+          
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <span style={{ fontSize: "0.82rem", fontWeight: 700, background: "#0a0a0a", color: "#ffffff", padding: "0.25rem 0.85rem", borderRadius: "16px" }}>
+              Verifications This Month: <CountUp to={totalVerificationsMonth} duration={0.8} />
+            </span>
+
+            {/* Email Notification Preference Toggle (Phase 2) */}
+            <label style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontSize: "0.78rem", fontWeight: 600, color: GS.ink, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={emailNotify}
+                onChange={(e) => {
+                  setEmailNotify(e.target.checked);
+                  setNotifyMsg(e.target.checked ? "✉️ Email notification alerts enabled" : "Disabled notification alerts");
+                  setTimeout(() => setNotifyMsg(""), 2500);
+                }}
+                style={{ cursor: "pointer" }}
+              />
+              Notify me by email
+            </label>
+          </div>
+        </div>
+
+        {notifyMsg && (
+          <div style={{ fontSize: "0.78rem", background: "#f1f5f9", border: "1px solid #0a0a0a", padding: "0.4rem 0.8rem", borderRadius: "6px", marginBottom: "0.85rem", color: GS.ink, fontWeight: 600 }}>
+            {notifyMsg}
+          </div>
+        )}
+
+        <div className="cert-list">
+          {verifications.length === 0 ? (
+            <p style={{ color: GS.muted, fontSize: "0.88rem" }}>No verifications recorded yet. When employers or verifiers check credentials on the Verifier page, live feedback will appear here.</p>
+          ) : (
+            verifications.map((v, idx) => (
+              <motion.div
+                key={v.id || idx}
+                className="cert-item card-lift"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: idx * 0.03, ease: PREMIUM }}
+                style={{ background: "#ffffff", border: `1.5px solid ${GS.border}`, borderRadius: "8px", padding: "0.75rem 1rem", marginBottom: "0.5rem" }}
+              >
+                <div>
+                  <div style={{ fontWeight: 700, color: GS.ink, fontSize: "0.9rem" }}>
+                    Certificate <code>{v.certificate_number}</code> ({v.student_name || "Student"}) was verified by <strong>{v.verifier_org || "Anonymous Verifier"}</strong>
+                  </div>
+                  <div style={{ fontSize: "0.78rem", color: GS.muted, marginTop: "2px" }}>
+                    {new Date(v.verified_at).toLocaleString("en-IN", { hour12: false })}
+                  </div>
+                </div>
+                <div>
+                  <span className={`status-badge ${v.verification_result === "VALID" ? "status-valid" : "status-revoked"}`}>
+                    {v.verification_result}
+                  </span>
+                </div>
+              </motion.div>
+            ))
+          )}
         </div>
       </motion.div>
 
@@ -535,6 +639,67 @@ function UniversityDashboard() {
 
               <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
                 <CategoryCertificateTemplate ref={modalCertRef} certificate={{ ...selectedCert, university_name: university?.name }} qrCodeUrl={`${API_BASE}/uploads/qr_${selectedCert.id}.png`} />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── REVOCATION CONFIRMATION MODAL ───────────────────────────────────── */}
+      <AnimatePresence>
+        {revokeTarget && (
+          <div
+            style={{
+              position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
+              background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)",
+              zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem"
+            }}
+            onClick={() => setRevokeTarget(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.94 }}
+              transition={{ duration: 0.2, ease: PREMIUM }}
+              style={{
+                background: "#ffffff", border: `2px solid ${GS.border}`, borderRadius: "16px",
+                width: "100%", maxWidth: "480px", padding: "1.5rem", boxShadow: "0 20px 50px rgba(0,0,0,0.3)"
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "1.2rem", fontWeight: 700, color: GS.ink }}>
+                🚫 Revoke Certificate
+              </h3>
+              <p style={{ fontSize: "0.85rem", color: GS.muted, marginBottom: "1rem" }}>
+                Revoking <strong>{revokeTarget.student_name}</strong>'s certificate (<code>{revokeTarget.certificate_number}</code>) will cryptographically invalidate it with an RSA-2048 signature anchored to the blockchain ledger.
+              </p>
+              
+              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: GS.ink, marginBottom: "0.4rem" }}>
+                Reason for Revocation *
+              </label>
+              <textarea
+                value={revokeReason}
+                onChange={(e) => setRevokeReason(e.target.value)}
+                placeholder="e.g. Clerical error during issuance, disciplinary expulsion, or record correction"
+                rows={3}
+                style={{
+                  width: "100%", padding: "0.6rem 0.8rem", border: `1.5px solid ${GS.border}`, borderRadius: "8px",
+                  fontSize: "0.85rem", fontFamily: "'Inter', sans-serif", marginBottom: "1.25rem", boxSizing: "border-box"
+                }}
+              />
+
+              <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+                <button className="btn-secondary" onClick={() => setRevokeTarget(null)} disabled={revoking}>
+                  Cancel
+                </button>
+                <button
+                  className="btn"
+                  onClick={confirmRevoke}
+                  disabled={revoking || !revokeReason.trim()}
+                  style={{ background: "#0a0a0a", color: "#ffffff" }}
+                >
+                  {revoking ? "Revoking..." : "Confirm & Sign Revocation"}
+                </button>
               </div>
             </motion.div>
           </div>

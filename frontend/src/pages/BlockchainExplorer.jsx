@@ -185,6 +185,15 @@ function AnimatedRow({ anchor, index, isNewest, isSelected, onClick }) {
             <span style={{ fontSize: "0.75rem", background: "#eef1f5", color: "#3d4a5c", padding: "1px 7px", borderRadius: "10px" }}>
               Block #{anchor.block_number}
             </span>
+            {anchor.status === "REVOKED" ? (
+              <span style={{ fontSize: "0.68rem", background: "#0a0a0a", color: "#ffffff", padding: "1px 7px", borderRadius: "10px", letterSpacing: "0.04em", fontWeight: 700 }}>
+                REVOCATION
+              </span>
+            ) : (
+              <span style={{ fontSize: "0.68rem", background: "#f1f5f9", color: "#0a0a0a", border: "1px solid #0a0a0a", padding: "1px 7px", borderRadius: "10px", letterSpacing: "0.04em", fontWeight: 700 }}>
+                ISSUANCE
+              </span>
+            )}
             {isNewest && (
               <span className="pulse-live" style={{ fontSize: "0.68rem", background: "#0a0a0a", color: "#ffffff", padding: "1px 7px", borderRadius: "10px", letterSpacing: "0.04em", fontWeight: 700 }}>
                 LIVE

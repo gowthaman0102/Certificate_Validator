@@ -1,5 +1,6 @@
+const { v4: uuidv4 } = require('uuid');
 const { db } = require('../config/db');
-const { generateHash, verifySignature } = require('../utils/crypto');
+const { generateHash, verifySignature, validateReplayProtection } = require('../utils/crypto');
 const { logAudit } = require('../utils/auditLogger');
 const { verifyOnBlockchain } = require('../utils/blockchain');
 
@@ -22,11 +23,31 @@ function verifyCertificate(req, res) {
     const {
       cert_id, certificate_number, register_number, student_name, course,
       cgpa, start_year, end_year, issue_date, issuer_id, hash, signature,
-      sig_enc,
+      sig_enc, scan_nonce, scan_ts,
     } = req.body;
 
     const verifiedAt       = new Date().toISOString();
     const verificationMode = 'ONLINE';
+
+    // ── Step 0: Replay Protection Check ─────────────────────────────────────────
+    // CRITICAL ARCHITECTURAL DISTINCTION:
+    // Certificate credential validity NEVER expires. A 10-year-old diploma remains valid.
+    // Replay protection applies ONLY to short-lived verification scan session tokens
+    // (scan_nonce + scan_ts) to prevent replaying captured verification requests.
+    const replayCheck = validateReplayProtection(scan_nonce, scan_ts);
+    if (!replayCheck.valid) {
+      logAudit(req, { module: 'VERIFICATION', action: 'VERIFY', status: 'FAILURE', resource_id: certificate_number || cert_id, details: { result: 'REPLAY_REJECTED', reason: replayCheck.reason } });
+      return res.status(400).json({
+        result: 'REPLAY_REJECTED',
+        error: 'Replay Protection Failure',
+        reason: replayCheck.reason,
+        algorithm: ALGORITHM,
+        verifiedAt,
+        verificationMode,
+        hashStatus: 'UNCHECKED',
+        signatureStatus: 'UNCHECKED',
+      });
+    }
 
     if (!cert_id || !certificate_number || !register_number || !student_name || !course || !end_year || !issue_date || !issuer_id || !hash || !signature) {
       return res.status(400).json({ error: 'Incomplete QR data provided' });
@@ -119,14 +140,29 @@ function verifyCertificate(req, res) {
     }
 
     // ── Step 3: Revocation check ──────────────────────────────────────────────
-    const cert = certRecord || db.prepare('SELECT * FROM certificates WHERE id = ?').get(cert_id);
-    if (cert && cert.status === 'REVOKED') {
-      logAudit(req, { module: 'VERIFICATION', action: 'VERIFY', status: 'SUCCESS', resource_id: certificate_number, details: { result: 'REVOKED', student_name, course } });
+    const cert = certRecord || db.prepare('SELECT * FROM certificates WHERE id = ? OR certificate_number = ?').get(cert_id, certificate_number);
+    const revocationRecord = db.prepare('SELECT * FROM revoked_certificates WHERE certificate_id = ? OR certificate_id = ?').get(cert_id, cert?.id);
+
+    if ((cert && cert.status === 'REVOKED') || revocationRecord) {
+      logAudit(req, { module: 'VERIFICATION', action: 'VERIFY', status: 'SUCCESS', resource_id: certificate_number, details: { result: 'REVOKED', student_name, course, reason: revocationRecord?.reason } });
       return res.json({
-        result: 'REVOKED', reason: 'This certificate has been revoked by the issuer',
-        algorithm: ALGORITHM, verifiedAt, verificationMode,
-        hashStatus: 'MATCH', signatureStatus: 'VALID',
+        result: 'REVOKED',
+        reason: revocationRecord?.reason || 'This certificate has been revoked by the issuing university',
+        algorithm: ALGORITHM,
+        verifiedAt,
+        verificationMode,
+        hashStatus: 'MATCH',
+        signatureStatus: 'VALID',
         certificate: certDetails,
+        revocation: {
+          isRevoked: true,
+          revokedAt: revocationRecord?.revoked_at || cert?.created_at,
+          revokedBy: university?.name || 'Issuing University',
+          reason: revocationRecord?.reason || 'Certificate revoked by issuer',
+          signature: revocationRecord?.signature || null,
+          txId: revocationRecord?.tx_id || null,
+          blockNumber: revocationRecord?.block_number || null,
+        },
       });
     }
 
@@ -149,6 +185,7 @@ function verifyCertificate(req, res) {
       console.error('[blockchain] Verify lookup failed:', bcErr.message);
     }
 
+    recordVerificationEvent(university?.id, cert_id || cert?.id, certificate_number, student_name, req.body.verifier_org, 'VALID', verifiedAt);
     logAudit(req, { module: 'VERIFICATION', action: 'VERIFY', status: 'SUCCESS', resource_id: certificate_number, details: { result: 'VALID', student_name, course, issuer: university.name } });
     return res.json({
       result: 'VALID',
@@ -174,6 +211,51 @@ function verifyCertificate(req, res) {
   }
 }
 
+function recordVerificationEvent(universityId, certId, certNumber, studentName, verifierOrg, result, verifiedAt) {
+  if (!universityId) return;
+  try {
+    const eventId = uuidv4();
+    db.prepare(`
+      INSERT INTO verification_events
+        (id, university_id, certificate_id, certificate_number, student_name, verifier_org, verification_result, verified_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(eventId, universityId, certId || 'UNKNOWN', certNumber || '—', studentName || 'Student', verifierOrg || 'Anonymous Verifier', result, verifiedAt);
+  } catch (err) {
+    console.error('[verification_events] Log error:', err.message);
+  }
+}
+
+function getUniversityVerifications(req, res) {
+  try {
+    const userId = req.user.id;
+    const university = db.prepare('SELECT * FROM universities WHERE user_id = ?').get(userId);
+    if (!university) {
+      return res.status(403).json({ error: 'University not found' });
+    }
+
+    const events = db.prepare(`
+      SELECT * FROM verification_events
+      WHERE university_id = ?
+      ORDER BY verified_at DESC
+      LIMIT 35
+    `).all(university.id);
+
+    const monthlyCount = db.prepare(`
+      SELECT COUNT(*) as count FROM verification_events
+      WHERE university_id = ?
+        AND strftime('%Y-%m', verified_at) = strftime('%Y-%m', 'now')
+    `).get(university.id);
+
+    res.json({
+      verifications: events,
+      totalThisMonth: monthlyCount?.count || 0,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch verification activity' });
+  }
+}
+
 function getPublicKey(req, res) {
   try {
     const { issuer_id } = req.params;
@@ -188,4 +270,4 @@ function getPublicKey(req, res) {
   }
 }
 
-module.exports = { verifyCertificate, getPublicKey };
+module.exports = { verifyCertificate, getPublicKey, getUniversityVerifications };
