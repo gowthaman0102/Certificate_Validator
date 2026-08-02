@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const { uploadCertificate, getCertificate, getCertificateByCertNumber, getCertificatesByUniversity, getCertificatesByEmail, getCertificatesByRegisterNumber, getCertificatesByIdentity, bulkUploadCertificates } = require('../controllers/certificateController');
 const { authenticateToken } = require('../middleware/auth');
@@ -12,3 +12,4 @@ router.get('/certificate/by-number/:certNumber', getCertificateByCertNumber);
 router.get('/certificate/:id', getCertificate);
 router.get('/certificates/university/:id', getCertificatesByUniversity);
 module.exports = router;
+

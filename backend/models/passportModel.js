@@ -17,14 +17,14 @@ function upsertStudentProfile(userId, data) {
           graduation_year = ?, career_interests = ?, is_public = ?, updated_at = CURRENT_TIMESTAMP
       WHERE user_id = ?
     `).run(
-      data.profile_picture ?? existing.profile_picture,
-      data.bio ?? existing.bio,
-      data.headline ?? existing.headline,
-      data.department ?? existing.department,
-      data.program ?? existing.program,
-      data.graduation_year ?? existing.graduation_year,
-      data.career_interests ?? existing.career_interests,
-      data.is_public !== undefined ? (data.is_public ? 1 : 0) : existing.is_public,
+      data.profile_picture !== undefined ? data.profile_picture : (existing.profile_picture || null),
+      data.bio !== undefined ? data.bio : (existing.bio || ''),
+      data.headline !== undefined ? data.headline : (existing.headline || ''),
+      data.department !== undefined ? data.department : (existing.department || ''),
+      data.program !== undefined ? data.program : (existing.program || ''),
+      data.graduation_year !== undefined ? data.graduation_year : (existing.graduation_year || ''),
+      data.career_interests !== undefined ? data.career_interests : (existing.career_interests || ''),
+      data.is_public !== undefined ? (data.is_public ? 1 : 0) : (existing.is_public || 1),
       userId
     );
   } else {

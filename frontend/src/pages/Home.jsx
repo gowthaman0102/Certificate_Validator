@@ -1,11 +1,12 @@
-import { Link } from 'react-router-dom';
+﻿import { useRef } from "react";
+import { Link } from "react-router-dom";
+import { motion, useInView } from "framer-motion";
+import { RevealOnScroll, RevealItem } from "../components/motion";
 
 /* ─────────────────────────────────────────────────────────────
-   CredentialVault — Homepage (Polyline Connector Fix)
-   - Updated connector polylines to meet node anchor points cleanly
-     without crossing or overlapping any text.
-   - Preserves all 4 portal cards (Universities, Students, Verifiers, Blockchain)
-     with white backgrounds and solid black buttons (.btn) inside the box.
+   CredentialVault — Homepage
+   Motion system: clip-reveal hero, staggered portal cards,
+   SVG polyline draw-in. Strictly monochrome, 60fps-safe.
    ───────────────────────────────────────────────────────────── */
 
 /* ── Inline SVG Icons ───────────────────────────────────────── */
@@ -107,8 +108,62 @@ function IsometricCubesIcon({ size = 30, color = "#0a0a0a" }) {
   );
 }
 
+/* ── Animation Variants ─────────────────────────────────────── */
+
+// Hero brand title: clip-path seal unveil, left → right
+const heroTitleVariants = {
+  hidden:  { clipPath: "inset(0 100% 0 0)", opacity: 1 },
+  visible: {
+    clipPath: "inset(0 0% 0 0)",
+    opacity: 1,
+    transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
+// Hero subtitle & description: simple fade-up, slightly delayed
+const heroSubVariants = {
+  hidden:  { opacity: 0, y: 10 },
+  visible: (delay = 0) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.55, delay, ease: [0.16, 1, 0.3, 1] },
+  }),
+};
+
+// Portal card stagger container
+const cardsContainerVariants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+  },
+};
+
+// Individual portal card: rise 16px + fade
+const cardVariants = {
+  hidden:  { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1, y: 0,
+    transition: { duration: 0.56, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
+const POLYLINE_LENGTH = 165;
+
+const polylineVariants = {
+  hidden:  { strokeDashoffset: POLYLINE_LENGTH },
+  visible: (delay = 0) => ({
+    strokeDashoffset: 0,
+    transition: { duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] },
+  }),
+};
+
 /* ── Main Home Component ────────────────────────────────────── */
 function Home() {
+  const cardsRef  = useRef(null);
+  const cardsInView = useInView(cardsRef, { once: true, margin: "-60px" });
+
+  const svgRef    = useRef(null);
+  const svgInView = useInView(svgRef, { once: true, margin: "-60px" });
+
   return (
     <div className="home-root">
       <div className="home-content">
@@ -116,85 +171,101 @@ function Home() {
         {/* ── 1. Top Hero Section ────────────────────────────── */}
         <section className="hero-grid diagram-layout">
           {/* Left Column: Branding & Headline */}
-          <div className="hero-left-col" style={{ position: 'relative' }}>
-            {/* Background Cryptographic & Blockchain Graphic Visuals (Behind Content) */}
-            <svg className="hero-bg-visual" viewBox="0 0 600 350" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0, opacity: 0.32 }}>
-              {/* Dot matrix grid */}
+          <div className="hero-left-col" style={{ position: "relative" }}>
+            {/* Background Cryptographic & Blockchain Graphic Visuals */}
+            <svg
+              className="hero-bg-visual"
+              viewBox="0 0 600 350"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{
+                position: "absolute", top: 0, left: 0,
+                width: "100%", height: "100%",
+                pointerEvents: "none", zIndex: 0, opacity: 0.32,
+              }}
+            >
               <pattern id="heroBgGrid" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
                 <circle cx="2.5" cy="2.5" r="1.5" fill="#0a0a0a" opacity="0.35" />
               </pattern>
               <rect x="0" y="0" width="600" height="350" fill="url(#heroBgGrid)" opacity="0.45" />
-
-              {/* Large Concentric Cryptographic Inspection Seals */}
               <circle cx="280" cy="175" r="145" stroke="#0a0a0a" strokeWidth="1" strokeDasharray="6 6" opacity="0.25" />
               <circle cx="280" cy="175" r="110" stroke="#0a0a0a" strokeWidth="0.8" strokeDasharray="3 4" opacity="0.2" />
-
-              {/* SHA-256 Hash Inspection Wave Curves */}
               <path d="M 10 35 Q 160 5, 290 35 T 560 35" stroke="#0a0a0a" strokeWidth="2" strokeDasharray="4 4" fill="none" opacity="0.4" />
               <circle cx="290" cy="35" r="4.5" fill="#0a0a0a" opacity="0.55" />
               <path d="M 20 310 Q 180 340, 310 310 T 580 310" stroke="#0a0a0a" strokeWidth="1.5" strokeDasharray="3 3" fill="none" opacity="0.3" />
-
-              {/* Connected Blockchain Ledger Blocks */}
               <g opacity="0.35">
-                {/* Block 1 */}
                 <rect x="25" y="70" width="42" height="28" rx="5" stroke="#0a0a0a" strokeWidth="1.4" fill="none" />
                 <path d="M 32 84 L 60 84" stroke="#0a0a0a" strokeWidth="1.2" />
                 <circle cx="46" cy="84" r="2.5" fill="#0a0a0a" />
-
-                {/* Block 2 (Connected) */}
                 <line x1="67" y1="84" x2="115" y2="84" stroke="#0a0a0a" strokeWidth="1.2" strokeDasharray="2 2" />
                 <rect x="115" y="70" width="42" height="28" rx="5" stroke="#0a0a0a" strokeWidth="1.4" fill="none" />
-
-                {/* Hexagonal Cryptographic Security Shield Outline */}
                 <polygon points="510,105 545,125 545,165 510,185 475,165 475,125" stroke="#0a0a0a" strokeWidth="1.6" fill="none" />
                 <path d="M 500 145 L 508 153 L 522 137" stroke="#0a0a0a" strokeWidth="2" fill="none" strokeLinecap="round" />
-
-                {/* Crosshair Tickers */}
                 <path d="M 530 40 L 542 40 M 536 34 L 536 46" stroke="#0a0a0a" strokeWidth="1.2" />
                 <path d="M 40 240 L 52 240 M 46 234 L 46 246" stroke="#0a0a0a" strokeWidth="1.2" />
-
-                {/* Binary & Hash Watermark Streams */}
                 <text x="15" y="272" fontFamily="monospace" fontSize="8.5" fill="#0a0a0a" letterSpacing="0.1em">SHA256 :: 0x8f9a2b4e7c1d3e5f6a8b9c0d1e2f3a4b</text>
                 <text x="15" y="289" fontFamily="monospace" fontSize="7.8" fill="#666666" letterSpacing="0.08em">IMMUTABLE LEDGER VERIFIED · ZERO TAMPERING</text>
                 <text x="320" y="272" fontFamily="monospace" fontSize="8" fill="#8c8c8c" letterSpacing="0.06em">BLOCK #849201 [CONFIRMED]</text>
               </g>
-
-              {/* Decorative Horizontal Guidelines with Diamond Endpoints */}
               <line x1="10" y1="325" x2="570" y2="325" stroke="#0a0a0a" strokeWidth="1.2" strokeDasharray="6 4" opacity="0.3" />
               <polygon points="10,325 15,321 20,325 15,329" fill="#0a0a0a" opacity="0.4" />
               <polygon points="565,325 570,321 575,325 570,329" fill="#0a0a0a" opacity="0.4" />
             </svg>
 
-            <div className="brand-header-block" style={{ position: 'relative', zIndex: 1 }}>
-              <h1 className="main-brand-title">CredentialVault</h1>
-              <p className="main-brand-subtitle">Offline-Verifiable Digital Academic Credentials</p>
+            {/* Hero Brand Title */}
+            <div className="brand-header-block" style={{ position: "relative", zIndex: 1 }}>
+              <motion.h1
+                className="main-brand-title"
+                variants={heroTitleVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                CredentialVault
+              </motion.h1>
+              <motion.p
+                className="main-brand-subtitle"
+                variants={heroSubVariants}
+                initial="hidden"
+                animate="visible"
+                custom={0.5}
+              >
+                Offline-Verifiable Digital Academic Credentials
+              </motion.p>
             </div>
 
-            <div className="headline-block" style={{ position: 'relative', zIndex: 1 }}>
-              <h2 className="headline-text">
+            <div className="headline-block" style={{ position: "relative", zIndex: 1 }}>
+              <motion.h2
+                className="headline-text"
+                variants={heroSubVariants}
+                initial="hidden"
+                animate="visible"
+                custom={0.7}
+              >
                 Verify. Anywhere. Trust. Forever.
-              </h2>
-              <p className="headline-description">
+              </motion.h2>
+              <motion.p
+                className="headline-description"
+                variants={heroSubVariants}
+                initial="hidden"
+                animate="visible"
+                custom={0.85}
+              >
                 CredentialVault helps institutions issue tamper-proof academic
                 certificates and empowers anyone to verify them instantly — even offline.
-              </p>
+              </motion.p>
             </div>
           </div>
 
           {/* Right Column: Orbit Diagram Canvas */}
           <div className="hero-right-col diagram-canvas-wrapper">
-            <div className="orbit-diagram-container">
-              {/* Dot matrix background grid */}
+            <div className="orbit-diagram-container" ref={svgRef}>
               <div className="dot-matrix-pattern top-right" />
 
-              {/* Central SVG Canvas */}
               <svg className="orbit-svg" viewBox="0 0 540 400" fill="none">
-                {/* Concentric Circles */}
                 <circle cx="270" cy="190" r="150" stroke="#e0e0e0" strokeWidth="1" strokeDasharray="3 3" />
                 <circle cx="270" cy="190" r="120" stroke="#d5d5d5" strokeWidth="1" />
                 <circle cx="270" cy="190" r="90" stroke="#e0e0e0" strokeWidth="1" strokeDasharray="2 3" />
 
-                {/* Particles & Dots */}
                 <circle cx="270" cy="40" r="2.5" fill="#0a0a0a" />
                 <circle cx="150" cy="100" r="2" fill="#0a0a0a" />
                 <circle cx="200" cy="70" r="2" fill="#0a0a0a" />
@@ -205,34 +276,60 @@ function Home() {
                 <circle cx="360" cy="310" r="2" fill="#0a0a0a" />
                 <circle cx="180" cy="310" r="2" fill="#0a0a0a" />
 
-                {/* Open circles */}
                 <circle cx="190" cy="90" r="2.5" stroke="#0a0a0a" strokeWidth="1" fill="none" />
                 <circle cx="360" cy="125" r="2.5" stroke="#0a0a0a" strokeWidth="1" fill="none" />
                 <circle cx="330" cy="300" r="2.5" stroke="#0a0a0a" strokeWidth="1" fill="none" />
 
-                {/* Outline squares */}
                 <rect x="345" y="75" width="5" height="5" stroke="#8c8c8c" strokeWidth="1" fill="none" />
                 <rect x="135" y="255" width="5" height="5" stroke="#8c8c8c" strokeWidth="1" fill="none" />
                 <rect x="380" y="210" width="5" height="5" stroke="#8c8c8c" strokeWidth="1" fill="none" />
 
-                {/* Anchor Points on Concentric Orbit Rings */}
                 <circle cx="190" cy="145" r="3" fill="#0a0a0a" />
                 <circle cx="350" cy="145" r="3" fill="#0a0a0a" />
                 <circle cx="190" cy="235" r="3" fill="#0a0a0a" />
                 <circle cx="350" cy="235" r="3" fill="#0a0a0a" />
                 <circle cx="270" cy="260" r="2.5" fill="#0a0a0a" />
 
-                {/* Clean Polylines (Ending at node boundary without text overlap) */}
-                <polyline points="122 72, 145 72, 168 145, 190 145" stroke="#0a0a0a" strokeWidth="1" />
-                <polyline points="122 308, 145 308, 168 235, 190 235" stroke="#0a0a0a" strokeWidth="1" />
-                <polyline points="418 72, 395 72, 372 145, 350 145" stroke="#0a0a0a" strokeWidth="1" />
-                <polyline points="418 308, 395 308, 372 235, 350 235" stroke="#0a0a0a" strokeWidth="1" />
+                <motion.polyline
+                  points="122 72, 145 72, 168 145, 190 145"
+                  stroke="#0a0a0a" strokeWidth="1" fill="none"
+                  strokeDasharray={POLYLINE_LENGTH}
+                  variants={polylineVariants}
+                  initial="hidden"
+                  animate={svgInView ? "visible" : "hidden"}
+                  custom={0.65}
+                />
+                <motion.polyline
+                  points="122 308, 145 308, 168 235, 190 235"
+                  stroke="#0a0a0a" strokeWidth="1" fill="none"
+                  strokeDasharray={POLYLINE_LENGTH}
+                  variants={polylineVariants}
+                  initial="hidden"
+                  animate={svgInView ? "visible" : "hidden"}
+                  custom={0.75}
+                />
+                <motion.polyline
+                  points="418 72, 395 72, 372 145, 350 145"
+                  stroke="#0a0a0a" strokeWidth="1" fill="none"
+                  strokeDasharray={POLYLINE_LENGTH}
+                  variants={polylineVariants}
+                  initial="hidden"
+                  animate={svgInView ? "visible" : "hidden"}
+                  custom={0.85}
+                />
+                <motion.polyline
+                  points="418 308, 395 308, 372 235, 350 235"
+                  stroke="#0a0a0a" strokeWidth="1" fill="none"
+                  strokeDasharray={POLYLINE_LENGTH}
+                  variants={polylineVariants}
+                  initial="hidden"
+                  animate={svgInView ? "visible" : "hidden"}
+                  custom={0.95}
+                />
 
-                {/* Vertical Dotted Line */}
                 <line x1="270" y1="230" x2="270" y2="295" stroke="#0a0a0a" strokeWidth="1.5" strokeDasharray="3 3" />
               </svg>
 
-              {/* 3D Isometric Stacked QR Block */}
               <div className="isometric-qr-wrapper">
                 <div className="shadow-floor" />
                 <div className="iso-block-top">
@@ -242,7 +339,6 @@ function Home() {
                 </div>
               </div>
 
-              {/* Bottom Solid Black Circle Checkmark Badge */}
               <div className="trusted-blockchain-group">
                 <div className="center-verified-badge">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
@@ -255,11 +351,8 @@ function Home() {
                 </div>
               </div>
 
-              {/* 4 Corner Nodes */}
               <div className="diagram-node node-top-left">
-                <div className="node-icon-circle">
-                  <TemplePillarsIcon size={20} />
-                </div>
+                <div className="node-icon-circle"><TemplePillarsIcon size={20} /></div>
                 <div className="node-text-group">
                   <h4 className="node-label">ISSUE</h4>
                   <p className="node-desc">Universities issue digitally signed credentials.</p>
@@ -267,9 +360,7 @@ function Home() {
               </div>
 
               <div className="diagram-node node-bottom-left">
-                <div className="node-icon-circle">
-                  <ShieldCheckNodeIcon size={20} />
-                </div>
+                <div className="node-icon-circle"><ShieldCheckNodeIcon size={20} /></div>
                 <div className="node-text-group">
                   <h4 className="node-label">SECURE</h4>
                   <p className="node-desc">Encrypted, signed and stored with integrity.</p>
@@ -277,9 +368,7 @@ function Home() {
               </div>
 
               <div className="diagram-node node-top-right">
-                <div className="node-icon-circle">
-                  <PersonUserIcon size={20} />
-                </div>
+                <div className="node-icon-circle"><PersonUserIcon size={20} /></div>
                 <div className="node-text-group">
                   <h4 className="node-label">SHARE</h4>
                   <p className="node-desc">Students share via QR code anytime.</p>
@@ -287,9 +376,7 @@ function Home() {
               </div>
 
               <div className="diagram-node node-bottom-right">
-                <div className="node-icon-circle">
-                  <MagnifierGlassIcon size={20} />
-                </div>
+                <div className="node-icon-circle"><MagnifierGlassIcon size={20} /></div>
                 <div className="node-text-group">
                   <h4 className="node-label">VERIFY</h4>
                   <p className="node-desc">Verifiers check instantly, even offline.</p>
@@ -299,87 +386,74 @@ function Home() {
           </div>
         </section>
 
-        {/* ── 2. Features Banner Row ──────────────────────────── */}
+        {/* ── 2. Features Banner Row ────────────────────────── */}
         <section className="features-banner-row">
-          <div className="feature-banner-col">
-            <div className="feature-banner-icon">
-              <ShieldIcon size={22} />
-            </div>
+          <RevealOnScroll className="feature-banner-col" delay={0}>
+            <div className="feature-banner-icon"><ShieldIcon size={22} /></div>
             <div className="feature-banner-text">
               <h4 className="feature-banner-title">Tamper-Proof</h4>
               <p className="feature-banner-desc">Digitally signed and immutable certificates.</p>
             </div>
-          </div>
-
-          <div className="feature-banner-col">
-            <div className="feature-banner-icon">
-              <QrScanIcon size={22} />
-            </div>
+          </RevealOnScroll>
+          <RevealOnScroll className="feature-banner-col" delay={0.06}>
+            <div className="feature-banner-icon"><QrScanIcon size={22} /></div>
             <div className="feature-banner-text">
               <h4 className="feature-banner-title">Offline Verifiable</h4>
               <p className="feature-banner-desc">Verify credentials anytime, anywhere — no internet required.</p>
             </div>
-          </div>
-
-          <div className="feature-banner-col">
-            <div className="feature-banner-icon">
-              <LockIcon size={22} />
-            </div>
+          </RevealOnScroll>
+          <RevealOnScroll className="feature-banner-col" delay={0.12}>
+            <div className="feature-banner-icon"><LockIcon size={22} /></div>
             <div className="feature-banner-text">
               <h4 className="feature-banner-title">Privacy First</h4>
               <p className="feature-banner-desc">Minimal data exposure with zero-knowledge verification.</p>
             </div>
-          </div>
-
-          <div className="feature-banner-col">
-            <div className="feature-banner-icon">
-              <BoltIcon size={22} />
-            </div>
+          </RevealOnScroll>
+          <RevealOnScroll className="feature-banner-col" delay={0.18}>
+            <div className="feature-banner-icon"><BoltIcon size={22} /></div>
             <div className="feature-banner-text">
               <h4 className="feature-banner-title">Instant Verification</h4>
               <p className="feature-banner-desc">Get verification results in seconds using QR or ID.</p>
             </div>
-          </div>
+          </RevealOnScroll>
         </section>
 
-        {/* ── 3. Bottom 4 Action Portal Cards (Buttons Strictly Inside Box) ── */}
-        <section className="portals-four-grid">
+        {/* ── 3. Bottom 4 Action Portal Cards ──────────────── */}
+        <motion.section
+          className="portals-four-grid"
+          ref={cardsRef}
+          variants={cardsContainerVariants}
+          initial="hidden"
+          animate={cardsInView ? "visible" : "hidden"}
+        >
           {/* Card 1: Universities */}
-          <div className="portal-block">
+          <motion.div className="portal-block card-lift" variants={cardVariants}>
             <div className="portal-top-meta">
               <TemplePillarsIcon size={26} />
               <div className="card-dot-matrix" />
             </div>
             <div className="portal-inner-content">
               <h3 className="portal-head">Universities</h3>
-              <p className="portal-text">
-                Issue tamper-proof, signed certificates with QR codes.
-              </p>
-              <Link to="/university-login" className="btn portal-action-btn">
-                Sign in
-              </Link>
+              <p className="portal-text">Issue tamper-proof, signed certificates with QR codes.</p>
+              <Link to="/university-login" className="btn portal-action-btn">Sign in</Link>
             </div>
             <div className="portal-vector-art">
               <svg width="125" height="90" viewBox="0 0 100 70" fill="none" stroke="#d5d5d5" strokeWidth="1">
                 <path d="M10 65h80M15 65V35M35 65V35M50 65V35M65 65V35M85 65V35M10 35h80M50 10L10 35h80L50 10z" />
               </svg>
             </div>
-          </div>
+          </motion.div>
 
           {/* Card 2: Students */}
-          <div className="portal-block">
+          <motion.div className="portal-block card-lift" variants={cardVariants}>
             <div className="portal-top-meta">
               <GradCapIcon size={28} />
               <div className="card-dot-matrix" />
             </div>
             <div className="portal-inner-content">
               <h3 className="portal-head">Students</h3>
-              <p className="portal-text">
-                View and share your certificates by QR code.
-              </p>
-              <Link to="/student-login" className="btn portal-action-btn">
-                Sign in
-              </Link>
+              <p className="portal-text">View and share your certificates by QR code.</p>
+              <Link to="/student-login" className="btn portal-action-btn">Sign in</Link>
             </div>
             <div className="portal-vector-art">
               <svg width="115" height="90" viewBox="0 0 100 80" fill="none" stroke="#d5d5d5" strokeWidth="1">
@@ -389,22 +463,18 @@ function Home() {
                 <circle cx="85" cy="65" r="3" fill="#d5d5d5" />
               </svg>
             </div>
-          </div>
+          </motion.div>
 
           {/* Card 3: Verifiers */}
-          <div className="portal-block">
+          <motion.div className="portal-block card-lift" variants={cardVariants}>
             <div className="portal-top-meta">
               <MagnifierGlassIcon size={26} />
               <div className="card-dot-matrix" />
             </div>
             <div className="portal-inner-content">
               <h3 className="portal-head">Verifiers</h3>
-              <p className="portal-text">
-                Verify instantly, even completely offline.
-              </p>
-              <Link to="/verify" className="btn portal-action-btn">
-                Verify
-              </Link>
+              <p className="portal-text">Verify instantly, even completely offline.</p>
+              <Link to="/verify" className="btn portal-action-btn">Verify</Link>
             </div>
             <div className="portal-vector-art">
               <svg width="100" height="100" viewBox="0 0 100 100" fill="none" stroke="#d5d5d5" strokeWidth="1.2">
@@ -412,22 +482,18 @@ function Home() {
                 <line x1="65" y1="65" x2="90" y2="90" strokeWidth="2" />
               </svg>
             </div>
-          </div>
+          </motion.div>
 
           {/* Card 4: Blockchain */}
-          <div className="portal-block">
+          <motion.div className="portal-block card-lift" variants={cardVariants}>
             <div className="portal-top-meta">
               <IsometricCubesIcon size={30} color="#0a0a0a" />
               <div className="card-dot-matrix" />
             </div>
             <div className="portal-inner-content">
               <h3 className="portal-head">Blockchain</h3>
-              <p className="portal-text">
-                Anchored hashes and block records on the ledger.
-              </p>
-              <Link to="/blockchain-explorer" className="btn portal-action-btn">
-                Explore
-              </Link>
+              <p className="portal-text">Anchored hashes and block records on the ledger.</p>
+              <Link to="/blockchain-explorer" className="btn portal-action-btn">Explore</Link>
             </div>
             <div className="portal-vector-art">
               <svg width="120" height="95" viewBox="0 0 100 80" fill="none" stroke="#d5d5d5" strokeWidth="1">
@@ -436,8 +502,8 @@ function Home() {
                 <path d="M60 10l20-10 20 10-20 10zM60 10v15l20 10V25zM100 10v15l-20 10V25z" />
               </svg>
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
       </div>
     </div>

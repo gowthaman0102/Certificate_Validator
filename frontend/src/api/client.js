@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -40,6 +40,7 @@ export const getStudentCertificates = ({ email, registerNumber }) => {
   if (registerNumber) params.set('registerNumber', registerNumber);
   return client.get(`/certificates/by-identity?${params.toString()}`);
 };
+
 
 // ---- Verification ----
 export const verifyCertificate = (data) => client.post('/verify', data);

@@ -4,6 +4,7 @@ import SuggestedQuestions from './SuggestedQuestions';
 import TypingIndicator from './TypingIndicator';
 import { sendChatMessage, getChatHistory, clearChatHistory } from '../../api/chat';
 import { GradRobotIcon } from './FloatingAIButton';
+import { useAIProvider } from '../../hooks/useAIProvider';
 
 const GS = { ink: '#0a0a0a', muted: '#666666', subtle: '#999999', border: '#0a0a0a', bg: '#ffffff', mid: '#8c8c8c' };
 
@@ -13,6 +14,8 @@ export default function ChatWindow({ onClose }) {
   const [loading, setLoading] = useState(false);
   const [sessionId] = useState(() => `session-${Date.now()}`);
   const messagesEndRef = useRef(null);
+  const aiProvider = useAIProvider();
+  const [showProviderTooltip, setShowProviderTooltip] = useState(false);
 
   // Detect current role / user from localStorage
   const token = localStorage.getItem('token');
@@ -134,9 +137,7 @@ How can I help you today?`,
   return (
     <div
       style={{
-        position: 'fixed',
-        bottom: '90px',
-        right: '24px',
+        position: 'relative',
         width: '390px',
         maxWidth: 'calc(100vw - 32px)',
         height: '560px',
@@ -144,11 +145,11 @@ How can I help you today?`,
         background: '#ffffff',
         border: `2px solid ${GS.ink}`,
         boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
-        zIndex: 9999,
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: '0',
+        borderRadius: '16px',
         fontFamily: "'Inter', sans-serif",
+        overflow: 'hidden',
       }}
     >
       {/* Header */}
@@ -165,7 +166,50 @@ How can I help you today?`,
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <GradRobotIcon size={22} color="#ffffff" />
-          <span style={{ fontSize: '0.95rem', fontWeight: 600, fontFamily: "'Prata', serif" }}>AI Assistant</span>
+          <div>
+            <span style={{ fontSize: '0.95rem', fontWeight: 600, fontFamily: "'Prata', serif" }}>AI Assistant</span>
+            {/* AI Provider badge — updates automatically from /api/ai/provider */}
+            <div
+              style={{ position: 'relative', display: 'inline-block', marginLeft: '8px' }}
+              onMouseEnter={() => setShowProviderTooltip(true)}
+              onMouseLeave={() => setShowProviderTooltip(false)}
+            >
+              <span style={{
+                fontSize: '0.6rem',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                background: 'rgba(255,255,255,0.18)',
+                border: '1px solid rgba(255,255,255,0.45)',
+                color: '#ffffff',
+                padding: '1px 6px',
+                borderRadius: '3px',
+                cursor: 'help',
+              }}>
+                {aiProvider.loading ? '...' : aiProvider.label}
+              </span>
+              {showProviderTooltip && !aiProvider.loading && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  marginTop: '4px',
+                  background: '#1a1a1a',
+                  color: '#f0f0f0',
+                  fontSize: '0.72rem',
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  width: '220px',
+                  zIndex: 10,
+                  lineHeight: 1.5,
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.4)',
+                  pointerEvents: 'none',
+                }}>
+                  {aiProvider.description}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>

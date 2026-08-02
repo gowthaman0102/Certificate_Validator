@@ -196,7 +196,7 @@ button.btn-secondary:hover:not(:disabled),
 /* -- Verifier Side Decorative Visuals (8-14% Opacity Enterprise SaaS) -- */
 .verifier-side-decoration {
   position: absolute;
-  top: 50%;
+  top: calc(50% + 40px);
   pointer-events: none;
   z-index: 0;
   opacity: 0.12;
@@ -205,13 +205,13 @@ button.btn-secondary:hover:not(:disabled),
 }
 
 .verifier-side-left {
-  left: clamp(1rem, 3.5vw, 5.5rem);
+  left: clamp(1.2rem, 2.5vw, 3.5rem);
   transform: translateY(-50%);
   animation: floatSlowLeft 9s ease-in-out infinite;
 }
 
 .verifier-side-right {
-  right: clamp(1rem, 3.5vw, 5.5rem);
+  right: clamp(1.2rem, 2.5vw, 3.5rem);
   transform: translateY(-50%);
   animation: floatSlowRight 10s ease-in-out infinite;
 }
@@ -418,10 +418,10 @@ button.btn-secondary:hover:not(:disabled),
 /* -- Module Page Decorative Visuals (Always Fixed Visible Side Space Top-to-Bottom) -- */
 .module-bg-decorations {
   position: fixed;
-  top: 0;
+  top: 90px;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 90px);
   pointer-events: none;
   z-index: 1;
   overflow: hidden;
@@ -429,31 +429,39 @@ button.btn-secondary:hover:not(:disabled),
 
 .module-decor-left {
   position: fixed;
-  top: 20px;
-  left: clamp(0.2rem, 0.8vw, 1.2rem);
-  width: 150px;
-  max-width: 150px;
-  height: calc(100vh - 30px);
-  opacity: 0.75;
+  top: 90px;
+  left: clamp(1.2rem, 2.5vw, 3.5rem);
+  width: 140px;
+  max-width: 140px;
+  height: calc(100vh - 100px);
+  opacity: 0.85;
   animation: floatSlowLeft 9s ease-in-out infinite;
   pointer-events: none;
-  z-index: 1;
+  z-index: 0 !important;
 }
 
 .module-decor-right {
   position: fixed;
-  top: 20px;
-  right: clamp(0.2rem, 0.8vw, 1.2rem);
-  width: 150px;
-  max-width: 150px;
-  height: calc(100vh - 30px);
-  opacity: 0.75;
+  top: 90px;
+  right: clamp(1.2rem, 2.5vw, 3.5rem);
+  width: 140px;
+  max-width: 140px;
+  height: calc(100vh - 100px);
+  opacity: 0.85;
   animation: floatSlowRight 10s ease-in-out infinite;
   pointer-events: none;
-  z-index: 1;
+  z-index: 0 !important;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1250px) {
+  .module-decor-left,
+  .module-decor-right {
+    opacity: 0.5 !important;
+    width: 100px !important;
+  }
+}
+
+@media (max-width: 1080px) {
   .module-bg-decorations {
     display: none !important;
   }
@@ -491,7 +499,9 @@ button.btn-secondary:hover:not(:disabled),
   max-width: 1360px;
   margin: 0 auto;
   padding: 105px 1.5rem 2.5rem 1.5rem !important;
-  background: var(--color-bg);
+  background-color: var(--color-bg);
+  background-image: radial-gradient(rgba(10, 10, 10, 0.05) 0.8px, transparent 0.8px);
+  background-size: 24px 24px;
   min-height: 100vh;
   position: relative;
 }
@@ -507,7 +517,7 @@ button.btn-secondary:hover:not(:disabled),
   justify-content: space-between !important;
   align-items: center !important;
   border: none !important;
-  padding: 0.85rem max(1.5rem, calc((100% - 980px) / 2)) !important;
+  padding: 0.85rem max(1.5rem, calc((100% - 900px) / 2)) !important;
   z-index: 1000 !important;
   background: #ffffff !important;
   box-shadow: none !important;
@@ -524,7 +534,9 @@ button.btn-secondary:hover:not(:disabled),
 }
 
 .card {
-  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: radial-gradient(rgba(10, 10, 10, 0.03) 0.75px, transparent 0.75px) !important;
+  background-size: 16px 16px !important;
   border: 1px solid var(--color-border);
   border-radius: 25px !important;
   padding: 1.75rem;
@@ -1409,5 +1421,429 @@ input[type="date"], input[type="file"], select, textarea,
     max-width: 1600px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
+  }
+}
+
+/* ============================================================
+   PREMIUM MOTION SYSTEM — Monochrome Crest
+   Hackathon demo–grade animation layer.
+   Rules:
+     • Only animates transform & opacity (60fps safe).
+     • Strictly black / white / gray — no color additions.
+     • prefers-reduced-motion: reduce → near-instant or disabled.
+     • Reuses --color-ink / --color-muted / --color-fill-mid tokens.
+   ============================================================ */
+
+/* ── Easing custom properties ───────────────────────────── */
+:root {
+  --ease-premium-out : cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-interactive  : cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-micro         : 200ms;
+  --dur-entrance      : 560ms;
+  --dur-ambient       : 9000ms;
+}
+
+/* ── Shared New Keyframes ─────────────────────────────────
+   Extend the existing floatSlowLeft / floatSlowRight pattern.
+   ──────────────────────────────────────────────────────── */
+
+/* Clip-path seal-unveil: left → right mask slide */
+@keyframes clipReveal {
+  0%   { clip-path: inset(0 100% 0 0); opacity: 1; }
+  100% { clip-path: inset(0 0% 0 0);   opacity: 1; }
+}
+
+/* Rise + fade entrance (used by .reveal-up and stagger children) */
+@keyframes revealUp {
+  0%   { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0);    }
+}
+
+/* SVG line draw-in (apply via stroke-dashoffset on the element) */
+@keyframes drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+/* QR scan-line sweep */
+@keyframes scanSweep {
+  0%   { transform: translateY(0);    opacity: 0.9; }
+  48%  { opacity: 1; }
+  50%  { transform: translateY(100%); opacity: 0.9; }
+  52%  { opacity: 0.6; }
+  100% { transform: translateY(0);    opacity: 0.9; }
+}
+
+/* Failure shake — 3 oscillations, 300ms total */
+@keyframes shakeX {
+  0%, 100% { transform: translateX(0);   }
+  16%       { transform: translateX(-4px); }
+  33%       { transform: translateX( 4px); }
+  50%       { transform: translateX(-4px); }
+  66%       { transform: translateX( 4px); }
+  83%       { transform: translateX(-2px); }
+}
+
+/* Live-block pulse (opacity only) */
+@keyframes pulseLive {
+  0%, 100% { opacity: 1;   }
+  50%       { opacity: 0.55; }
+}
+
+/* Floating AI button idle scale pulse */
+@keyframes idlePulse {
+  0%, 100% { transform: scale(1);    }
+  50%       { transform: scale(1.04); }
+}
+
+/* Page transition: vertical drift fade */
+@keyframes pageFadeIn {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0);   }
+}
+@keyframes pageFadeOut {
+  0%   { opacity: 1; transform: translateY(0);    }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+
+/* Progress bar fill */
+@keyframes progressFill {
+  0%   { transform: scaleX(0);   }
+  100% { transform: scaleX(1);   }
+}
+
+/* Success checkmark circle scale-in */
+@keyframes circleScaleIn {
+  0%   { transform: scale(0.8); opacity: 0; }
+  70%  { transform: scale(1.04); }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+/* Typing-dot bounce */
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: translateY(0);    opacity: 0.5; }
+  40%            { transform: translateY(-4px); opacity: 1;   }
+}
+
+/* Chat bubble entrance */
+@keyframes bubbleSlideUp {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0);   }
+}
+
+/* ── Utility Classes ──────────────────────────────────────── */
+
+/* Seal-unveil clip reveal — apply to Prata hero headline */
+.reveal-clip {
+  animation: clipReveal var(--dur-entrance) var(--ease-premium-out) both;
+}
+
+/* Generic rise + fade entrance */
+.reveal-up {
+  animation: revealUp var(--dur-entrance) var(--ease-premium-out) both;
+}
+
+/* SVG polyline / border draw-in
+   Usage: set stroke-dasharray & stroke-dashoffset on the SVG element,
+   then add this class to trigger the animation.
+   Parametrize speed with: style={{ '--draw-duration': '800ms' }}
+   Falls back to --dur-entrance (560ms) when not set. */
+.draw-line {
+  animation: drawLine var(--draw-duration, var(--dur-entrance)) var(--ease-premium-out) forwards;
+}
+
+/* Stagger child — delays managed via --stagger-delay custom prop */
+.stagger-child {
+  opacity: 0;
+  animation: revealUp var(--dur-entrance) var(--ease-premium-out) both;
+  animation-delay: var(--stagger-delay, 0ms);
+}
+
+/* QR scan-line element */
+.qr-scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-ink);
+  opacity: 0.7;
+  animation: scanSweep 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Failure shake — add class via JS on verification fail */
+.shake {
+  animation: shakeX 300ms var(--ease-interactive) both;
+}
+
+/* Live-block pulse — add to newest blockchain row */
+.pulse-live {
+  animation: pulseLive 1.5s ease-in-out infinite;
+}
+
+/* Idle pulse for floating AI button */
+.idle-pulse {
+  animation: idlePulse 3s ease-in-out infinite;
+}
+
+/* Page wrapper transition classes (used with AnimatePresence) */
+.page-enter {
+  animation: pageFadeIn 250ms var(--ease-premium-out) both;
+}
+.page-exit {
+  animation: pageFadeOut 250ms var(--ease-interactive) both;
+}
+
+/* Top-of-page progress bar */
+.progress-bar-track {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  z-index: 9999;
+  pointer-events: none;
+  background: transparent;
+}
+.progress-bar-fill {
+  height: 2px;
+  background: var(--color-ink);
+  transform-origin: left center;
+  transform: scaleX(0);
+  animation: progressFill 600ms var(--ease-premium-out) forwards;
+}
+
+/* Success circle */
+.success-circle {
+  animation: circleScaleIn 400ms var(--ease-premium-out) both;
+}
+
+/* Typing indicator dots */
+.typing-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  animation: dotBounce 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 120ms; }
+.typing-dot:nth-child(3) { animation-delay: 240ms; }
+
+/* Chat bubble entrance */
+.chat-bubble-enter {
+  animation: bubbleSlideUp 200ms var(--ease-premium-out) both;
+}
+
+/* ── Portal card icon micro-interaction ────────────────────
+   Hover: icon lifts & rotates slightly, card lifts.
+   Extends the existing .btn:hover pattern.
+   ──────────────────────────────────────────────────────── */
+.portal-block {
+  transition: transform 250ms var(--ease-interactive) !important;
+}
+.portal-block:hover {
+  transform: translateY(-4px) !important;
+}
+.portal-block .node-icon-circle,
+.portal-block .portal-icon {
+  transition: transform 250ms var(--ease-interactive) !important;
+}
+.portal-block:hover .node-icon-circle,
+.portal-block:hover .portal-icon {
+  transform: scale(1.08) rotate(-2deg) !important;
+}
+
+/* ── Hash scramble hover — monospace flash ─────────────────
+   The JS layer cycles chars; CSS sets up the font style.
+   ──────────────────────────────────────────────────────── */
+.hash-scramble {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  cursor: default;
+  transition: opacity 80ms linear;
+}
+
+/* ── Dashboard stat card entrance ─────────────────────────
+   Add class="stat-card-animate" and --stagger-delay inline style.
+   ──────────────────────────────────────────────────────── */
+.stat-card-animate {
+  opacity: 0;
+  animation: revealUp var(--dur-entrance) var(--ease-premium-out) both;
+  animation-delay: var(--stagger-delay, 0ms);
+}
+
+/* ── Card lift — reusable hover elevation for non-button cards ──
+   Mirrors the existing .btn:hover translateY pattern.
+   Add class="card-lift" to any interactive card wrapper.         */
+.card-lift {
+  transition:
+    transform  200ms var(--ease-interactive),
+    box-shadow 200ms var(--ease-interactive);
+  will-change: transform;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+}
+
+/* ── Skeleton shimmer — monochrome, 1.2s sweep ─────────────────
+   Usage: <div className="skeleton" style={{ height: '1.2rem' }} />
+   Wrap multiple rows in a .skeleton-group for layout.           */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+.skeleton {
+  border-radius: 4px;
+  background:
+    linear-gradient(
+      90deg,
+      #e8e8e8 25%,
+      #d0d0d0 50%,
+      #e8e8e8 75%
+    );
+  background-size: 800px 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+  display: block;
+  width: 100%;
+}
+
+.skeleton-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+/* ── Toast slide-in/out — top-right notification primitive ─────
+   Apply .toast-enter on mount, .toast-exit on dismiss.
+   The shrinking-width auto-dismiss bar is added by ToastNotification.
+   These classes are the entrance/exit choreography only.        */
+@keyframes toastIn {
+  0%   { opacity: 0; transform: translateX(calc(100% + 1.5rem)); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes toastOut {
+  0%   { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(calc(100% + 1.5rem)); }
+}
+
+.toast-enter {
+  animation: toastIn 300ms var(--ease-premium-out) both;
+}
+.toast-exit {
+  animation: toastOut 250ms var(--ease-interactive) both;
+}
+
+/* Toast container — fixed top-right, stacks multiple toasts */
+.toast-container {
+  position: fixed;
+  top: 5.5rem;       /* clears the 90px fixed header */
+  right: 1.5rem;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  pointer-events: none;
+}
+
+/* Individual toast card */
+.toast-card {
+  pointer-events: auto;
+  background: var(--color-ink);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 0.75rem 1.25rem;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 500;
+  min-width: 220px;
+  max-width: 320px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.20);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Auto-dismiss shrinking bar (width animated via inline style) */
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.4);
+  transition: width linear;
+}
+
+/* Inverted (light) toast variant */
+.toast-card.toast-light {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+.toast-card.toast-light .toast-progress {
+  background: rgba(10, 10, 10, 0.3);
+}
+
+/* ── prefers-reduced-motion guard ─────────────────────────
+   Collapse or disable all custom animations for users who
+   have requested less motion in their OS accessibility settings.
+   ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  /* ── One-shot entrance animations: collapse to instant ──── */
+  .reveal-clip,
+  .reveal-up,
+  .draw-line,
+  .stagger-child,
+  .page-enter,
+  .page-exit,
+  .stat-card-animate,
+  .success-circle,
+  .chat-bubble-enter,
+  .toast-enter,
+  .toast-exit {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    opacity: 1 !important;
+    clip-path: none !important;
+    transform: none !important;
+  }
+
+  /* ── Looping animations: stop entirely ─────────────────── */
+  .qr-scan-line,
+  .pulse-live,
+  .idle-pulse,
+  .typing-dot,
+  .skeleton {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    background: #e8e8e8 !important;   /* static gray for skeleton */
+  }
+
+  /* ── Decoration floats: stop entirely ──────────────────── */
+  .portal-block,
+  .portal-block .node-icon-circle,
+  .portal-block .portal-icon,
+  .auth-side-decoration,
+  .verifier-side-decoration,
+  .module-decor-left,
+  .module-decor-right {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* ── Hover interactions: disable transform/shadow motion ── */
+  .card-lift,
+  .card-lift:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    transition: none !important;
+  }
+
+  /* ── Progress bar: instant fill ────────────────────────── */
+  .progress-bar-fill {
+    animation-duration: 1ms !important;
   }
 }

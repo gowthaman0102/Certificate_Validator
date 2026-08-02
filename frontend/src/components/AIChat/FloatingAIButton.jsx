@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ChatWindow from './ChatWindow';
 
-const GS = { ink: '#0a0a0a', muted: '#666666', subtle: '#999999', border: '#0a0a0a', bg: '#ffffff', mid: '#8c8c8c' };
+const GS = { ink: '#0a0a0a' };
+const PREMIUM = [0.16, 1, 0.3, 1];
 
 export function GradRobotIcon({ size = 32, color = 'currentColor' }) {
   return (
@@ -34,10 +36,22 @@ export default function FloatingAIButton() {
 
   return (
     <>
-      {/* Floating Button */}
-      <div
+      {/* Floating Button with ambient pulse & 90deg morph rotation */}
+      <motion.div
         onClick={handleToggle}
         title="Open AI Assistant"
+        animate={{
+          scale: isOpen ? [1] : [1, 1.04, 1],
+        }}
+        transition={{
+          scale: {
+            duration: 3,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          },
+        }}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.95 }}
         style={{
           position: 'fixed',
           bottom: '24px',
@@ -54,13 +68,20 @@ export default function FloatingAIButton() {
           boxShadow: '0 6px 20px rgba(0,0,0,0.18)',
           border: `2px solid ${GS.ink}`,
           zIndex: 9998,
-          transition: 'transform 0.2s ease, opacity 0.2s ease',
           userSelect: 'none',
         }}
-        onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
-        onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
       >
-        <GradRobotIcon size={34} color="#0a0a0a" />
+        <motion.div
+          animate={{ rotate: isOpen ? 90 : 0 }}
+          transition={{ duration: 0.25, ease: PREMIUM }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          {isOpen ? (
+            <span style={{ fontSize: '1.4rem', fontWeight: 700, lineHeight: 1, color: GS.ink }}>✕</span>
+          ) : (
+            <GradRobotIcon size={34} color="#0a0a0a" />
+          )}
+        </motion.div>
 
         {/* Unread Badge */}
         {!isOpen && unreadCount > 0 && (
@@ -85,10 +106,22 @@ export default function FloatingAIButton() {
             !
           </span>
         )}
-      </div>
+      </motion.div>
 
-      {/* Chat Drawer Window */}
-      {isOpen && <ChatWindow onClose={() => setIsOpen(false)} />}
+      {/* Chat Drawer Window with AnimatePresence */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.96 }}
+            transition={{ duration: 0.25, ease: PREMIUM }}
+            style={{ position: 'fixed', bottom: '90px', right: '24px', zIndex: 9999 }}
+          >
+            <ChatWindow onClose={() => setIsOpen(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

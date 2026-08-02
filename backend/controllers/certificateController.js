@@ -572,3 +572,4 @@ function getCertificatesByIdentity(req, res) {
 }
 
 module.exports = { uploadCertificate, getCertificate, getCertificateByCertNumber, getCertificatesByUniversity, getCertificatesByEmail, getCertificatesByRegisterNumber, bulkUploadCertificates, getCertificatesByIdentity };
+

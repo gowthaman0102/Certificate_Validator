@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 
-const GS = { ink: '#0a0a0a', muted: '#666666', subtle: '#999999', border: '#0a0a0a', bg: '#ffffff', mid: '#8c8c8c' };
+const GS = { ink: '#0a0a0a', muted: '#666666', border: '#0a0a0a', mid: '#8c8c8c' };
+const PREMIUM = [0.16, 1, 0.3, 1];
 
 export default function ChatBubble({ message }) {
   const [copied, setCopied] = useState(false);
@@ -53,7 +55,6 @@ export default function ChatBubble({ message }) {
   }
 
   function parseFormattedText(str) {
-    // Replace **bold** and `code`
     const parts = str.split(/(\*\*.*?\*\*|`.*?`)/g);
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
@@ -71,7 +72,12 @@ export default function ChatBubble({ message }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: isUser ? 'flex-end' : 'flex-start', marginBottom: '0.85rem' }}>
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: PREMIUM }}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: isUser ? 'flex-end' : 'flex-start', marginBottom: '0.85rem' }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem', fontSize: '0.7rem', color: GS.muted, fontWeight: 600 }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
           {isUser ? (
@@ -96,7 +102,7 @@ export default function ChatBubble({ message }) {
           background: isUser ? GS.ink : '#f8f9fa',
           color: isUser ? '#ffffff' : GS.ink,
           border: `1px solid ${GS.border}`,
-          borderRadius: '0',
+          borderRadius: '16px',
           fontSize: '0.85rem',
           position: 'relative',
           wordBreak: 'break-word',
@@ -124,6 +130,6 @@ export default function ChatBubble({ message }) {
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
