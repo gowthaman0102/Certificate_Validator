@@ -7,14 +7,32 @@ import { jsPDF } from 'jspdf';
 import { fetchVerificationAnalytics } from '../api/analytics';
 import VerificationAnalyticsDecorations from '../components/decorations/VerificationAnalyticsDecorations';
 
-const GS = { ink: '#0a0a0a', muted: '#666666', subtle: '#999999', border: '#0a0a0a', bg: '#ffffff', mid: '#8c8c8c' };
-const tooltipStyle = { background: GS.bg, border: `1px solid ${GS.border}`, borderRadius: '0', fontSize: '0.8rem', color: GS.ink };
+const GS = { ink: '#0a0a0a', muted: '#64748b', subtle: '#94a3b8', border: '#0a0a0a', bg: '#ffffff', mid: '#334155' };
+
+const customTooltipStyle = {
+  background: '#ffffff',
+  border: '2px solid #0a0a0a',
+  borderRadius: '8px',
+  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+  fontSize: '0.82rem',
+  color: '#0a0a0a',
+  padding: '8px 14px',
+  fontWeight: 600,
+  fontFamily: '"Inter", sans-serif'
+};
 
 function StatBox({ label, value }) {
   return (
-    <div style={{ background: GS.bg, border: `1px solid ${GS.border}`, padding: '0.85rem 0.75rem', textAlign: 'center' }}>
-      <div style={{ fontSize: '1.4rem', fontWeight: 400, color: GS.ink, fontFamily: "'Prata', serif", lineHeight: 1, marginBottom: '6px' }}>{value ?? '—'}</div>
-      <div style={{ fontSize: '0.72rem', color: GS.muted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+    <div style={{
+      background: '#ffffff',
+      border: `2px solid ${GS.border}`,
+      borderRadius: '12px',
+      padding: '1.1rem 1rem',
+      textAlign: 'center',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+    }}>
+      <div style={{ fontSize: '1.8rem', fontWeight: 700, color: GS.ink, fontFamily: '"Prata", serif', lineHeight: 1.1, marginBottom: '6px' }}>{value ?? '—'}</div>
+      <div style={{ fontSize: '0.75rem', color: GS.muted, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>{label}</div>
     </div>
   );
 }
@@ -72,28 +90,36 @@ function VerificationAnalytics() {
 
   if (loading) return (
     <div className="dashboard">
+      <VerificationAnalyticsDecorations />
       <div className="dashboard-header"><h2>Verification Analytics</h2></div>
-      <div className="card"><p style={{ color: GS.muted }}>Loading analytics…</p></div>
+      <div className="card" style={{ maxWidth: '1280px' }}><p style={{ color: GS.muted }}>Loading analytics…</p></div>
     </div>
   );
 
   return (
-    <div className="dashboard" ref={pageRef}>
+    <div className="dashboard" ref={pageRef} style={{ minHeight: '100vh', paddingBottom: '3rem' }}>
       <VerificationAnalyticsDecorations />
+
+      {/* ── HEADER BAR ────────────────────────────────────────────── */}
       <div className="dashboard-header">
         <h2>Verification Analytics</h2>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button className="btn" onClick={handleExcel} disabled={!!exporting} id="vanalytics-excel-btn">{exporting === 'excel' ? 'Exporting…' : 'Export Excel'}</button>
           <button className="btn" onClick={handlePdf} disabled={!!exporting} id="vanalytics-pdf-btn">{exporting === 'pdf' ? 'Exporting…' : 'Export PDF'}</button>
           <button className="btn-secondary" onClick={() => navigate('/university')} id="vanalytics-back-btn">← Dashboard</button>
           <button className="logout-btn" onClick={handleLogout} id="vanalytics-logout-btn">Logout</button>
         </div>
       </div>
-      {error && <div className="card"><div className="error-msg">{error}</div></div>}
+
+      {error && <div className="card" style={{ maxWidth: '1280px' }}><div className="error-msg">{error}</div></div>}
+
+      {/* ── VERIFICATION OVERVIEW STAT CARDS ───────────────────────── */}
       {data?.summary && (
-        <div className="card">
-          <h3>Verification Overview</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
+        <div className="card" style={{ maxWidth: '1280px', border: '2px solid #0a0a0a', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ borderBottom: '2px solid #0a0a0a', paddingBottom: '0.6rem', marginBottom: '1rem', fontWeight: 700, fontSize: '1.2rem', color: GS.ink }}>
+            Verification Overview
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem' }}>
             <StatBox label="Total Verifications" value={data.summary.total} />
             <StatBox label="Valid Results" value={data.summary.valid_count} />
             <StatBox label="Tampered Attempts" value={data.summary.tampered_count} />
@@ -101,10 +127,14 @@ function VerificationAnalytics() {
           </div>
         </div>
       )}
+
+      {/* ── AUTHENTICATION EVENTS STAT CARDS ──────────────────────── */}
       {data?.authSummary && (
-        <div className="card">
-          <h3>Authentication Events</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
+        <div className="card" style={{ maxWidth: '1280px', marginTop: '1.5rem', border: '2px solid #0a0a0a', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ borderBottom: '2px solid #0a0a0a', paddingBottom: '0.6rem', marginBottom: '1rem', fontWeight: 700, fontSize: '1.2rem', color: GS.ink }}>
+            Authentication Events
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem' }}>
             <StatBox label="Total Auth Events" value={data.authSummary.total} />
             <StatBox label="Successful Logins" value={data.authSummary.login_success} />
             <StatBox label="Failed Logins" value={data.authSummary.login_failure} />
@@ -112,56 +142,48 @@ function VerificationAnalytics() {
           </div>
         </div>
       )}
+
+
+
+      {/* ── RESULT BREAKDOWN BY MONTH (MONOCHROME STACKED BAR CHART) ── */}
       {data?.monthly?.length > 0 && (
-        <div className="card">
-          <h3>Monthly Verification Trend (Last 12 Months)</h3>
-          <ResponsiveContainer width="100%" height={230}>
-            <LineChart data={data.monthly} margin={{ top: 10, right: 15, left: -10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: GS.muted }} />
-              <YAxis tick={{ fontSize: 11, fill: GS.muted }} allowDecimals={false} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Legend wrapperStyle={{ fontSize: '0.78rem' }} />
-              <Line type="monotone" dataKey="total" name="Total" stroke="#0a0a0a" strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="valid_count" name="Valid" stroke="#4f46e5" strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="tampered_count" name="Tampered" stroke="#dc2626" strokeWidth={2} dot={{ r: 3 }} strokeDasharray="4 2" />
-              <Line type="monotone" dataKey="revoked_count" name="Revoked" stroke="#d97706" strokeWidth={2} dot={{ r: 3 }} strokeDasharray="4 2" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-      {data?.monthly?.length > 0 && (
-        <div className="card">
-          <h3>Result Breakdown by Month</h3>
-          <ResponsiveContainer width="100%" height={230}>
-            <BarChart data={data.monthly} margin={{ top: 10, right: 15, left: -10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: GS.muted }} />
-              <YAxis tick={{ fontSize: 11, fill: GS.muted }} allowDecimals={false} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Legend wrapperStyle={{ fontSize: '0.78rem' }} />
-              <Bar dataKey="valid_count" name="Valid" fill="#4f46e5" maxBarSize={38} radius={[3, 3, 0, 0]} stackId="a" />
-              <Bar dataKey="revoked_count" name="Revoked" fill="#d97706" maxBarSize={38} radius={[3, 3, 0, 0]} stackId="a" />
-              <Bar dataKey="tampered_count" name="Tampered" fill="#dc2626" maxBarSize={38} radius={[3, 3, 0, 0]} stackId="a" />
+        <div className="card" style={{ maxWidth: '1280px', marginTop: '1.5rem', border: '2px solid #0a0a0a', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ borderBottom: '2px solid #0a0a0a', paddingBottom: '0.6rem', marginBottom: '1rem', fontWeight: 700, fontSize: '1.2rem', color: GS.ink }}>
+            Result Breakdown by Month
+          </h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={data.monthly} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: GS.ink, fontWeight: 600 }} />
+              <YAxis tick={{ fontSize: 11, fill: GS.ink, fontWeight: 600 }} allowDecimals={false} />
+              <Tooltip contentStyle={customTooltipStyle} cursor={{ fill: 'rgba(15, 23, 42, 0.06)' }} />
+              <Legend wrapperStyle={{ fontSize: '0.8rem', fontWeight: 600, color: GS.ink }} />
+              <Bar dataKey="valid_count" name="Valid" fill="#0a0a0a" maxBarSize={38} radius={[0, 0, 0, 0]} stackId="a" />
+              <Bar dataKey="revoked_count" name="Revoked" fill="#64748b" maxBarSize={38} radius={[0, 0, 0, 0]} stackId="a" />
+              <Bar dataKey="tampered_count" name="Tampered" fill="#94a3b8" maxBarSize={38} radius={[3, 3, 0, 0]} stackId="a" />
             </BarChart>
           </ResponsiveContainer>
         </div>
       )}
+
+      {/* ── RECENT VERIFICATION EVENTS LIST ───────────────────────── */}
       {data?.recent?.length > 0 && (
-        <div className="card">
-          <h3>Recent Verification Events</h3>
+        <div className="card" style={{ maxWidth: '1280px', marginTop: '1.5rem', border: '2px solid #0a0a0a', borderRadius: '12px' }}>
+          <h3 style={{ borderBottom: '2px solid #0a0a0a', paddingBottom: '0.6rem', marginBottom: '1rem', fontWeight: 700, fontSize: '1.2rem', color: GS.ink }}>
+            Recent Verification Events
+          </h3>
           <div className="cert-list">
             {data.recent.map((row, i) => {
               const det = parseDetail(row.details);
               const result = det.result || '—';
               return (
-                <div key={i} style={{ background: GS.bg, border: `1px solid ${GS.border}`, padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div key={i} style={{ background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '8px', padding: '0.85rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <div>
-                    <div style={{ fontWeight: 600, color: GS.ink, fontSize: '0.88rem' }}>{row.resource_id || '—'}</div>
-                    <div style={{ fontSize: '0.78rem', color: GS.muted }}>{det.student_name && `${det.student_name} · `}{det.course && `${det.course} · `}IP: {row.ip_address || '—'}</div>
+                    <div style={{ fontWeight: 700, color: GS.ink, fontSize: '0.92rem' }}>{row.resource_id || '—'}</div>
+                    <div style={{ fontSize: '0.8rem', color: GS.muted, marginTop: '2px' }}>{det.student_name && `${det.student_name} · `}{det.course && `${det.course} · `}IP: {row.ip_address || '—'}</div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: GS.subtle }}>{fmt(row.timestamp)}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '0.78rem', color: GS.subtle, fontWeight: 500 }}>{fmt(row.timestamp)}</span>
                     <span className={`status-badge ${result === 'VALID' ? 'status-valid' : 'status-revoked'}`}>{result}</span>
                   </div>
                 </div>

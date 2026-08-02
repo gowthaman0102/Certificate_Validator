@@ -3,6 +3,7 @@ import ChatBubble from './ChatBubble';
 import SuggestedQuestions from './SuggestedQuestions';
 import TypingIndicator from './TypingIndicator';
 import { sendChatMessage, getChatHistory, clearChatHistory } from '../../api/chat';
+import { GradRobotIcon } from './FloatingAIButton';
 
 const GS = { ink: '#0a0a0a', muted: '#666666', subtle: '#999999', border: '#0a0a0a', bg: '#ffffff', mid: '#8c8c8c' };
 
@@ -162,10 +163,8 @@ How can I help you today?`,
           borderBottom: `1px solid ${GS.ink}`,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
-          </svg>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <GradRobotIcon size={22} color="#ffffff" />
           <span style={{ fontSize: '0.95rem', fontWeight: 600, fontFamily: "'Prata', serif" }}>AI Assistant</span>
         </div>
 

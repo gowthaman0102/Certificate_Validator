@@ -116,13 +116,61 @@ function Home() {
         {/* ── 1. Top Hero Section ────────────────────────────── */}
         <section className="hero-grid diagram-layout">
           {/* Left Column: Branding & Headline */}
-          <div className="hero-left-col">
-            <div className="brand-header-block">
+          <div className="hero-left-col" style={{ position: 'relative' }}>
+            {/* Background Cryptographic & Blockchain Graphic Visuals (Behind Content) */}
+            <svg className="hero-bg-visual" viewBox="0 0 600 350" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0, opacity: 0.32 }}>
+              {/* Dot matrix grid */}
+              <pattern id="heroBgGrid" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
+                <circle cx="2.5" cy="2.5" r="1.5" fill="#0a0a0a" opacity="0.35" />
+              </pattern>
+              <rect x="0" y="0" width="600" height="350" fill="url(#heroBgGrid)" opacity="0.45" />
+
+              {/* Large Concentric Cryptographic Inspection Seals */}
+              <circle cx="280" cy="175" r="145" stroke="#0a0a0a" strokeWidth="1" strokeDasharray="6 6" opacity="0.25" />
+              <circle cx="280" cy="175" r="110" stroke="#0a0a0a" strokeWidth="0.8" strokeDasharray="3 4" opacity="0.2" />
+
+              {/* SHA-256 Hash Inspection Wave Curves */}
+              <path d="M 10 35 Q 160 5, 290 35 T 560 35" stroke="#0a0a0a" strokeWidth="2" strokeDasharray="4 4" fill="none" opacity="0.4" />
+              <circle cx="290" cy="35" r="4.5" fill="#0a0a0a" opacity="0.55" />
+              <path d="M 20 310 Q 180 340, 310 310 T 580 310" stroke="#0a0a0a" strokeWidth="1.5" strokeDasharray="3 3" fill="none" opacity="0.3" />
+
+              {/* Connected Blockchain Ledger Blocks */}
+              <g opacity="0.35">
+                {/* Block 1 */}
+                <rect x="25" y="70" width="42" height="28" rx="5" stroke="#0a0a0a" strokeWidth="1.4" fill="none" />
+                <path d="M 32 84 L 60 84" stroke="#0a0a0a" strokeWidth="1.2" />
+                <circle cx="46" cy="84" r="2.5" fill="#0a0a0a" />
+
+                {/* Block 2 (Connected) */}
+                <line x1="67" y1="84" x2="115" y2="84" stroke="#0a0a0a" strokeWidth="1.2" strokeDasharray="2 2" />
+                <rect x="115" y="70" width="42" height="28" rx="5" stroke="#0a0a0a" strokeWidth="1.4" fill="none" />
+
+                {/* Hexagonal Cryptographic Security Shield Outline */}
+                <polygon points="510,105 545,125 545,165 510,185 475,165 475,125" stroke="#0a0a0a" strokeWidth="1.6" fill="none" />
+                <path d="M 500 145 L 508 153 L 522 137" stroke="#0a0a0a" strokeWidth="2" fill="none" strokeLinecap="round" />
+
+                {/* Crosshair Tickers */}
+                <path d="M 530 40 L 542 40 M 536 34 L 536 46" stroke="#0a0a0a" strokeWidth="1.2" />
+                <path d="M 40 240 L 52 240 M 46 234 L 46 246" stroke="#0a0a0a" strokeWidth="1.2" />
+
+                {/* Binary & Hash Watermark Streams */}
+                <text x="15" y="272" fontFamily="monospace" fontSize="8.5" fill="#0a0a0a" letterSpacing="0.1em">SHA256 :: 0x8f9a2b4e7c1d3e5f6a8b9c0d1e2f3a4b</text>
+                <text x="15" y="289" fontFamily="monospace" fontSize="7.8" fill="#666666" letterSpacing="0.08em">IMMUTABLE LEDGER VERIFIED · ZERO TAMPERING</text>
+                <text x="320" y="272" fontFamily="monospace" fontSize="8" fill="#8c8c8c" letterSpacing="0.06em">BLOCK #849201 [CONFIRMED]</text>
+              </g>
+
+              {/* Decorative Horizontal Guidelines with Diamond Endpoints */}
+              <line x1="10" y1="325" x2="570" y2="325" stroke="#0a0a0a" strokeWidth="1.2" strokeDasharray="6 4" opacity="0.3" />
+              <polygon points="10,325 15,321 20,325 15,329" fill="#0a0a0a" opacity="0.4" />
+              <polygon points="565,325 570,321 575,325 570,329" fill="#0a0a0a" opacity="0.4" />
+            </svg>
+
+            <div className="brand-header-block" style={{ position: 'relative', zIndex: 1 }}>
               <h1 className="main-brand-title">CredentialVault</h1>
               <p className="main-brand-subtitle">Offline-Verifiable Digital Academic Credentials</p>
             </div>
 
-            <div className="headline-block">
+            <div className="headline-block" style={{ position: 'relative', zIndex: 1 }}>
               <h2 className="headline-text">
                 Verify. Anywhere. Trust. Forever.
               </h2>
@@ -366,7 +414,7 @@ function Home() {
             </div>
           </div>
 
-          {/* Card 4: Blockchain (Unified White BG & Black Button) */}
+          {/* Card 4: Blockchain */}
           <div className="portal-block">
             <div className="portal-top-meta">
               <IsometricCubesIcon size={30} color="#0a0a0a" />

@@ -48,7 +48,7 @@ function UniversityLogin() {
           <button type="submit" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
         </form>
         <p>Don't have a university account? <Link to="/university-register">Register</Link></p>
-        <p><Link to="/">Back to Home</Link></p>
+        <p style={{ marginTop: '1rem' }}><Link to="/" className="btn-back-home-oval">← Back to Home</Link></p>
       </div>
     </div>
   );

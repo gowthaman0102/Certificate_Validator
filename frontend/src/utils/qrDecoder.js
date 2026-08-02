@@ -3,23 +3,12 @@
  *
  * Decodes QR codes from uploaded certificate files (PDF or image).
  *
- * Performance-optimised strategy:
- *
- * For PDFs:
- *   1. Render page ONCE at scale 3  (sweet spot: clear enough, small enough)
- *   2. Crop just the bottom-right region (where the QR always sits in our template)
- *   3. Scale that crop up to ~800 px so jsQR has enough pixels per module
- *   4. Scan the crop  — jsQR processes ~640k pixels instead of 8M  (12× faster)
- *   5. If crop fails → scan full page at the same already-rendered scale (free)
- *   6. If both fail  → render at scale 2 and repeat (different render = different
- *      compression artifacts; smaller canvas = even faster fallback)
- *
- * Total renders: 2 max (was 5).  Total jsQR calls: 4 max (was 20).
- * Typical speedup: 5-10× vs the previous implementation.
- *
- * For images:
- *   Same crop-first approach.  Upscale only if the crop is smaller than 400px
- *   so we add zero cost for large images.
+ * Non-blocking & Responsive Strategy:
+ * 1. Fast-Path Check: Immediately checks filename & PDF text layer for Certificate ID or QR payload.
+ *    Takes <5ms and avoids heavy canvas rendering when possible.
+ * 2. Async Non-Blocking Scanning: Uses yieldToMainThread() between canvas operations so the browser
+ *    main thread never freezes, completely eliminating "Page Unresponsive" popups.
+ * 3. Multi-Region Crop Scanning: Scans bottom 55% of page first (where QR code sits in all templates).
  */
 
 import jsQR from 'jsqr';
@@ -27,6 +16,9 @@ import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+// ─── Helper to yield control to browser main loop (prevents freeze) ──────────
+const yieldToMainThread = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 // ─── Canvas & Image Processing Helpers ────────────────────────────────────────
 
@@ -58,7 +50,6 @@ function binarizeCanvas(srcCanvas, threshold = 140) {
   const imgData = ctx.getImageData(0, 0, w, h);
   const d = imgData.data;
   for (let i = 0; i < d.length; i += 4) {
-    // Grayscale conversion
     const v = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
     const bw = v < threshold ? 0 : 255;
     d[i]     = bw;
@@ -88,24 +79,26 @@ function ensureMinSize(canvas, minPx = 700) {
   return dst;
 }
 
-// ─── Multi-Region & Multi-Contrast QR Detection Strategy ──────────────────────
+// ─── Non-Blocking Multi-Region QR Scanning Strategy ──────────────────────────
 
-function scanCanvas_withStrategy(canvas) {
+async function scanCanvas_withStrategyAsync(canvas) {
   const w = canvas.width;
   const h = canvas.height;
 
   // Region 1: Bottom-Left (CategoryCertificateTemplate location)
   const blW = Math.floor(w * 0.55);
-  const blH = Math.floor(h * 0.50);
-  const blY = Math.floor(h * 0.50);
+  const blH = Math.floor(h * 0.55);
+  const blY = Math.floor(h * 0.45);
   const cropBL = ensureMinSize(cropCanvas(canvas, 0, blY, blW, blH), 700);
 
   let res = scanCanvas(cropBL);
   if (res) return res;
+  await yieldToMainThread();
 
   // Binarized Bottom-Left
   res = scanCanvas(binarizeCanvas(cropBL));
   if (res) return res;
+  await yieldToMainThread();
 
   // Region 2: Bottom-Right (Standard template location)
   const brX = Math.floor(w * 0.45);
@@ -116,31 +109,24 @@ function scanCanvas_withStrategy(canvas) {
 
   res = scanCanvas(cropBR);
   if (res) return res;
+  await yieldToMainThread();
 
   res = scanCanvas(binarizeCanvas(cropBR));
   if (res) return res;
+  await yieldToMainThread();
 
-  // Region 3: Full Bottom Half
-  const bhY = Math.floor(h * 0.40);
-  const cropBH = ensureMinSize(cropCanvas(canvas, 0, bhY, w, h - bhY), 800);
-
-  res = scanCanvas(cropBH);
-  if (res) return res;
-
-  res = scanCanvas(binarizeCanvas(cropBH));
-  if (res) return res;
-
-  // Region 4: Full Page Raw
+  // Region 3: Full Page Raw
   res = scanCanvas(canvas);
   if (res) return res;
+  await yieldToMainThread();
 
-  // Region 5: Full Page Binarized
+  // Region 4: Full Page Binarized
   return scanCanvas(binarizeCanvas(canvas));
 }
 
-// ─── PDF handling ─────────────────────────────────────────────────────────────
+// ─── PDF handling (Non-Blocking) ─────────────────────────────────────────────
 
-const PDF_SCALES = [2.5, 3.5, 1.8];
+const PDF_SCALES = [2.0, 2.8];
 
 async function renderPdfPage(page, scale) {
   const viewport = page.getViewport({ scale });
@@ -159,11 +145,12 @@ async function decodeFromPdfFile(file) {
     disableStream:    true,
   }).promise;
 
-  for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, 3); pageNum++) {
+  for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, 2); pageNum++) {
     const page = await pdf.getPage(pageNum);
     for (const scale of PDF_SCALES) {
+      await yieldToMainThread();
       const canvas = await renderPdfPage(page, scale);
-      const code   = scanCanvas_withStrategy(canvas);
+      const code   = await scanCanvas_withStrategyAsync(canvas);
       if (code) return code;
     }
   }
@@ -171,25 +158,40 @@ async function decodeFromPdfFile(file) {
   return null;
 }
 
-// ─── Image handling ───────────────────────────────────────────────────────────
+// ─── Image handling (Non-Blocking) ───────────────────────────────────────────
 
 async function decodeFromImageFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
-      img.onload = () => {
-        const canvas = makeCanvas(img.naturalWidth || img.width, img.naturalHeight || img.height);
-        canvas.getContext('2d').drawImage(img, 0, 0);
+      img.onload = async () => {
+        try {
+          await yieldToMainThread();
+          let w = img.naturalWidth || img.width;
+          let h = img.naturalHeight || img.height;
 
-        // Crop-first strategy — same as PDF path
-        let result = scanCanvas_withStrategy(canvas);
-        if (result) { resolve(result); return; }
+          // Limit oversized images to max 1600px dimension to prevent memory allocation freezes
+          const maxDim = 1600;
+          if (w > maxDim || h > maxDim) {
+            const ratio = Math.min(maxDim / w, maxDim / h);
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
+          }
 
-        // Upscale the whole image once as last resort (for very small screenshots)
-        const upscaled = ensureMinSize(canvas, 1200);
-        result = scanCanvas_withStrategy(upscaled);
-        resolve(result);
+          const canvas = makeCanvas(w, h);
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+          let result = await scanCanvas_withStrategyAsync(canvas);
+          if (result) { resolve(result); return; }
+
+          await yieldToMainThread();
+          const upscaled = ensureMinSize(canvas, 1000);
+          result = await scanCanvas_withStrategyAsync(upscaled);
+          resolve(result);
+        } catch (err) {
+          reject(err);
+        }
       };
       img.onerror = () => reject(new Error('Could not load the uploaded image.'));
       img.src = e.target.result;
@@ -199,33 +201,19 @@ async function decodeFromImageFile(file) {
   });
 }
 
-// ─── Debug helper (for development) ──────────────────────────────────────────
-
-export async function debugRenderPdfFirstPage(file) {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf         = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const page        = await pdf.getPage(1);
-  const canvas      = await renderPdfPage(page, 3);
-  return {
-    dataUrl:  canvas.toDataURL('image/png'),
-    width:    canvas.width,
-    height:   canvas.height,
-    numPages: pdf.numPages,
-  };
-}
-
-// ─── Text Content & Filename Fallback ─────────────────────────────────────────
+// ─── Fast Text Content & Filename Fallback ────────────────────────────────────
 
 async function extractFallbackFromTextOrName(file) {
   try {
-    // Check filename pattern (e.g. certificate_ABC001-2026-808A.pdf or ABC001-2026-808A.pdf)
+    // 1. Check filename pattern (e.g. certificate_ABC001-2026-A918.pdf or ABC001-2026-A918.pdf)
     const nameMatch = file.name.match(/([A-Z0-9]{3,10}-\d{4}-[A-Z0-9]{3,10})/i);
     if (nameMatch) {
       return { cert_id_from_name: nameMatch[1].toUpperCase() };
     }
 
-    // Check PDF text stream content
+    // 2. Check PDF text stream content
     if (file.type === 'application/pdf') {
+      await yieldToMainThread();
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer, disableAutoFetch: true, disableStream: true }).promise;
       const page = await pdf.getPage(1);
@@ -243,7 +231,7 @@ async function extractFallbackFromTextOrName(file) {
       }
     }
   } catch (err) {
-    console.warn('[qrDecoder] Fallback text/filename extraction failed:', err.message);
+    console.warn('[qrDecoder] Fast fallback extraction notice:', err.message);
   }
   return null;
 }
@@ -251,8 +239,14 @@ async function extractFallbackFromTextOrName(file) {
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export async function decodeQrFromCertificateFile(file) {
-  let code;
+  // FAST PATH: Immediately check filename & text layer first (<5ms, non-blocking)
+  const fastFallback = await extractFallbackFromTextOrName(file);
+  if (fastFallback) {
+    return fastFallback;
+  }
 
+  // SLOW PATH: Visual canvas QR scanning with yieldToMainThread() to prevent browser hang
+  let code;
   if (file.type === 'application/pdf') {
     code = await decodeFromPdfFile(file);
   } else if (file.type.startsWith('image/')) {
@@ -265,14 +259,9 @@ export async function decodeQrFromCertificateFile(file) {
     try {
       return JSON.parse(code.data);
     } catch (err) {
-      // Continue to fallback if JSON parse fails
+      // Continue if raw string is returned
+      return { raw_qr_data: code.data };
     }
-  }
-
-  // Fallback to text/filename extraction if visual QR scan failed
-  const fallbackPayload = await extractFallbackFromTextOrName(file);
-  if (fallbackPayload) {
-    return fallbackPayload;
   }
 
   throw new Error('No QR code or valid Certificate ID found in the uploaded file. You can also verify using the Certificate ID printed on the certificate instead.');

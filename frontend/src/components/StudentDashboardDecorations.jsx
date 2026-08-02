@@ -68,7 +68,7 @@ export function StudentDashboardDecorations() {
           <g transform="translate(10, 540)">
             <rect x="0" y="0" width="125" height="68" rx="4" stroke="#0a0a0a" strokeWidth="2" fill="#ffffff" fillOpacity="0.95" />
             <text x="10" y="20" fontFamily="monospace" fontSize="8.5" fontWeight="bold" fill="#0a0a0a">STUDENT CREDENTIAL</text>
-            <text x="10" y="40" fontFamily="serif" fontSize="14" fontWeight="bold" fill="#0a0a0a">VERIFIED PORTFOLIO</text>
+            <text x="10" y="40" fontFamily="serif" fontSize="10.5" fontWeight="bold" fill="#0a0a0a">VERIFIED PORTFOLIO</text>
             <text x="10" y="54" fontFamily="monospace" fontSize="7.5" fill="#0a0a0a">✓ AUTHENTICATED</text>
           </g>
 

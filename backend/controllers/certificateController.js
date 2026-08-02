@@ -14,17 +14,128 @@ const RESTRICTED_CATEGORIES = new Set([
   'Distinction Certificate',
 ]);
 
+/**
+ * Strict 3-way credential verification helper:
+ * Ensures student_name, register_number, and student_email are all provided
+ * and that all 3 belong to the exact same student record (in `users` table or existing `certificates`).
+ */
+function verifyStudentCredentials(student_name, register_number, student_email) {
+  const normName  = (student_name || '').trim().replace(/\s+/g, ' ');
+  const normRegNo = (register_number || '').trim();
+  const normEmail = (student_email || '').trim().toLowerCase();
+
+  if (!normName || !normRegNo || !normEmail) {
+    return {
+      valid: false,
+      error: 'Student Name, Register Number, and Student Email are all required to issue a certificate.'
+    };
+  }
+
+  // Helper for flexible name matching (case-insensitive, whitespace-normalized)
+  const isNameMatch = (nameA, nameB) => {
+    const a = (nameA || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const b = (nameB || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    return a === b || a.includes(b) || b.includes(a);
+  };
+
+  // 1. Check registered student accounts in `users` table
+  const userByEmail = db.prepare("SELECT * FROM users WHERE role = 'STUDENT' AND LOWER(email) = ?").get(normEmail);
+  const userByRegNo = db.prepare("SELECT * FROM users WHERE role = 'STUDENT' AND register_number = ?").get(normRegNo);
+
+  if (userByEmail || userByRegNo) {
+    // If student exists by both, ensure both query results point to the same user ID
+    if (userByEmail && userByRegNo && userByEmail.id !== userByRegNo.id) {
+      return {
+        valid: false,
+        error: 'Credential Verification Failed: Provided Email and Register Number belong to two different registered students.'
+      };
+    }
+
+    const user = userByEmail || userByRegNo;
+
+    // Verify email match
+    if (user.email && user.email.trim().toLowerCase() !== normEmail) {
+      return {
+        valid: false,
+        error: `Credential Verification Failed: Provided Email does not match the registered record for Register Number '${normRegNo}'.`
+      };
+    }
+
+    // Verify register number match
+    if (user.register_number && user.register_number.trim() !== normRegNo) {
+      return {
+        valid: false,
+        error: `Credential Verification Failed: Provided Register Number does not match the registered record for email '${normEmail}'.`
+      };
+    }
+
+    // Verify student name match
+    if (user.name && !isNameMatch(user.name, normName)) {
+      return {
+        valid: false,
+        error: 'Credential Verification Failed: Provided Student Name does not match the registered student record.'
+      };
+    }
+
+    return { valid: true, studentUserId: user.id };
+  }
+
+  // 2. Check existing certificates in `certificates` table for non-registered students
+  const certByEmail = db.prepare("SELECT * FROM certificates WHERE LOWER(student_email) = ? AND status != 'REVOKED' LIMIT 1").get(normEmail);
+  const certByRegNo = db.prepare("SELECT * FROM certificates WHERE register_number = ? AND status != 'REVOKED' LIMIT 1").get(normRegNo);
+
+  if (certByEmail || certByRegNo) {
+    if (certByEmail && certByRegNo && (certByEmail.register_number !== certByRegNo.register_number || certByEmail.student_email?.toLowerCase() !== certByRegNo.student_email?.toLowerCase())) {
+      return {
+        valid: false,
+        error: 'Credential Verification Failed: Provided Email and Register Number are linked to different students in prior certificate records.'
+      };
+    }
+
+    const existingCert = certByEmail || certByRegNo;
+
+    if (existingCert.student_email && existingCert.student_email.trim().toLowerCase() !== normEmail) {
+      return {
+        valid: false,
+        error: `Credential Verification Failed: Provided Email does not match existing records for Register Number '${normRegNo}'.`
+      };
+    }
+
+    if (existingCert.register_number && existingCert.register_number.trim() !== normRegNo) {
+      return {
+        valid: false,
+        error: `Credential Verification Failed: Provided Register Number does not match existing records for email '${normEmail}'.`
+      };
+    }
+
+    if (existingCert.student_name && !isNameMatch(existingCert.student_name, normName)) {
+      return {
+        valid: false,
+        error: 'Credential Verification Failed: Provided Student Name does not match existing records.'
+      };
+    }
+  }
+
+  return { valid: true, studentUserId: null };
+}
+
 async function uploadCertificate(req, res) {
   try {
     const { student_name, student_email, register_number, course, cgpa, start_year, end_year, issue_date,
             certificate_category, certificate_detail } = req.body;
     const userId = req.user.id;
 
-    if (!student_name || !register_number || !course || !end_year || !issue_date) {
-      return res.status(400).json({ error: 'student_name, register_number, course, end_year, and issue_date are required' });
+    if (!student_name || !register_number || !student_email || !course || !end_year || !issue_date) {
+      return res.status(400).json({ error: 'student_name, register_number, student_email, course, end_year, and issue_date are required' });
     }
     if (!certificate_category) {
       return res.status(400).json({ error: 'certificate_category is required' });
+    }
+
+    // ── Strict 3-way credential verification (Name, Register Number, Student Email) ──
+    const credCheck = verifyStudentCredentials(student_name, register_number, student_email);
+    if (!credCheck.valid) {
+      return res.status(400).json({ error: credCheck.error });
     }
 
     const university = db.prepare('SELECT * FROM universities WHERE user_id = ?').get(userId);
@@ -100,12 +211,12 @@ async function uploadCertificate(req, res) {
 
     db.prepare(`
       INSERT INTO certificates
-        (id, certificate_number, register_number, student_name, student_email, course, cgpa,
+        (id, certificate_number, register_number, student_name, student_email, student_user_id, course, cgpa,
          start_year, end_year, issue_date, certificate_hash, signature, university_id,
          file_path, qr_data, status, certificate_category, certificate_detail)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'VALID', ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'VALID', ?, ?)
     `).run(
-      certificateId, certificateNumber, normalizedRegNo, student_name, normalizedEmail,
+      certificateId, certificateNumber, normalizedRegNo, student_name, normalizedEmail, credCheck.studentUserId || null,
       course, cgpa || null, start_year || null, end_year, issue_date,
       certificateHash, signature, university.id, filePath, qrData,
       certCategory, certDetail || null
@@ -124,6 +235,12 @@ async function uploadCertificate(req, res) {
     } catch (bcErr) {
       console.error('[blockchain] Anchor failed (cert still issued):', bcErr.message);
     }
+
+    logAudit(req, {
+      module: 'CERTIFICATE', action: 'ISSUE', status: 'SUCCESS',
+      resource_id: certificateId,
+      details: { certificate_number: certificateNumber, student_name, register_number: normalizedRegNo, course, university: university.name },
+    });
 
     res.status(201).json({
       message: 'Certificate issued successfully',
@@ -156,19 +273,13 @@ async function uploadCertificate(req, res) {
         network:     blockchainAnchor.network,
       } : { anchored: false },
     });
-
-    logAudit(req, {
-      module: 'CERTIFICATE', action: 'ISSUE', status: 'SUCCESS',
-      resource_id: certificateId,
-      details: { certificate_number: certificateNumber, student_name, register_number: normalizedRegNo, course, university: university.name },
-    });
   } catch (err) {
     console.error(err);
     logAudit(req, {
       module: 'CERTIFICATE', action: 'ISSUE', status: 'FAILURE',
       details: { error: err.message, student_name: req.body?.student_name },
     });
-    res.status(500).json({ error: 'Failed to issue certificate', debug: err.message });
+    res.status(500).json({ error: err.message || 'Failed to issue certificate' });
   }
 }
 
@@ -290,13 +401,20 @@ async function bulkUploadCertificates(req, res) {
         const certCategory    = (row.certificate_category || 'Course Completion Certificate').trim();
         const certDetail      = (row.certificate_detail   || '').trim();
 
-        if (!student_name || !register_number || !course || !end_year) {
-          results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'missing_fields', error: 'Missing required field(s)' });
+        if (!student_name || !register_number || !student_email || !course || !end_year) {
+          results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'missing_fields', error: 'Missing required field(s): Student Name, Register Number, and Student Email are required' });
           continue;
         }
 
         const normalizedRegNo  = String(register_number).trim();
-        const normalizedEmail  = student_email ? String(student_email).trim().toLowerCase() : null;
+        const normalizedEmail  = String(student_email).trim().toLowerCase();
+
+        // ── Strict 3-way credential verification ─────────────────────────────
+        const credCheck = verifyStudentCredentials(student_name, normalizedRegNo, normalizedEmail);
+        if (!credCheck.valid) {
+          results.push({ row: rowNum, register_number: normalizedRegNo, student_name, success: false, reason: 'credential_mismatch', error: credCheck.error });
+          continue;
+        }
 
         // ── Duplicate restriction check ───────────────────────────────────────
         if (RESTRICTED_CATEGORIES.has(certCategory)) {
@@ -306,7 +424,7 @@ async function bulkUploadCertificates(req, res) {
               AND certificate_category = ?
               AND (register_number = ? OR (student_email IS NOT NULL AND student_email = ?))
               AND status != 'REVOKED'
-          `).get(university.id, certCategory, normalizedRegNo, normalizedEmail || '');
+          `).get(university.id, certCategory, normalizedRegNo, normalizedEmail);
 
           if (duplicate) {
             results.push({ row: rowNum, register_number: normalizedRegNo, student_name, success: false, reason: 'duplicate_restricted', error: `Already has a ${certCategory}` });
@@ -359,12 +477,12 @@ async function bulkUploadCertificates(req, res) {
 
         db.prepare(`
           INSERT INTO certificates
-            (id, certificate_number, register_number, student_name, student_email, course, cgpa,
+            (id, certificate_number, register_number, student_name, student_email, student_user_id, course, cgpa,
              start_year, end_year, issue_date, certificate_hash, signature, university_id,
              file_path, qr_data, status, certificate_category, certificate_detail)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'VALID', ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'VALID', ?, ?)
         `).run(
-          certificateId, certificateNumber, normalizedRegNo, student_name, normalizedEmail,
+          certificateId, certificateNumber, normalizedRegNo, student_name, normalizedEmail, credCheck.studentUserId || null,
           course, cgpa || null, start_year || null, end_year, issue_date,
           certificateHash, signature, university.id, null, qrData,
           certCategory, certDetail || null

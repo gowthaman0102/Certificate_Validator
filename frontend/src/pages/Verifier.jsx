@@ -79,7 +79,26 @@ function Verifier() {
       } else if (helperTab === 'file') {
         if (!helperFile) throw new Error('Choose a certificate file to extract QR data.');
         const payload = await decodeQrFromCertificateFile(helperFile);
-        setRetrievedQrData(JSON.stringify(payload, null, 2));
+        let finalPayload = payload;
+        if (payload && payload.cert_id_from_name) {
+          const res = await getCertificateByCertNumber(payload.cert_id_from_name);
+          const cert = res.data;
+          finalPayload = cert.qr_data ? JSON.parse(cert.qr_data) : {
+            cert_id:            cert.id,
+            certificate_number: cert.certificate_number,
+            register_number:    cert.register_number,
+            student_name:       cert.student_name,
+            course:             cert.course,
+            cgpa:               cert.cgpa ?? '',
+            start_year:         cert.start_year ?? '',
+            end_year:           cert.end_year,
+            issue_date:         cert.issue_date,
+            issuer_id:          cert.issuer_code,
+            hash:               cert.certificate_hash,
+            signature:          cert.signature,
+          };
+        }
+        setRetrievedQrData(JSON.stringify(finalPayload, null, 2));
       }
     } catch (err) {
       setHelperError(err.response?.data?.error || err.message || 'Failed to retrieve QR data.');
@@ -209,9 +228,9 @@ function Verifier() {
   return (
     <div className="dashboard">
       <VerifierBackgroundDecorations />
-      <div className="dashboard-header" style={{ position: 'relative', zIndex: 2 }}>
+      <div className="dashboard-header">
         <h2>Verify a Certificate</h2>
-        <Link to="/" style={{ color: GS.ink, fontSize: '0.9rem', fontWeight: 500, textDecoration: 'underline' }}>Back to Home</Link>
+        <Link to="/" className="btn-back-home-oval" id="verifier-back-home-btn">← Back to Home</Link>
       </div>
 
       {/* ── MAIN VERIFICATION PROCESS CARD ───────────────────────────────── */}
@@ -315,7 +334,7 @@ function Verifier() {
             {/* Tab 1: Certificate ID */}
             {helperTab === 'certId' && (
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: GS.ink, marginBottom: '0.35rem', textTransform: 'uppercase' }}>Certificate ID / Number</label>
+                <label>Certificate ID / Number</label>
                 <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <input value={helperCertId} onChange={(e) => setHelperCertId(e.target.value)} placeholder="e.g. ABC001-2026-3953"
                     style={{ flex: 1, minWidth: '220px', background: GS.bg, border: `1px solid ${GS.border}`, borderRadius: '25px', padding: '0.65rem 1.25rem', fontSize: '0.9rem', fontFamily: "'Inter', sans-serif" }} />
@@ -329,7 +348,7 @@ function Verifier() {
             {/* Tab 2: Upload Certificate */}
             {helperTab === 'file' && (
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: GS.ink, marginBottom: '0.35rem', textTransform: 'uppercase' }}>Upload Certificate (PDF / Image)</label>
+                <label>Upload Certificate (PDF / Image)</label>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
                   <input ref={helperFileInputRef} type="file" accept="application/pdf,image/*" onChange={(e) => setHelperFile(e.target.files[0])}
                     style={{ flex: 1, minWidth: '220px', background: GS.bg, border: `1px solid ${GS.border}`, borderRadius: '25px', padding: '0.5rem 1.25rem', fontSize: '0.85rem' }} />
@@ -417,7 +436,11 @@ function Verifier() {
                     ...result.certificate,
                     university_name: result.certificate.issuer || result.certificate.university_name || 'Issuing University',
                   }}
-                  qrCodeUrl={result.certificate.id ? `http://localhost:5000/uploads/qr_${result.certificate.id}.png` : null}
+                  qrCodeUrl={
+                    (result.certificate.id || result.certificate.cert_id)
+                      ? `http://localhost:5000/uploads/qr_${result.certificate.id || result.certificate.cert_id}.png`
+                      : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(result.certificate.certificate_number || result.certificate.student_name || 'VERIFIED')}`
+                  }
                 />
 
                 {/* Status Stamp Overlay */}

@@ -168,12 +168,12 @@ function BlockchainExplorer() {
       <BlockchainExplorerDecorations />
       <div className="dashboard-header">
         <div>
-          <h2>⛓ Blockchain Explorer</h2>
-          <p style={{ margin: 0, fontSize: '0.8rem', color: '#c9a227', letterSpacing: '0.5px' }}>
+          <h2>Blockchain Explorer</h2>
+          <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', letterSpacing: '0.5px' }}>
             SIMULATED LEDGER — Ethereum-Compatible Hash Anchoring
           </p>
         </div>
-        <Link to="/" style={{ color: '#c9a227', fontSize: '0.9rem', fontWeight: 500 }}>← Back to Home</Link>
+        <Link to="/" className="btn-back-home-oval" id="blockchain-back-home-btn">← Back to Home</Link>
       </div>
 
       {/* ── Network Stats ── */}

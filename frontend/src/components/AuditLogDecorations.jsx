@@ -57,7 +57,7 @@ export function AuditLogDecorations() {
           <g transform="translate(10, 445)">
             <rect x="0" y="0" width="125" height="68" rx="4" stroke="#0a0a0a" strokeWidth="2" fill="#ffffff" fillOpacity="0.95" />
             <text x="10" y="20" fontFamily="monospace" fontSize="8.5" fontWeight="bold" fill="#0a0a0a">SECURITY AUDIT</text>
-            <text x="10" y="40" fontFamily="serif" fontSize="14" fontWeight="bold" fill="#0a0a0a">IMMUTABLE LOG</text>
+            <text x="10" y="40" fontFamily="serif" fontSize="11" fontWeight="bold" fill="#0a0a0a">IMMUTABLE LOG</text>
             <text x="10" y="54" fontFamily="monospace" fontSize="7.5" fill="#0a0a0a">✓ 100% VERIFIED</text>
           </g>
 
@@ -79,7 +79,7 @@ export function AuditLogDecorations() {
           <g transform="translate(10, 678)">
             <rect x="0" y="0" width="125" height="68" rx="4" stroke="#0a0a0a" strokeWidth="2" fill="#ffffff" fillOpacity="0.95" />
             <text x="10" y="20" fontFamily="monospace" fontSize="8.5" fontWeight="bold" fill="#0a0a0a">AUDIT FOOTPRINT</text>
-            <text x="10" y="40" fontFamily="serif" fontSize="14" fontWeight="bold" fill="#0a0a0a">TAMPER-PROOF</text>
+            <text x="10" y="40" fontFamily="serif" fontSize="11" fontWeight="bold" fill="#0a0a0a">TAMPER-PROOF</text>
             <text x="10" y="54" fontFamily="monospace" fontSize="7.5" fill="#0a0a0a">✓ ON-CHAIN SYNC</text>
           </g>
         </svg>
@@ -132,7 +132,7 @@ export function AuditLogDecorations() {
           <g transform="translate(10, 375)">
             <rect x="0" y="0" width="125" height="65" rx="4" stroke="#0a0a0a" strokeWidth="2" fill="#ffffff" fillOpacity="0.95" />
             <text x="10" y="20" fontFamily="monospace" fontSize="8.5" fontWeight="bold" fill="#0a0a0a">LOG EVENTS</text>
-            <text x="10" y="40" fontFamily="serif" fontSize="14" fontWeight="bold" fill="#0a0a0a">CRYPTOGRAPHIC</text>
+            <text x="10" y="40" fontFamily="serif" fontSize="10.5" fontWeight="bold" fill="#0a0a0a">CRYPTOGRAPHIC</text>
             <text x="10" y="54" fontFamily="monospace" fontSize="7.5" fill="#0a0a0a">✓ ZERO TAMPERING</text>
           </g>
 
@@ -143,7 +143,7 @@ export function AuditLogDecorations() {
           <g transform="translate(10, 485)">
             <rect x="0" y="0" width="125" height="70" rx="4" stroke="#0a0a0a" strokeWidth="2" fill="#ffffff" fillOpacity="0.95" />
             <text x="10" y="20" fontFamily="monospace" fontSize="8.5" fontWeight="bold" fill="#0a0a0a">ACCESS PROTOCOL</text>
-            <text x="10" y="40" fontFamily="serif" fontSize="14" fontWeight="bold" fill="#0a0a0a">2FA VALIDATED</text>
+            <text x="10" y="40" fontFamily="serif" fontSize="11" fontWeight="bold" fill="#0a0a0a">2FA VALIDATED</text>
             <text x="10" y="54" fontFamily="monospace" fontSize="7.5" fill="#0a0a0a">✓ FULL COMPLIANCE</text>
           </g>
 

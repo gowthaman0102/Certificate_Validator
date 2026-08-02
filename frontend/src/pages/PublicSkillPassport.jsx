@@ -37,7 +37,7 @@ export default function PublicSkillPassport() {
         <div className="card">
           <h2 style={{ color: '#0a0a0a' }}>Student Portfolio</h2>
           <div className="error-msg">{error}</div>
-          <Link to="/" style={{ color: GS.ink, marginTop: '1rem', display: 'inline-block' }}>← Back to Home</Link>
+          <Link to="/" className="btn-back-home-oval" style={{ marginTop: '1rem' }}>← Back to Home</Link>
         </div>
       </div>
     );

@@ -4,12 +4,13 @@ import {
   getMyUniversity, createUniversity, uploadCertificate,
   bulkUploadCertificates, getCertificatesByUniversity, revokeCertificate,
 } from '../api/client';
-import CertificateTemplate from '../components/CertificateTemplate';
 import CategoryCertificateTemplate from '../components/templates/CategoryCertificateTemplate';
 import { downloadCertificateAsPDF } from '../utils/certificatePdf';
 import { parseCertificateExcel } from '../utils/excelParser';
 import { CATEGORIES, NEEDS_DETAIL } from '../utils/certificateCategory';
 import UniversityDashboardDecorations from '../components/UniversityDashboardDecorations';
+
+const API_BASE = 'http://localhost:5000';
 
 const GS = {
   ink:    '#0a0a0a',
@@ -112,7 +113,7 @@ function UniversityDashboard() {
       setCgpa(''); setStartYear(''); setEndYear(''); setIssueDate('');
       setFile(null); setCertCategory(CATEGORIES[0].value); setCertDetail('');
       loadCertificates(university.id);
-    } catch (err) { setError(err.response?.data?.error || 'Failed to issue certificate'); }
+    } catch (err) { setError(err.response?.data?.error || err.response?.data?.debug || err.message || 'Failed to issue certificate'); }
     finally { setIssuing(false); }
   }
 
@@ -183,7 +184,6 @@ function UniversityDashboard() {
       <div className="dashboard-header">
         <h2>{university.name}</h2>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <button className="btn" onClick={() => navigate('/university/templates')} id="university-templates-btn">Certificate Templates</button>
           <button className="btn" onClick={() => navigate('/analytics/university')} id="university-analytics-btn">Analytics</button>
           <button className="btn" onClick={() => navigate('/analytics/verification')} id="university-verification-analytics-btn">Verification Stats</button>
           <button className="btn" onClick={() => navigate('/audit')} id="university-audit-btn">Audit Logs</button>
@@ -193,14 +193,45 @@ function UniversityDashboard() {
 
       <div className="card">
         <h3 style={{ fontWeight: 700, fontSize: '1.2rem', color: '#0a0a0a', borderBottom: '2px solid #0a0a0a', paddingBottom: '0.4rem', marginBottom: '1.2rem' }}>University Info</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.06em', background: '#0a0a0a', color: '#ffffff', padding: '0.2rem 0.55rem' }}>Issuer Code</span>
-            <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '1.05rem', color: '#0a0a0a', letterSpacing: '0.05em' }}>{university.issuer_code}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {/* Issuer Code — bold monospace, kept as-is */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '1.25rem' }}>
+            <span style={{
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: 700,
+              fontSize: '0.68rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.13em',
+              color: '#3a3a3a',
+              flexShrink: 0
+            }}>Issuer Code</span>
+            <span style={{
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              fontSize: '1rem',
+              color: '#0a0a0a',
+              letterSpacing: '0.04em'
+            }}>{university.issuer_code}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.06em', background: '#0a0a0a', color: '#ffffff', padding: '0.2rem 0.55rem' }}>University ID</span>
-            <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.92rem', color: '#0a0a0a', wordBreak: 'break-all' }}>{university.id}</span>
+          {/* University ID — Inter theme font, not monospace */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '1.25rem' }}>
+            <span style={{
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: 700,
+              fontSize: '0.68rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.13em',
+              color: '#3a3a3a',
+              flexShrink: 0
+            }}>University ID</span>
+            <span style={{
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: 500,
+              fontSize: '0.9rem',
+              color: '#0a0a0a',
+              letterSpacing: '0.01em',
+              wordBreak: 'break-all'
+            }}>{university.id}</span>
           </div>
         </div>
       </div>
@@ -213,8 +244,8 @@ function UniversityDashboard() {
           <input value={studentName} onChange={(e) => setStudentName(e.target.value)} required />
           <label>Register Number</label>
           <input value={registerNumber} onChange={(e) => setRegisterNumber(e.target.value)} required placeholder="e.g. 21CS1042" />
-          <label>Student Email (optional)</label>
-          <input type="email" value={studentEmail} onChange={(e) => setStudentEmail(e.target.value)} placeholder="student@example.com" />
+          <label>Student Email</label>
+          <input type="email" value={studentEmail} onChange={(e) => setStudentEmail(e.target.value)} placeholder="student@example.com" required />
           <label>Department / Course</label>
           <input value={course} onChange={(e) => setCourse(e.target.value)} required />
           <div style={{ display: 'flex', gap: '1rem' }}>
@@ -269,14 +300,14 @@ function UniversityDashboard() {
             </div>
             <div style={{ overflowX: 'auto', display: 'flex', justifyContent: 'center' }}>
               <div style={{ transform: 'scale(0.55)', transformOrigin: 'top center', marginBottom: '-250px' }}>
-                <CategoryCertificateTemplate certificate={{ ...lastIssued, university_name: university?.name }} qrCodeUrl={`http://localhost:5000${lastIssued.qr_code_url}`} />
+                <CategoryCertificateTemplate certificate={{ ...lastIssued, university_name: university?.name }} qrCodeUrl={`${API_BASE}${lastIssued.qr_code_url}`} />
               </div>
             </div>
             <div style={{ textAlign: 'center', marginTop: '1rem' }}>
               <button className="btn" onClick={handleDownloadPdf}>Download Certificate PDF</button>
             </div>
             <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-              <CategoryCertificateTemplate ref={hiddenCertRef} certificate={{ ...lastIssued, university_name: university?.name }} qrCodeUrl={`http://localhost:5000${lastIssued.qr_code_url}`} />
+              <CategoryCertificateTemplate ref={hiddenCertRef} certificate={{ ...lastIssued, university_name: university?.name }} qrCodeUrl={`${API_BASE}${lastIssued.qr_code_url}`} />
             </div>
           </div>
         )}
@@ -285,8 +316,8 @@ function UniversityDashboard() {
       <div className="card">
         <h3 style={{ fontWeight: 700, fontSize: '1.2rem', color: '#0a0a0a', borderBottom: '2px solid #0a0a0a', paddingBottom: '0.4rem', marginBottom: '1.2rem' }}>Bulk Issue Certificates</h3>
         <p style={{ color: GS.muted, fontSize: '0.85rem', marginBottom: '1rem' }}>
-          Upload an Excel file (.xlsx) with columns: Register Number, Name, Department / Course, CGPA, Year of Passing.
-          Certificate Category and Certificate Detail are optional columns. Start Year, Email, and Issue Date are also optional.
+          Upload an Excel file (.xlsx) with required columns: <strong>Name</strong>, <strong>Register Number</strong>, <strong>Student Email</strong>, <strong>Department / Course</strong>, <strong>CGPA</strong>, and <strong>Year of Passing</strong>.
+          Certificate Category, Certificate Detail, Start Year, and Issue Date are optional.
         </p>
         <input type="file" accept=".xlsx,.xls" onChange={handleBulkFileChange} />
         <div style={{ marginTop: '1rem' }}>
@@ -315,7 +346,9 @@ function UniversityDashboard() {
       <div className="card">
         <h3 style={{ fontWeight: 700, fontSize: '1.2rem', color: '#0a0a0a', borderBottom: '2px solid #0a0a0a', paddingBottom: '0.4rem', marginBottom: '1.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>Issued Certificates</span>
-          <span style={{ fontSize: '0.82rem', fontWeight: 700, background: '#0a0a0a', color: '#ffffff', padding: '0.15rem 0.65rem', fontFamily: 'monospace' }}>{certificates.length}</span>
+          <span style={{ fontSize: '0.82rem', fontWeight: 700, background: '#0a0a0a', color: '#ffffff', border: '1px solid #0a0a0a', padding: '0.2rem 0.8rem', borderRadius: '16px', fontFamily: '"Inter", sans-serif' }}>
+            Total: {certificates.length}
+          </span>
         </h3>
         <div className="cert-list">
           {certificates.length === 0 && <p style={{ color: GS.muted }}>No certificates issued yet.</p>}
@@ -367,7 +400,7 @@ function UniversityDashboard() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '1.5rem',
+            padding: '1rem',
           }}
           onClick={() => setSelectedCert(null)}
         >
@@ -376,36 +409,41 @@ function UniversityDashboard() {
               background: '#ffffff',
               border: '2px solid #0a0a0a',
               borderRadius: '16px',
-              maxWidth: '920px',
+              maxWidth: '850px',
               width: '100%',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              padding: '1.75rem',
+              maxHeight: '92vh',
+              overflow: 'hidden',
+              padding: '1.25rem 1.5rem',
               boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+              display: 'flex',
+              flexDirection: 'column',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '2px solid #0a0a0a', paddingBottom: '0.75rem' }}>
-              <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1.3rem', color: '#0a0a0a' }}>
+            {/* Modal Header Bar with Title and Close Button */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '2px solid #0a0a0a', paddingBottom: '0.65rem' }}>
+              <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1.15rem', color: '#0a0a0a' }}>
                 Certificate Preview — {selectedCert.certificate_number}
               </h3>
               <button
                 onClick={() => setSelectedCert(null)}
-                style={{ background: '#0a0a0a', color: '#ffffff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontWeight: 700, fontSize: '1.1rem' }}
+                style={{ background: '#0a0a0a', color: '#ffffff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontWeight: 700, fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 ✕
               </button>
             </div>
 
-            {/* Visual Certificate Template Display */}
-            <div style={{ overflowX: 'auto', background: '#e2e8f0', padding: '1.5rem', borderRadius: '12px', marginBottom: '1.25rem', display: 'flex', justifyContent: 'center' }}>
-              <CategoryCertificateTemplate
-                certificate={{
-                  ...selectedCert,
-                  university_name: university?.name || 'Issuing University',
-                }}
-                qrCodeUrl={`http://localhost:5000/uploads/qr_${selectedCert.id}.png`}
-              />
+            {/* Visual Certificate Template Display - Scaled to fit screen without scrolling */}
+            <div style={{ background: '#e2e8f0', padding: '1rem', borderRadius: '12px', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflow: 'hidden', minHeight: '340px', maxHeight: '420px' }}>
+              <div style={{ transform: 'scale(0.55)', transformOrigin: 'top center', marginBottom: '-250px' }}>
+                <CategoryCertificateTemplate
+                  certificate={{
+                    ...selectedCert,
+                    university_name: university?.name || 'Issuing University',
+                  }}
+                  qrCodeUrl={`${API_BASE}/uploads/qr_${selectedCert.id}.png`}
+                />
+              </div>
             </div>
 
             {/* Modal Footer Controls */}
@@ -423,7 +461,7 @@ function UniversityDashboard() {
 
             {/* Hidden Ref for High-Res PDF Export */}
             <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-              <CategoryCertificateTemplate ref={modalCertRef} certificate={{ ...selectedCert, university_name: university?.name }} qrCodeUrl={`http://localhost:5000/uploads/qr_${selectedCert.id}.png`} />
+              <CategoryCertificateTemplate ref={modalCertRef} certificate={{ ...selectedCert, university_name: university?.name }} qrCodeUrl={`${API_BASE}/uploads/qr_${selectedCert.id}.png`} />
             </div>
           </div>
         </div>

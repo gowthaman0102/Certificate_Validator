@@ -81,7 +81,7 @@ export function UniversityDashboardDecorations() {
           <g transform="translate(10, 690)">
             <rect x="0" y="0" width="125" height="68" rx="4" stroke="#0a0a0a" strokeWidth="2" fill="#ffffff" fillOpacity="0.95" />
             <text x="10" y="20" fontFamily="monospace" fontSize="8.5" fontWeight="bold" fill="#0a0a0a">OFFICIAL ISSUER</text>
-            <text x="10" y="40" fontFamily="serif" fontSize="14" fontWeight="bold" fill="#0a0a0a">ACCREDITED UNIV</text>
+            <text x="10" y="40" fontFamily="serif" fontSize="11" fontWeight="bold" fill="#0a0a0a">ACCREDITED UNIV</text>
             <text x="10" y="54" fontFamily="monospace" fontSize="7.5" fill="#0a0a0a">✓ RSA SIGNED</text>
           </g>
         </svg>
@@ -152,7 +152,7 @@ export function UniversityDashboardDecorations() {
           <g transform="translate(10, 715)">
             <rect x="0" y="0" width="125" height="68" rx="4" stroke="#0a0a0a" strokeWidth="2" fill="#ffffff" fillOpacity="0.95" />
             <text x="10" y="20" fontFamily="monospace" fontSize="8.5" fontWeight="bold" fill="#0a0a0a">LEDGER ANCHOR</text>
-            <text x="10" y="40" fontFamily="serif" fontSize="14" fontWeight="bold" fill="#0a0a0a">ZERO TAMPERING</text>
+            <text x="10" y="40" fontFamily="serif" fontSize="11" fontWeight="bold" fill="#0a0a0a">ZERO TAMPERING</text>
             <text x="10" y="54" fontFamily="monospace" fontSize="7.5" fill="#0a0a0a">✓ FULL COMPLIANCE</text>
           </g>
         </svg>

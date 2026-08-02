@@ -18,6 +18,7 @@ function StudentDashboard() {
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [registerNumber, setRegisterNumber] = useState('');
   const [copiedId, setCopiedId] = useState('');
@@ -27,10 +28,11 @@ function StudentDashboard() {
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (!token || user.role !== 'STUDENT') { navigate('/student-login'); return; }
-    if (user.email) {
-      setUserEmail(user.email);
+    setUserName(user.name || '');
+    if (user.email || user.register_number) {
+      setUserEmail(user.email || '');
       setRegisterNumber(user.register_number || '');
-      loadCertificates(user.email, user.register_number || '');
+      loadCertificates(user.email || '', user.register_number || '');
     } else { setLoading(false); }
   }, []);
 
@@ -73,8 +75,7 @@ function StudentDashboard() {
 
       <div className="card">
         <p style={{ color: GS.muted, fontSize: '0.9rem' }}>
-          Showing certificates issued to <strong style={{ color: GS.ink }}>{userEmail}</strong>
-          {registerNumber ? ` / ${registerNumber}` : ''}
+          Showing certificates issued to <strong style={{ color: GS.ink }}>{userName || userEmail}</strong> {userName && userEmail ? `(${userEmail}${registerNumber ? ` / ${registerNumber}` : ''})` : (registerNumber ? `/ ${registerNumber}` : '')}
         </p>
         {error && <div className="error-msg" style={{ marginTop: '1rem' }}>{error}</div>}
       </div>
