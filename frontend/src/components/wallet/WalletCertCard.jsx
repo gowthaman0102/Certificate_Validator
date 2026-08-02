@@ -25,6 +25,29 @@ function WalletCertCard({ cert, onCopyLink, onDownload, onShare }) {
   const [discError, setDiscError]                     = useState("");
   const [copiedDiscLink, setCopiedDiscLink]           = useState(false);
 
+  function openDisclosureModal() {
+    setShowDisclosureModal(true);
+    setDiscResult(null);
+    setDiscError("");
+    setClaimType("cgpa_gte");
+    setClaimVal(cert.cgpa ? String(cert.cgpa) : "3.5");
+  }
+
+  function handleClaimTypeChange(newType) {
+    setClaimType(newType);
+    setDiscResult(null);
+    setDiscError("");
+    if (newType === "cgpa_gte") {
+      setClaimVal(cert.cgpa ? String(cert.cgpa) : "3.5");
+    } else if (newType === "graduated_by") {
+      setClaimVal(cert.end_year ? String(cert.end_year) : "2026");
+    } else if (newType === "course_match") {
+      setClaimVal(cert.course ? String(cert.course) : "Computer Science");
+    } else if (newType === "status_valid") {
+      setClaimVal("VALID");
+    }
+  }
+
   async function handleGenerateDisclosure() {
     setGenerating(true);
     setDiscError("");
@@ -174,7 +197,7 @@ function WalletCertCard({ cert, onCopyLink, onDownload, onShare }) {
 
       <div style={{ textAlign: "center", marginTop: "1rem", display: "flex", gap: "0.6rem", justifyContent: "center", flexWrap: "wrap" }}>
         <button className="btn" onClick={handleDownloadPdf}>Download Certificate PDF</button>
-        <button className="btn-secondary" onClick={() => { setShowDisclosureModal(true); setDiscResult(null); setDiscError(""); }} style={{ fontSize: "0.85rem", padding: "0.55rem 1.1rem" }}>
+        <button className="btn-secondary" onClick={openDisclosureModal} style={{ fontSize: "0.85rem", padding: "0.55rem 1.1rem" }}>
           🔒 Share Verified Claim (Selective Disclosure)
         </button>
         {cert.file_path && (
@@ -202,7 +225,7 @@ function WalletCertCard({ cert, onCopyLink, onDownload, onShare }) {
 
             <div style={{ background: "#f8fafc", border: "1.5px solid #0a0a0a", padding: "1.1rem", borderRadius: "14px", marginBottom: "1.25rem" }}>
               <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", marginBottom: "0.4rem" }}>Select Predicate to Prove:</label>
-              <select value={claimType} onChange={(e) => setClaimType(e.target.value)} style={{ width: "100%", padding: "0.6rem 1rem", borderRadius: "12px", border: "1.5px solid #0a0a0a", fontSize: "0.9rem", fontFamily: "'Inter', sans-serif", marginBottom: "0.75rem" }}>
+              <select value={claimType} onChange={(e) => handleClaimTypeChange(e.target.value)} style={{ width: "100%", padding: "0.6rem 1rem", borderRadius: "12px", border: "1.5px solid #0a0a0a", fontSize: "0.9rem", fontFamily: "'Inter', sans-serif", marginBottom: "0.75rem" }}>
                 <option value="cgpa_gte">Academic Honor: CGPA ≥ Threshold</option>
                 <option value="graduated_by">Timeline: Degree Conferred by Year</option>
                 <option value="course_match">Degree Field: Course Matches Subject</option>
