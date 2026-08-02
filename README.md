@@ -1,4 +1,4 @@
-﻿# Certificate Validator
+# Certificate Validator
 
 > **Offline-first, cryptographically signed academic credentials â€” with fraud detection, blockchain anchoring, and a digital skill passport.**
 
@@ -20,7 +20,7 @@ cp backend/.env.example backend/.env
 npm --prefix backend install
 npm --prefix frontend install
 npm run test
-# Expected test output: "# tests 12 / # pass 12 / # fail 0" (100% passing in ~150ms)
+# Expected test output: "# tests 13 / # pass 13 / # fail 0" (100% passing in ~170ms)
 
 # 4. Start local development servers (run in two separate terminals)
 npm run dev:backend   # Terminal 1: Starts Express API on http://localhost:5000
@@ -272,21 +272,26 @@ When `AI_PROVIDER=heuristic` (the default), the chat assistant and fraud-risk sc
 - AI chat assistant for verification guidance
 
 ### Public
-- Home page with feature overview
-- Blockchain Explorer: browse all anchored transactions, search by hash/cert ID
-- Public Skill Passport: view any student''s shareable portfolio
+- Home page with feature overv---
+
+## 🔒 Selective Disclosure ("Prove a Claim Without Revealing the Document")
+
+Students can generate field-level shareable proofs of specific certificate claims — e.g. `CGPA ≥ 3.5`, `Graduated in 2026 or earlier`, or `Course: Computer Science` — without exposing their full transcript, student name, or register number to third parties.
+
+* **How it works**: The backend evaluates the predicate against the authenticated certificate, and if true, generates an RSA-2048 signed sub-document payload `{ disclosure_id, claim_predicate, claim_description, result: true, issuer_code, original_cert_hash, signature }`.
+* **Public independent verification**: Anyone holding the disclosure link (`/disclosure/:disclosureId`) can verify the university's RSA digital signature over the predicate claim without gaining access to any underlying student identity or transcript data.
+* **Refusal on false claims**: The server strictly refuses to issue signed disclosures for unfulfilled predicates (`400 Bad Request`).
+* **Technical Distinction**: This implementation provides **field-level RSA-signed predicate disclosure**. It is not a zero-knowledge proof system (ZK-SNARK). A future iteration could use zk-SNARKs to prove predicates without the verifier trusting the issuing server's computation at all.
 
 ---
 
----
-
-## â“ Judge FAQ & Anticipated Questions
+## ❓ Judge FAQ & Anticipated Questions
 
 ### 1. "Is the blockchain real or simulated?"
-**Answer**: It is a production-correct simulated ledger backed by SQLite that mirrors the exact interface, block headers, and transaction hashing of an Ethereum EVM smart contract. Swapping a single file ([`backend/utils/blockchain.js`](file:///d:/Certificate_Validator/backend/utils/blockchain.js)) connects the system directly to Polygon Mumbai or Ethereum mainnet via `ethers.js` with zero changes required in any UI page or controller handler.
+**Answer**: It is a production-correct simulated ledger backed by SQLite that mirrors the exact interface, block headers, and transaction hashing of an Ethereum EVM smart contract. Swapping a single file ([`backend/utils/blockchain.js`](https://github.com/gowthaman0102/Certificate_Validator/blob/main/backend/utils/blockchain.js)) connects the system directly to Polygon Mumbai or Ethereum mainnet via `ethers.js` with zero changes required in any UI page or controller handler.
 
 ### 2. "Is the AI fraud detection real or heuristic?"
-**Answer**: It is a multi-provider LLM abstraction ([`llmProvider.js`](file:///d:/Certificate_Validator/backend/services/llmProvider.js)). Out-of-the-box, it runs an offline fast-path 8-point heuristic rule engine (layout checks, OCR text matching, metadata verification). When an API key is supplied in `backend/.env`, the live AI-provider badge instantly switches to OpenAI GPT-4o, Google Gemini 1.5, Anthropic Claude 3.5, Azure OpenAI, or a local Ollama LLM endpoint.
+**Answer**: It is a multi-provider LLM abstraction ([`llmProvider.js`](https://github.com/gowthaman0102/Certificate_Validator/blob/main/backend/services/llmProvider.js)). Out-of-the-box, it runs an offline fast-path 8-point heuristic rule engine (layout checks, OCR text matching, metadata verification). When an API key is supplied in `backend/.env`, the live AI-provider badge instantly switches to OpenAI GPT-4o, Google Gemini 1.5, Anthropic Claude 3.5, Azure OpenAI, or a local Ollama LLM endpoint.
 
 ### 3. "Is revocation tamper-proof?"
 **Answer**: Yes! Revocations follow the exact same cryptographic model as issuance. A canonical revocation payload is hashed with SHA-256, signed using the university's RSA-2048 private key, and anchored to the simulated blockchain. During verification lookups, the system verifies the issuer's RSA signature over the revocation record itself, closing the threat model of forged revocation status.
@@ -296,6 +301,9 @@ When `AI_PROVIDER=heuristic` (the default), the chat assistant and fraud-risk sc
 
 ### 5. "What is replay protection in this context?"
 **Answer**: Certificate credentials themselves never expire (a university degree is permanent). However, live verification scan session payloads include a cryptographically random `scan_nonce` and a 5-minute sliding timestamp window (`scan_ts`) to prevent adversaries from capturing and replaying verification requests.
+
+### 6. "Is this a zero-knowledge proof (ZKP)?"
+**Answer**: No, and we state this explicitly to maintain technical accuracy. This is a **field-level RSA-2048 signed predicate disclosure system**. The server evaluates the credential claim (e.g. `CGPA ≥ 3.5`) and signs a minimal sub-document payload with the university's private key. The recipient can independently verify the RSA signature over that claim without seeing any other fields of the certificate. A true ZK-proof system (such as zk-SNARKs or Circom circuits) would allow the client to generate a zero-knowledge proof directly on-device without trusting a server to compute the predicate.
 
 ---
 

@@ -335,6 +335,23 @@ function initDB() {
       UNIQUE(university_id, category)
     );
     CREATE INDEX IF NOT EXISTS idx_tmpl_assign_uni ON template_assignments(university_id);
+
+    CREATE TABLE IF NOT EXISTS disclosures (
+      id                  TEXT PRIMARY KEY,
+      certificate_id      TEXT NOT NULL,
+      claim_type          TEXT NOT NULL,
+      claim_predicate     TEXT NOT NULL,
+      claim_description   TEXT NOT NULL,
+      result              INTEGER DEFAULT 1 CHECK(result IN (0, 1)),
+      original_cert_hash  TEXT NOT NULL,
+      university_id       TEXT NOT NULL,
+      issuer_code         TEXT NOT NULL,
+      university_name     TEXT NOT NULL,
+      signature           TEXT NOT NULL,
+      created_at          TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (certificate_id) REFERENCES certificates(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_disclosures_cert ON disclosures(certificate_id);
   `);
 
   // Auto-seed default university if empty (for clean test suite & initial setup)

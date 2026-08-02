@@ -16,6 +16,7 @@ const fraudRoutes      = require('./routes/fraudRoutes');
 const chatRoutes       = require('./routes/chatAssistantRoutes');
 const passportRoutes   = require('./routes/passportRoutes');
 const templateRoutes   = require('./routes/templateRoutes');
+const disclosureRoutes = require('./routes/disclosureRoutes');
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use('/api', fraudRoutes);
 app.use('/api', chatRoutes);
 app.use('/api/passport', passportRoutes);
 app.use('/api/templates', templateRoutes);
+app.use('/api', disclosureRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

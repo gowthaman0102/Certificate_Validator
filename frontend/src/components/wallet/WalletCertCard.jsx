@@ -1,4 +1,5 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { getPublicKey } from "../../api/client";
 import { getCachedPublicKey, setCachedPublicKey } from "../../utils/keyCache";
@@ -6,6 +7,7 @@ import { verifyOffline } from "../../utils/offlineCrypto";
 import { downloadCertificateAsPDF } from "../../utils/certificatePdf";
 import CertificateTemplate from "../CertificateTemplate";
 import { getHistory } from "../../utils/walletStore";
+import { createDisclosure } from "../../api/disclosure";
 
 const API_BASE = "http://localhost:5000";
 const GS = { ink: "#0a0a0a", muted: "#666666", subtle: "#999999", border: "#0a0a0a", bg: "#ffffff", mid: "#8c8c8c" };
@@ -15,6 +17,27 @@ function WalletCertCard({ cert, onCopyLink, onDownload, onShare }) {
   const [copiedId,  setCopiedId]    = useState(false);
   const [shareOpen, setShareOpen]   = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [showDisclosureModal, setShowDisclosureModal] = useState(false);
+  const [claimType, setClaimType]                     = useState("cgpa_gte");
+  const [claimVal, setClaimVal]                       = useState("3.5");
+  const [generating, setGenerating]                   = useState(false);
+  const [discResult, setDiscResult]                   = useState(null);
+  const [discError, setDiscError]                     = useState("");
+  const [copiedDiscLink, setCopiedDiscLink]           = useState(false);
+
+  async function handleGenerateDisclosure() {
+    setGenerating(true);
+    setDiscError("");
+    setDiscResult(null);
+    try {
+      const res = await createDisclosure(cert.id, { claim_type: claimType, claim_value: claimVal });
+      setDiscResult(res.data);
+    } catch (err) {
+      setDiscError(err.response?.data?.error || err.message || "Failed to generate disclosure claim");
+    } finally {
+      setGenerating(false);
+    }
+  }
   const hiddenRef                   = useRef(null);
   const cardRef                     = useRef(null);
 
@@ -151,6 +174,9 @@ function WalletCertCard({ cert, onCopyLink, onDownload, onShare }) {
 
       <div style={{ textAlign: "center", marginTop: "1rem", display: "flex", gap: "0.6rem", justifyContent: "center", flexWrap: "wrap" }}>
         <button className="btn" onClick={handleDownloadPdf}>Download Certificate PDF</button>
+        <button className="btn-secondary" onClick={() => { setShowDisclosureModal(true); setDiscResult(null); setDiscError(""); }} style={{ fontSize: "0.85rem", padding: "0.55rem 1.1rem" }}>
+          🔒 Share Verified Claim (Selective Disclosure)
+        </button>
         {cert.file_path && (
           <a href={`${API_BASE}${cert.file_path}`} target="_blank" rel="noreferrer"
             style={{ color: GS.ink, fontSize: "0.85rem", fontWeight: 500, textDecoration: "underline", display: "flex", alignItems: "center" }}>
@@ -158,6 +184,98 @@ function WalletCertCard({ cert, onCopyLink, onDownload, onShare }) {
           </a>
         )}
       </div>
+
+      {/* ── SELECTIVE DISCLOSURE MODAL ─────────────────────────────── */}
+      {showDisclosureModal && createPortal(
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(5px)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", boxSizing: "border-box" }} onClick={() => setShowDisclosureModal(false)}>
+          <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: "620px", maxHeight: "90vh", overflowY: "auto", margin: "auto", background: "#ffffff", border: "2.5px solid #0a0a0a", borderRadius: "24px", padding: "1.75rem", position: "relative", color: "#0a0a0a", boxShadow: "0 25px 60px rgba(0,0,0,0.4)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", borderBottom: "2px solid #0a0a0a", paddingBottom: "0.75rem" }}>
+              <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <span>🔒</span> Share Verified Claim (Selective Disclosure)
+              </h3>
+              <button onClick={() => setShowDisclosureModal(false)} style={{ background: "transparent", border: "none", fontSize: "1.4rem", cursor: "pointer", fontWeight: 700 }}>✕</button>
+            </div>
+
+            <p style={{ fontSize: "0.86rem", color: GS.muted, marginBottom: "1.25rem", lineHeight: 1.5 }}>
+              Generate an <strong>RSA-2048 signed proof</strong> of a single claim (e.g. <em>CGPA ≥ 3.5</em>). The recipient receives a cryptographic verification link proving the claim is authentic without exposing your full transcript, student name, or grade details.
+            </p>
+
+            <div style={{ background: "#f8fafc", border: "1.5px solid #0a0a0a", padding: "1.1rem", borderRadius: "14px", marginBottom: "1.25rem" }}>
+              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", marginBottom: "0.4rem" }}>Select Predicate to Prove:</label>
+              <select value={claimType} onChange={(e) => setClaimType(e.target.value)} style={{ width: "100%", padding: "0.6rem 1rem", borderRadius: "12px", border: "1.5px solid #0a0a0a", fontSize: "0.9rem", fontFamily: "'Inter', sans-serif", marginBottom: "0.75rem" }}>
+                <option value="cgpa_gte">Academic Honor: CGPA ≥ Threshold</option>
+                <option value="graduated_by">Timeline: Degree Conferred by Year</option>
+                <option value="course_match">Degree Field: Course Matches Subject</option>
+                <option value="status_valid">Credential Status: Active (Not Revoked)</option>
+              </select>
+
+              {claimType === "cgpa_gte" && (
+                <div>
+                  <label style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: "0.3rem" }}>CGPA Threshold:</label>
+                  <input value={claimVal} onChange={(e) => setClaimVal(e.target.value)} placeholder="e.g. 3.5" style={{ width: "100%", padding: "0.55rem 1rem", borderRadius: "10px", border: "1px solid #0a0a0a", fontSize: "0.88rem" }} />
+                </div>
+              )}
+              {claimType === "graduated_by" && (
+                <div>
+                  <label style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: "0.3rem" }}>Year Threshold:</label>
+                  <input value={claimVal} onChange={(e) => setClaimVal(e.target.value)} placeholder="e.g. 2026" style={{ width: "100%", padding: "0.55rem 1rem", borderRadius: "10px", border: "1px solid #0a0a0a", fontSize: "0.88rem" }} />
+                </div>
+              )}
+              {claimType === "course_match" && (
+                <div>
+                  <label style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: "0.3rem" }}>Course Subject Name:</label>
+                  <input value={claimVal} onChange={(e) => setClaimVal(e.target.value)} placeholder="e.g. Computer Science" style={{ width: "100%", padding: "0.55rem 1rem", borderRadius: "10px", border: "1px solid #0a0a0a", fontSize: "0.88rem" }} />
+                </div>
+              )}
+            </div>
+
+            {/* Live Preview Box */}
+            <div style={{ background: "#0a0a0a", color: "#ffffff", padding: "1rem 1.25rem", borderRadius: "14px", marginBottom: "1.25rem" }}>
+              <div style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", opacity: 0.8, marginBottom: "0.3rem" }}>
+                👁️ Recipient Live Preview (What They See)
+              </div>
+              <div style={{ fontSize: "0.92rem", fontWeight: 700, marginBottom: "0.3rem" }}>
+                ✓ {claimType === "cgpa_gte" ? `Student holds academic CGPA ≥ ${claimVal}` : claimType === "graduated_by" ? `Degree conferred in or prior to ${claimVal}` : claimType === "course_match" ? `Course field matches '${claimVal}'` : 'Certificate credential is valid and active'}
+              </div>
+              <div style={{ fontSize: "0.75rem", opacity: 0.75 }}>
+                Signed by: {cert.university_name || "Issuing University"} · Zero Transcript Data Leakage
+              </div>
+            </div>
+
+            {discError && <div className="error-msg" style={{ marginBottom: "1rem" }}>{discError}</div>}
+
+            {discResult ? (
+              <div style={{ background: "#f1f5f9", border: "1.5px solid #10B981", padding: "1.1rem", borderRadius: "14px", marginBottom: "1rem" }}>
+                <div style={{ color: "#10B981", fontWeight: 800, fontSize: "0.95rem", marginBottom: "0.5rem" }}>
+                  ✓ RSA Signed Selective Disclosure Claim Generated!
+                </div>
+                <div style={{ fontSize: "0.8rem", color: GS.muted, marginBottom: "0.5rem" }}>
+                  Shareable Verification URL:
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  <input readOnly value={`${window.location.origin}${discResult.shareable_url}`} style={{ flex: 1, fontFamily: "monospace", fontSize: "0.78rem", padding: "0.5rem", borderRadius: "8px", border: "1px solid #0a0a0a" }} />
+                  <button className="btn" style={{ fontSize: "0.78rem", padding: "0.5rem 0.9rem" }} onClick={async () => {
+                    await navigator.clipboard.writeText(`${window.location.origin}${discResult.shareable_url}`);
+                    setCopiedDiscLink(true);
+                    setTimeout(() => setCopiedDiscLink(false), 2000);
+                  }}>
+                    {copiedDiscLink ? "✓ Copied" : "Copy Link"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button className="btn" onClick={handleGenerateDisclosure} disabled={generating} style={{ width: "100%", padding: "0.7rem", fontSize: "0.9rem", fontWeight: 800 }}>
+                {generating ? "Generating RSA Signed Claim..." : "Generate Shareable Claim Link & QR"}
+              </button>
+            )}
+
+            <div style={{ textAlign: "right", marginTop: "1rem" }}>
+              <button className="btn-secondary" onClick={() => setShowDisclosureModal(false)}>Close</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
         <CertificateTemplate ref={hiddenRef} certificate={cert} qrCodeUrl={qrUrl} />

@@ -19,6 +19,7 @@ import BlockchainExplorer    from './pages/BlockchainExplorer';
 import DigitalSkillPassport  from './pages/DigitalSkillPassport';
 import PublicSkillPassport   from './pages/PublicSkillPassport';
 import TemplateManager       from './pages/TemplateManager';
+import PublicDisclosureView  from './pages/PublicDisclosureView';
 import OfflineIndicator      from './components/OfflineIndicator';
 import GuidedTourModal       from './components/GuidedTourModal';
 
@@ -129,6 +130,7 @@ function AnimatedRoutes() {
         <Route path="/analytics/student"         element={<PageWrapper><StudentAnalytics /></PageWrapper>} />
         <Route path="/analytics/verification"    element={<PageWrapper><VerificationAnalytics /></PageWrapper>} />
         <Route path="/blockchain-explorer"       element={<PageWrapper><BlockchainExplorer /></PageWrapper>} />
+        <Route path="/disclosure/:disclosureId"  element={<PageWrapper><PublicDisclosureView /></PageWrapper>} />
       </Routes>
     </AnimatePresence>
   );
