@@ -5,13 +5,101 @@
    and the single permitted mid-gray (#8c8c8c).
    ============================================================ */
 
+/* ── Master-Detail Split Container ─────────────────────────── */
+/* Lives inside a .card, so no max-width/margin here — inherits from card */
+.wallet-split-container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  /* stretch: both panes always the same height as the taller one */
+  align-items: stretch;
+}
+
+/* Left pane: subtle inset background to distinguish from card bg */
+.wallet-index-pane {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  /* Clip to the stretched grid height — never grows wider/taller */
+  overflow: hidden;
+}
+
+.wallet-index-list {
+  /* flex:1 fills the remaining height in the pane after search+pills */
+  flex: 1;
+  /* min-height:0 is required for flex children to scroll rather than expand */
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-right: 2px;
+  /* Smooth momentum scroll on touch devices */
+  -webkit-overflow-scrolling: touch;
+}
+
+.wallet-index-row {
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+  background: #ffffff;
+  color: var(--color-ink);
+  outline: none;
+  min-width: 0;
+}
+
+.wallet-index-row:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.wallet-index-row.selected {
+  background: #0a0a0a;
+  border-color: #0a0a0a;
+  color: #ffffff;
+}
+
+.wallet-index-row.selected span {
+  color: rgba(255,255,255,0.7);
+}
+
+/* Right pane: clean, borderless — card itself provides the frame */
+.wallet-detail-pane {
+  background: transparent;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  border-left: 1.5px solid #e2e8f0;
+  padding-left: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .wallet-split-container {
+    grid-template-columns: 1fr;
+  }
+  .wallet-detail-pane {
+    border-left: none;
+    padding-left: 0;
+    border-top: 1.5px solid #e2e8f0;
+    padding-top: 1.25rem;
+  }
+}
+
 /* ── Stats row (4 info boxes) ──────────────────────────────── */
 .wallet-stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
-  margin: 0 auto 1.5rem auto;
-  max-width: 980px;
   width: 100%;
   box-sizing: border-box;
 }
