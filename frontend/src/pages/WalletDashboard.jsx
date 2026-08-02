@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { getStudentCertificates }            from "../api/client";
@@ -169,7 +169,9 @@ function WalletDashboard() {
       </motion.div>
 
       {/* ── WALLET ACTIVITY SUMMARY ────────────────────────────────────── */}
-      <WalletStats stats={localStats} totalCerts={certificates.length} />
+      <motion.div variants={cardVariants} style={{ maxWidth: "980px", margin: "0 auto", width: "100%" }}>
+        <WalletStats stats={localStats} totalCerts={certificates.length} />
+      </motion.div>
 
       {error && <motion.div className="card" variants={cardVariants}><div className="error-msg">{error}</div></motion.div>}
 

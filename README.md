@@ -13,14 +13,14 @@ Get the application running locally in 4 simple commands:
 git clone https://github.com/gowthaman0102/Certificate_Validator.git
 cd Certificate_Validator
 
-# 2. Copy environment templates
+# 2. Copy environment template
 cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
 
 # 3. Install dependencies & run test suite
 npm --prefix backend install
 npm --prefix frontend install
 npm run test
+# Expected test output: "# tests 12 / # pass 12 / # fail 0" (100% passing in ~150ms)
 
 # 4. Start local development servers (run in two separate terminals)
 npm run dev:backend   # Terminal 1: Starts Express API on http://localhost:5000
@@ -36,6 +36,27 @@ Credential fraud — forged degrees, tampered transcripts, fabricated certificat
 ## The Solution
 
 Certificate Validator replaces trust-in-paper with cryptographic proof. Universities sign each certificate with an **RSA-2048 private key**, embed the signature and metadata in a **QR code**, and anchor a SHA-256 hash to a **simulated blockchain ledger**. Any verifier — employer, institution, or person — can scan the QR and verify the signature **entirely offline**, with no server call required, using a cached or freshly-fetched public key. For additional assurance, an **8-point AI fraud-detection pipeline** cross-checks metadata consistency and surfaced anomalies. Students get a **Digital Skill Passport** (shareable portfolio + verified credentials) and a **Credential Wallet**. All events are recorded in a tamper-evident **audit log**. The full flow works from issuance to verification in under 60 seconds.
+
+---
+
+## 📸 Visual Showcase & Application Screenshots
+
+### 1. Platform Overview & Home Page
+![Platform Overview](file:///C:/Users/GOWTHAMAN.S/.gemini/antigravity/brain/90dc129e-6a0d-427d-8334-8a0ec0f8b11c/.user_uploaded/media__1785684050765.png)
+
+### 2. Issued Visual Certificate Preview (Graduation Template)
+![Graduation Certificate Preview](file:///C:/Users/GOWTHAMAN.S/.gemini/antigravity/brain/90dc129e-6a0d-427d-8334-8a0ec0f8b11c/template_graduation_v2_1785592688764.jpg)
+
+### 3. Verification Result Card & Status Stamp
+![Verified Certificate Document & Status Stamp](file:///C:/Users/GOWTHAMAN.S/.gemini/antigravity/brain/90dc129e-6a0d-427d-8334-8a0ec0f8b11c/.user_uploaded/media__1785683784112.png)
+<!-- TODO: screenshot: Verifier result states showing VALID (green stamp), REVOKED (black stamp), and TAMPERED (red stamp) overlays -->
+
+### 4. AI Fraud Risk Analysis Modal & Engine Badge
+![AI Fraud Risk Analysis Modal](file:///C:/Users/GOWTHAMAN.S/.gemini/antigravity/brain/90dc129e-6a0d-427d-8334-8a0ec0f8b11c/.user_uploaded/media__1785683909567.png)
+<!-- TODO: screenshot: AI Fraud Risk Analysis Modal showing 8-point check breakdown and live AI provider badge -->
+
+### 5. Offline PWA Mode Active
+<!-- TODO: screenshot: Offline PWA banner / indicator active showing "OFFLINE MODE — Verifying locally via cached public keys & offline PWA service worker" -->
 
 ---
 

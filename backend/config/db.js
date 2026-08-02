@@ -337,7 +337,37 @@ function initDB() {
     CREATE INDEX IF NOT EXISTS idx_tmpl_assign_uni ON template_assignments(university_id);
   `);
 
+  // Auto-seed default university if empty (for clean test suite & initial setup)
+  try {
+    const uniCount = db.prepare('SELECT COUNT(*) as count FROM universities').get().count;
+    if (uniCount === 0) {
+      const { v4: uuidv4 } = require('uuid');
+      const { generateKeyPair } = require('../utils/crypto');
+
+      const userId = uuidv4();
+      const uniId = uuidv4();
+      const keys = generateKeyPair();
+
+      db.prepare(`
+        INSERT INTO users (id, name, email, password, role)
+        VALUES (?, 'Apex Global University Admin', 'admin@apexuniversity.edu', 'hashed_pass_123', 'UNIVERSITY')
+      `).run(userId);
+
+      db.prepare(`
+        INSERT INTO universities (id, user_id, name, issuer_code, public_key, private_key)
+        VALUES (?, ?, 'Apex Global University', 'UNI_APEX', ?, ?)
+      `).run(uniId, userId, keys.publicKey, keys.privateKey);
+
+      console.log('Seeded default university: Apex Global University (UNI_APEX)');
+    }
+  } catch (err) {
+    console.warn('Warning during default university seeding:', err.message);
+  }
+
   console.log('DB tables ready');
 }
+
+// Automatically initialize DB schema on require so all controllers & test files have ready tables
+initDB();
 
 module.exports = { db, initDB };
