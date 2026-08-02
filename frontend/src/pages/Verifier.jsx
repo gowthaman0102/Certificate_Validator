@@ -163,11 +163,50 @@ function Verifier() {
         }
       } catch (err) {
         const errReason = err.response?.data?.error || err.message || 'Could not extract or verify QR code';
-        setBatchFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'error', error: errReason, result: { result: 'ERROR', reason: errReason } } : f));
+        setBatchFiles(prev => prev.map((f, idx) => idx === i ? {
+          ...f,
+          status: 'error',
+          error: errReason,
+          result: {
+            result: 'ERROR',
+            reason: errReason,
+            hashStatus: 'MISMATCH',
+            signatureStatus: 'INVALID',
+            certificate: {
+              student_name: 'Unverified Document',
+              course: 'Unknown Course',
+              certificate_number: item.name,
+              issue_date: 'N/A',
+              issuer: 'Unknown Issuer',
+              certificate_category: 'Course Completion Certificate',
+            }
+          }
+        } : f));
       }
     }
 
     setBatchProcessing(false);
+  }
+
+  const [batchModalItem, setBatchModalItem] = useState(null);
+
+  function handleSelectBatchItem(item) {
+    if (!item.result && item.status !== 'error') return;
+    const resObj = item.result || {
+      result: 'ERROR',
+      reason: item.error || 'Could not extract or verify QR code',
+      hashStatus: 'MISMATCH',
+      signatureStatus: 'INVALID',
+      certificate: {
+        student_name: 'Unverified Document',
+        course: 'Unknown Course',
+        certificate_number: item.name,
+        issue_date: 'N/A',
+        issuer: 'Unknown Issuer',
+        certificate_category: 'Course Completion Certificate',
+      }
+    };
+    setBatchModalItem({ item, result: resObj });
   }
 
   /* ── Get QR Data Modal State ── */
@@ -267,9 +306,10 @@ function Verifier() {
     }
     if (inputMode === 'file') {
       if (!uploadedFile) throw new Error('Choose a certificate file to upload.');
-      const payload = await decodeQrFromCertificateFile(uploadedFile);
-      if (payload && payload.cert_id_from_name) {
-        const res = await getCertificateByCertNumber(payload.cert_id_from_name);
+      let payload = await decodeQrFromCertificateFile(uploadedFile);
+      const certLookupId = payload?.cert_id_from_name || (!payload?.hash ? (payload?.certificate_number || payload?.cert_id) : null);
+      if (certLookupId) {
+        const res = await getCertificateByCertNumber(certLookupId);
         const cert = res.data;
         return {
           cert_id: cert.id, certificate_number: cert.certificate_number,
@@ -358,6 +398,7 @@ function Verifier() {
   const tabInactive = { ...tabBase, background: GS.bg,  color: GS.ink };
 
   const isValid   = result?.result === 'VALID';
+  const isRevoked = result?.result === 'REVOKED';
   const isFailed  = result && !isValid;
 
   return (
@@ -515,52 +556,65 @@ function Verifier() {
 
                 {/* Per-File Sequential Cascade Row List */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {batchFiles.map((item, idx) => (
-                    <motion.div
-                      key={item.id || idx}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: idx * 0.04, ease: PREMIUM }}
-                      style={{
-                        background: '#ffffff',
-                        border: `1.5px solid ${GS.border}`,
-                        borderRadius: '10px',
-                        padding: '0.75rem 1rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        flexWrap: 'wrap',
-                        gap: '0.5rem',
-                      }}
-                    >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, fontSize: '0.88rem', color: GS.ink, wordBreak: 'break-all' }}>
-                          📄 {item.name}
+                  {batchFiles.map((item, idx) => {
+                    const isSelected = batchModalItem && batchModalItem.item.name === item.name;
+                    const canInspect = item.status === 'completed' || item.status === 'error';
+                    return (
+                      <motion.div
+                        key={item.id || idx}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: idx * 0.04, ease: PREMIUM }}
+                        onClick={() => { if (canInspect) handleSelectBatchItem(item); }}
+                        style={{
+                          background: isSelected ? '#f1f5f9' : '#ffffff',
+                          border: isSelected ? '2px solid #0a0a0a' : `1.5px solid ${GS.border}`,
+                          borderRadius: '10px',
+                          padding: '0.75rem 1rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap',
+                          gap: '0.5rem',
+                          cursor: canInspect ? 'pointer' : 'default',
+                          transition: 'all 0.2s ease',
+                          boxShadow: isSelected ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, fontSize: '0.88rem', color: GS.ink, wordBreak: 'break-all' }}>
+                            📄 {item.name}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: GS.muted, marginTop: '2px' }}>
+                            Size: {item.size} KB {item.result?.certificate?.student_name ? ` · Student: ${item.result.certificate.student_name} (${item.result.certificate.certificate_number || ''})` : item.error ? ` · Error: ${item.error}` : ''}
+                          </div>
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: GS.muted, marginTop: '2px' }}>
-                          Size: {item.size} KB {item.result?.certificate?.student_name ? ` · Student: ${item.result.certificate.student_name} (${item.result.certificate.certificate_number || ''})` : item.error ? ` · Error: ${item.error}` : ''}
-                        </div>
-                      </div>
 
-                      <div>
-                        {item.status === 'pending' && (
-                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: GS.muted, background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
-                            PENDING
-                          </span>
-                        )}
-                        {item.status === 'verifying' && (
-                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ffffff', background: '#0a0a0a', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
-                            VERIFYING...
-                          </span>
-                        )}
-                        {(item.status === 'completed' || item.status === 'error') && (
-                          <span className={`status-badge ${item.result?.result === 'VALID' ? 'status-valid' : 'status-revoked'}`} style={item.result?.result === 'REVOKED' ? { background: '#0a0a0a', color: '#ffffff' } : {}}>
-                            {item.result?.result || 'ERROR'}
-                          </span>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          {item.status === 'pending' && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: GS.muted, background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
+                              PENDING
+                            </span>
+                          )}
+                          {item.status === 'verifying' && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ffffff', background: '#0a0a0a', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
+                              VERIFYING...
+                            </span>
+                          )}
+                          {canInspect && (
+                            <>
+                              <span className={`status-badge ${item.result?.result === 'VALID' ? 'status-valid' : 'status-revoked'}`} style={item.result?.result === 'REVOKED' ? { background: '#0a0a0a', color: '#ffffff' } : {}}>
+                                {item.result?.result || 'ERROR'}
+                              </span>
+                              <span style={{ fontSize: '0.75rem', color: GS.ink, fontWeight: 700, textDecoration: 'underline', paddingLeft: '4px' }}>
+                                View Result →
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
                 </div>
 
                 <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem' }}>
@@ -661,9 +715,233 @@ function Verifier() {
         )}
       </AnimatePresence>
 
+      {/* ── BATCH RESULT POP-UP MODAL SCREEN ─────────────────────── */}
+      <AnimatePresence>
+        {batchModalItem && (
+          <motion.div
+            key="batch-modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(0,0,0,0.65)',
+              backdropFilter: 'blur(4px)',
+              zIndex: 1100,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '1.5rem',
+              overflowY: 'auto',
+            }}
+            onClick={() => setBatchModalItem(null)}
+          >
+            <motion.div
+              key="batch-modal-card"
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              transition={{ duration: 0.3, ease: PREMIUM }}
+              className="card"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '100%',
+                maxWidth: '920px',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                margin: 'auto',
+                background: '#ffffff',
+                border: '2.5px solid #0a0a0a',
+                borderRadius: '24px',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+                padding: '1.75rem 2rem',
+                position: 'relative',
+                color: '#0a0a0a',
+              }}
+            >
+              {/* Modal Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '2px solid #0a0a0a', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span style={{ fontSize: '1.3rem' }}>📄</span>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#0a0a0a' }}>
+                      {batchModalItem.item.name}
+                    </h3>
+                    <span style={{ fontSize: '0.75rem', color: GS.muted }}>
+                      Verified Batch Certificate Inspection
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setBatchModalItem(null)}
+                  style={{ background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', fontWeight: 700, color: '#0a0a0a', padding: '0 0.5rem' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Result Status Banner */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem', padding: '0.75rem 1rem', background: '#f8fafc', border: '1.5px solid #0a0a0a', borderRadius: '12px' }}>
+                <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: '#0a0a0a' }}>
+                  {batchModalItem.result.result === 'VALID'             && 'CERTIFICATE AUTHENTIC & VALID'}
+                  {batchModalItem.result.result === 'TAMPERED'          && 'TAMPERED / INTEGRITY FAILED'}
+                  {batchModalItem.result.result === 'HASH_MISMATCH'     && 'HASH MISMATCH / CORRUPTED'}
+                  {batchModalItem.result.result === 'SIGNATURE_INVALID' && 'INVALID DIGITAL SIGNATURE'}
+                  {batchModalItem.result.result === 'REVOKED'           && 'CERTIFICATE REVOKED BY ISSUER'}
+                  {batchModalItem.result.result === 'ERROR'             && 'VERIFICATION ERROR'}
+                </h2>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, padding: '0.3rem 0.9rem', borderRadius: '25px', background: batchModalItem.result.result === 'VALID' ? '#10B981' : (batchModalItem.result.result === 'REVOKED' ? '#0a0a0a' : '#EF4444'), color: '#ffffff', letterSpacing: '0.05em' }}>
+                  STATUS: {batchModalItem.result.result}
+                </span>
+              </div>
+
+              <p style={{ fontSize: '0.92rem', fontWeight: 500, margin: '0 0 1.25rem 0', color: '#333333' }}>
+                {batchModalItem.result.message || batchModalItem.result.reason}
+              </p>
+
+              {/* Action Bar: AI Fraud Analysis */}
+              <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+                <button
+                  className="btn"
+                  onClick={() => setShowFraudModal(true)}
+                  style={{
+                    background: '#0a0a0a',
+                    color: '#ffffff',
+                    border: '2px solid #0a0a0a',
+                    borderRadius: '25px',
+                    padding: '0.65rem 1.5rem',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                    boxShadow: '0 4px 14px rgba(10,10,10,0.25)',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  AI Fraud Risk Analysis
+                </button>
+              </div>
+
+              {/* Metadata Grid */}
+              {batchModalItem.result.certificate && (
+                <div style={{ background: '#e8e8e8', border: '1px solid #0a0a0a', padding: '1.1rem 1.25rem', borderRadius: '12px', marginBottom: '1.25rem', textAlign: 'left', color: '#0a0a0a' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem 1.25rem', fontSize: '0.88rem' }}>
+                    <div>
+                      <span style={{ color: '#666666', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase' }}>Student Name</span><br />
+                      <strong>{batchModalItem.result.certificate.student_name}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: '#666666', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase' }}>Course</span><br />
+                      <strong>{batchModalItem.result.certificate.course}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: '#666666', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase' }}>Issue Date</span><br />
+                      <strong>{batchModalItem.result.certificate.issue_date}</strong>
+                    </div>
+                    {batchModalItem.result.certificate.issuer && (
+                      <div>
+                        <span style={{ color: '#666666', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase' }}>Issuing University</span><br />
+                        <strong>{batchModalItem.result.certificate.issuer}</strong>
+                      </div>
+                    )}
+                    {batchModalItem.result.certificate.certificate_number && (
+                      <div>
+                        <span style={{ color: '#666666', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase' }}>Certificate Number</span><br />
+                        <strong style={{ fontFamily: 'monospace' }}>{batchModalItem.result.certificate.certificate_number}</strong>
+                      </div>
+                    )}
+                    {batchModalItem.result.certificate.certificate_category && (
+                      <div>
+                        <span style={{ color: '#666666', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase' }}>Category</span><br />
+                        <strong>{getCategoryLabel(batchModalItem.result.certificate.certificate_category)}</strong>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Visual Certificate Document Preview with Status Stamp */}
+              {batchModalItem.result.certificate && (
+                <div style={{ margin: '1.25rem 0', position: 'relative' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.6rem', textAlign: 'left', color: '#0a0a0a' }}>
+                    Visual Certificate Document Preview:
+                  </div>
+                  <div style={{ overflowX: 'auto', background: '#e2e8f0', padding: '1.25rem', borderRadius: '14px', border: '1.5px solid #0a0a0a', display: 'flex', justifyContent: 'center', position: 'relative' }}>
+                    <CategoryCertificateTemplate
+                      certificate={{ ...batchModalItem.result.certificate, university_name: batchModalItem.result.certificate.issuer || batchModalItem.result.certificate.university_name || 'Issuing University' }}
+                      qrCodeUrl={
+                        (batchModalItem.result.certificate.id || batchModalItem.result.certificate.cert_id)
+                          ? `http://localhost:5000/uploads/qr_${batchModalItem.result.certificate.id || batchModalItem.result.certificate.cert_id}.png`
+                          : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(batchModalItem.result.certificate.certificate_number || batchModalItem.result.certificate.student_name || 'VERIFIED')}`
+                      }
+                    />
+                    {/* Status Stamp Overlay */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%) rotate(-15deg)',
+                      fontSize: '3.5rem',
+                      fontWeight: 900,
+                      color: batchModalItem.result.result === 'VALID' ? '#10B981' : '#EF4444',
+                      border: `6px double ${batchModalItem.result.result === 'VALID' ? '#10B981' : '#EF4444'}`,
+                      padding: '0.5rem 2rem',
+                      borderRadius: '16px',
+                      background: 'rgba(255,255,255,0.95)',
+                      boxShadow: '0 10px 40px rgba(0,0,0,0.25)',
+                      letterSpacing: '0.1em',
+                      userSelect: 'none',
+                      pointerEvents: 'none'
+                    }}>
+                      {batchModalItem.result.result === 'VALID'    && 'VALID'}
+                      {batchModalItem.result.result === 'REVOKED'  && 'REVOKED'}
+                      {(batchModalItem.result.result === 'TAMPERED' || batchModalItem.result.result === 'HASH_MISMATCH' || batchModalItem.result.result === 'SIGNATURE_INVALID' || batchModalItem.result.result === 'ERROR') && 'TAMPERED'}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Cryptographic Audit Checklist */}
+              <div style={{ marginTop: '1.25rem', borderTop: '2px solid #0a0a0a', paddingTop: '1rem', textAlign: 'left', color: '#0a0a0a' }}>
+                <p style={{ fontWeight: 700, marginBottom: '0.75rem', fontSize: '0.92rem' }}>Cryptographic Verification Audit</p>
+                <div style={{ display: 'grid', gap: '0.5rem', fontSize: '0.85rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span>{batchModalItem.result.hashStatus === 'MATCH' ? '✓' : '✕'}</span>
+                    <span><strong>SHA-256 Hash Integrity:</strong> {batchModalItem.result.hashStatus === 'MATCH' ? 'Verified — data payload is 100% intact' : 'FAILED — data hash mismatch'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span>{batchModalItem.result.signatureStatus === 'VALID' ? '✓' : '✕'}</span>
+                    <span><strong>RSA-2048 Digital Signature:</strong> {batchModalItem.result.signatureStatus === 'VALID' ? 'Valid — signed by official university key' : 'FAILED — signature invalid'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span>{batchModalItem.result.result === 'VALID' ? '✓' : batchModalItem.result.result === 'REVOKED' ? '✕' : '○'}</span>
+                    <span><strong>Revocation Status:</strong> {batchModalItem.result.result === 'VALID' ? 'Active — certificate not revoked' : batchModalItem.result.result === 'REVOKED' ? 'REVOKED by issuer' : 'Skipped'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Close Button */}
+              <div style={{ textAlign: 'right', marginTop: '1.5rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
+                <button className="btn" onClick={() => setBatchModalItem(null)}>
+                  Close Inspection
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── VERIFICATION RESULT PANEL ─────────────────────────────── */}
       <AnimatePresence mode="wait">
-        {result && (
+        {result && inputMode !== 'batch' && (
           <motion.div
             key={`result-${shakeKey}`}
             className="card"
@@ -747,11 +1025,27 @@ function Verifier() {
             {/* Action Bar for Verified Certificate: AI Fraud Analysis */}
             <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1.25rem' }}>
               <button
-                className="btn-secondary"
+                className="btn"
                 onClick={() => setShowFraudModal(true)}
-                style={{ padding: '0.55rem 1.1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}
+                style={{
+                  background: '#0a0a0a',
+                  color: '#ffffff',
+                  border: '2px solid #0a0a0a',
+                  borderRadius: '25px',
+                  padding: '0.7rem 1.8rem',
+                  fontSize: '0.9rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  boxShadow: '0 4px 16px rgba(10,10,10,0.3)',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                }}
               >
-                🤖 AI Fraud Risk Analysis
+                AI Fraud Risk Analysis
               </button>
             </div>
 

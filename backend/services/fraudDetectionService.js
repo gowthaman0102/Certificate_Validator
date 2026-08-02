@@ -195,29 +195,43 @@ function checkFontConsistency(payload) {
   }
 }
 
+const RESTRICTED_CATEGORIES = new Set([
+  'Degree / Graduation Certificate',
+  'Merit Certificate',
+  'Distinction Certificate',
+]);
+
 function checkDuplicateCertificate(payload, dbCert) {
   try {
-    if (!payload && !dbCert) {
-      return { name: 'Duplicate Certificate Detection', status: 'PASS', details: 'No duplicates found.', issues: [] };
+    const category = (payload?.certificate_category || dbCert?.certificate_category || '').trim();
+
+    // Students can legitimately hold multiple certificates for non-restricted categories
+    // (Participation, Project, Course Completion, Internship, Bonafide, etc.).
+    if (!RESTRICTED_CATEGORIES.has(category)) {
+      return {
+        name: 'Duplicate Certificate Detection',
+        status: 'PASS',
+        details: 'Category permits multiple certificates per student (Participation/Project/Course). No duplicate risk.',
+        issues: [],
+      };
     }
 
     const regNum = payload?.register_number || dbCert?.register_number;
-    const certNum = payload?.certificate_number || dbCert?.certificate_number;
     const certHash = payload?.hash || dbCert?.certificate_hash;
 
-    if (regNum && certHash) {
-      // Search for certificates with same register number but different hash
+    if (regNum && category) {
+      // For restricted categories, search for existing active certificates of the SAME category for the same student
       const duplicates = db.prepare(`
         SELECT id, certificate_number FROM certificates
-        WHERE register_number = ? AND certificate_hash != ? AND id != ?
-      `).all(regNum, certHash, dbCert?.id || 'NO_ID');
+        WHERE register_number = ? AND certificate_category = ? AND status != 'REVOKED' AND id != ?
+      `).all(regNum, category, dbCert?.id || 'NO_ID');
 
       if (duplicates.length > 0) {
         return {
           name: 'Duplicate Certificate Detection',
           status: 'WARNING',
-          details: `Flagged: Found ${duplicates.length} other certificate(s) for register number '${regNum}' with different hashes. Potential cloned certificate.`,
-          issues: [`${duplicates.length} existing record(s) share register number '${regNum}'.`],
+          details: `Flagged: Found duplicate '${category}' for register number '${regNum}'.`,
+          issues: [`Student already holds a ${category}.`],
         };
       }
     }
@@ -225,7 +239,7 @@ function checkDuplicateCertificate(payload, dbCert) {
     return {
       name: 'Duplicate Certificate Detection',
       status: 'PASS',
-      details: 'Unique certificate instance. No cloned records found.',
+      details: 'Unique restricted certificate instance. No duplicate records found.',
       issues: [],
     };
   } catch (err) {

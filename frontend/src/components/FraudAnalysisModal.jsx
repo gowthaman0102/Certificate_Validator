@@ -125,8 +125,8 @@ ${(analysisData.reasons || [])
       >
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", borderBottom: `1px solid ${GS.border}`, paddingBottom: "0.75rem" }}>
-          <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "0.5rem", borderBottom: "none", paddingBottom: 0 }}>
-            <span>🤖</span> AI Fraud Detection & Risk Analysis
+          <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "0.6rem", borderBottom: "none", paddingBottom: 0, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            AI Fraud Detection &amp; Risk Analysis
             {/* AI Engine badge — live from /api/ai/provider */}
             <div
               style={{ position: "relative", display: "inline-block" }}
