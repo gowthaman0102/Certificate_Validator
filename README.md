@@ -1,10 +1,10 @@
-# Certificate Validator
+﻿# Certificate Validator
 
-> **Offline-first, cryptographically signed academic credentials — with fraud detection, blockchain anchoring, and a digital skill passport.**
+> **Offline-first, cryptographically signed academic credentials â€” with fraud detection, blockchain anchoring, and a digital skill passport.**
 
 ---
 
-## ⚡ Quick Start (Under 2 Minutes)
+## âš¡ Quick Start (Under 2 Minutes)
 
 Get the application running locally in 4 simple commands:
 
@@ -31,36 +31,36 @@ npm run dev:frontend  # Terminal 2: Starts Vite UI on http://localhost:5173
 
 ## The Problem
 
-Credential fraud — forged degrees, tampered transcripts, fabricated certificates — is a $1 billion global problem. Degree mills sell authentic-looking diplomas; manual verification is slow, expensive, and geographically uneven. In low-connectivity regions, employers or institutions that need to verify a candidate''s qualification often cannot reach a central verification portal at all — leaving them with no reliable fallback other than trusting the paper in their hand.
+Credential fraud â€” forged degrees, tampered transcripts, fabricated certificates â€” is a $1 billion global problem. Degree mills sell authentic-looking diplomas; manual verification is slow, expensive, and geographically uneven. In low-connectivity regions, employers or institutions that need to verify a candidate''s qualification often cannot reach a central verification portal at all â€” leaving them with no reliable fallback other than trusting the paper in their hand.
 
 ## The Solution
 
-Certificate Validator replaces trust-in-paper with cryptographic proof. Universities sign each certificate with an **RSA-2048 private key**, embed the signature and metadata in a **QR code**, and anchor a SHA-256 hash to a **simulated blockchain ledger**. Any verifier — employer, institution, or person — can scan the QR and verify the signature **entirely offline**, with no server call required, using a cached or freshly-fetched public key. For additional assurance, an **8-point AI fraud-detection pipeline** cross-checks metadata consistency and surfaced anomalies. Students get a **Digital Skill Passport** (shareable portfolio + verified credentials) and a **Credential Wallet**. All events are recorded in a tamper-evident **audit log**. The full flow works from issuance to verification in under 60 seconds.
+Certificate Validator replaces trust-in-paper with cryptographic proof. Universities sign each certificate with an **RSA-2048 private key**, embed the signature and metadata in a **QR code**, and anchor a SHA-256 hash to a **simulated blockchain ledger**. Any verifier â€” employer, institution, or person â€” can scan the QR and verify the signature **entirely offline**, with no server call required, using a cached or freshly-fetched public key. For additional assurance, an **8-point AI fraud-detection pipeline** cross-checks metadata consistency and surfaced anomalies. Students get a **Digital Skill Passport** (shareable portfolio + verified credentials) and a **Credential Wallet**. All events are recorded in a tamper-evident **audit log**. The full flow works from issuance to verification in under 60 seconds.
 
 ---
 
-## 📸 Visual Showcase & Application Screenshots
+## ðŸ“¸ Visual Showcase & Application Screenshots
 
 ### 1. Platform Overview & Home Page
-![Platform Overview](file:///C:/Users/GOWTHAMAN.S/.gemini/antigravity/brain/90dc129e-6a0d-427d-8334-8a0ec0f8b11c/.user_uploaded/media__1785684050765.png)
+![Platform Overview](docs/screenshots/platform-overview.png)
 
 ### 2. Issued Visual Certificate Preview (Graduation Template)
-![Graduation Certificate Preview](file:///C:/Users/GOWTHAMAN.S/.gemini/antigravity/brain/90dc129e-6a0d-427d-8334-8a0ec0f8b11c/template_graduation_v2_1785592688764.jpg)
+![Graduation Certificate Preview](docs/screenshots/certificate-template.jpg)
 
 ### 3. Verification Result Card & Status Stamp
-![Verified Certificate Document & Status Stamp](file:///C:/Users/GOWTHAMAN.S/.gemini/antigravity/brain/90dc129e-6a0d-427d-8334-8a0ec0f8b11c/.user_uploaded/media__1785683784112.png)
+![Verified Certificate Document & Status Stamp](docs/screenshots/verified-status-stamp.png)
 <!-- TODO: screenshot: Verifier result states showing VALID (green stamp), REVOKED (black stamp), and TAMPERED (red stamp) overlays -->
 
 ### 4. AI Fraud Risk Analysis Modal & Engine Badge
-![AI Fraud Risk Analysis Modal](file:///C:/Users/GOWTHAMAN.S/.gemini/antigravity/brain/90dc129e-6a0d-427d-8334-8a0ec0f8b11c/.user_uploaded/media__1785683909567.png)
+![AI Fraud Risk Analysis Modal](docs/screenshots/fraud-analysis-modal.png)
 <!-- TODO: screenshot: AI Fraud Risk Analysis Modal showing 8-point check breakdown and live AI provider badge -->
 
 ### 5. Offline PWA Mode Active
-<!-- TODO: screenshot: Offline PWA banner / indicator active showing "OFFLINE MODE — Verifying locally via cached public keys & offline PWA service worker" -->
+<!-- TODO: screenshot: Offline PWA banner / indicator active showing "OFFLINE MODE â€” Verifying locally via cached public keys & offline PWA service worker" -->
 
 ---
 
-## 📈 Why This Matters (Economic & Operational Impact)
+## ðŸ“ˆ Why This Matters (Economic & Operational Impact)
 
 Traditional academic credential verification relies on manual email exchanges, physical seal attestations, or paid third-party clearinghouses.
 
@@ -70,19 +70,19 @@ Traditional academic credential verification relies on manual email exchanges, p
 
 ---
 
-## 🎯 Who This Is For (Stakeholder Framing)
+## ðŸŽ¯ Who This Is For (Stakeholder Framing)
 
-* **🏛️ Universities & Registrars**: Complete authority over credential issuance and revocation with 100% cryptographic tamper proofing and automated compliance audit logging.
-* **💼 Employers & Background Verifiers**: Instant, zero-cost, offline trust verification without waiting weeks for university email responses or paying clearinghouse fees.
-* **🎓 Students & Graduates**: A self-owned digital skill passport and credential wallet to store, prove, and share verified achievements securely.
-* **📜 Accreditation Bodies & Auditors**: Immutable, exportable institutional audit trails tracking every issuance, verification attempt, and revocation event.
+* **ðŸ›ï¸ Universities & Registrars**: Complete authority over credential issuance and revocation with 100% cryptographic tamper proofing and automated compliance audit logging.
+* **ðŸ’¼ Employers & Background Verifiers**: Instant, zero-cost, offline trust verification without waiting weeks for university email responses or paying clearinghouse fees.
+* **ðŸŽ“ Students & Graduates**: A self-owned digital skill passport and credential wallet to store, prove, and share verified achievements securely.
+* **ðŸ“œ Accreditation Bodies & Auditors**: Immutable, exportable institutional audit trails tracking every issuance, verification attempt, and revocation event.
 
 ---
 
-## 💬 Evaluator & Pilot Feedback
+## ðŸ’¬ Evaluator & Pilot Feedback
 
 > *"The ability to verify degree authenticity offline using cached public keys directly solves our field-verification bottleneck during recruitment drives in remote locations."*  
-> — Feedback gathered during live demonstration testing with university registrar and technical evaluators.
+> â€” Feedback gathered during live demonstration testing with university registrar and technical evaluators.
 
 ---
 
@@ -90,7 +90,7 @@ Traditional academic credential verification relies on manual email exchanges, p
 
 ### Issuance & Revocation Cryptographic Flow
 
-Every institutional action — both **Issuance** and **Revocation** — follows an identical cryptographic workflow (Sign → Hash → Anchor):
+Every institutional action â€” both **Issuance** and **Revocation** â€” follows an identical cryptographic workflow (Sign â†’ Hash â†’ Anchor):
 
 ```
 University / Registrar Authority
@@ -150,9 +150,9 @@ flowchart LR
 | **Backend** | Node.js 18+, Express 5, better-sqlite3 (SQLite) |
 | **Cryptography** | Node.js `crypto` (RSA-2048 + SHA-256), offline signature verification |
 | **AI / Fraud Detection** | Multi-provider LLM abstraction (OpenAI / Gemini / Claude / Azure / Heuristic fallback) |
-| **Blockchain** | Simulated SQLite ledger — identical interface to an on-chain contract; Polygon-ready |
+| **Blockchain** | Simulated SQLite ledger â€” identical interface to an on-chain contract; Polygon-ready |
 | **Auth** | JWT (jsonwebtoken) + bcryptjs |
-| **QR** | `qrcode` library — base64 JSON payload embedded in certificate |
+| **QR** | `qrcode` library â€” base64 JSON payload embedded in certificate |
 | **Design System** | Monochrome "Crest" design system, Framer Motion reveal/draw-in motion primitives |
 
 ---
@@ -212,10 +212,10 @@ cd frontend && npm run dev
 
 ### 5. First-time setup
 1. Navigate to `http://localhost:5173`
-2. Register as a **University** — generates your RSA-2048 key pair automatically
+2. Register as a **University** â€” generates your RSA-2048 key pair automatically
 3. Register as a **Student** linked to that university
 4. Issue a certificate from the University Dashboard
-5. Verify it from the Verifier page — works offline after the first public key fetch
+5. Verify it from the Verifier page â€” works offline after the first public key fetch
 
 ---
 
@@ -223,15 +223,15 @@ cd frontend && npm run dev
 
 These are explicit design decisions, not hidden gaps. They reflect prioritization within hackathon constraints.
 
-### Blockchain Layer — Simulated Ledger
+### Blockchain Layer â€” Simulated Ledger
 
 The blockchain module (`backend/utils/blockchain.js`, `blockchainController.js`) uses a **SQLite-backed ledger** that mirrors the interface of a deployed smart contract. The data model, API surface, and frontend Blockchain Explorer are production-correct.
 
-**Migration path to mainnet:** Swap `blockchain.js` for an `ethers.js` provider pointing at a Polygon/Ethereum node. No other file changes required — the controller and frontend consume the same interface. This was a deliberate time trade-off: a correct data model over a testnet integration.
+**Migration path to mainnet:** Swap `blockchain.js` for an `ethers.js` provider pointing at a Polygon/Ethereum node. No other file changes required â€” the controller and frontend consume the same interface. This was a deliberate time trade-off: a correct data model over a testnet integration.
 
-### AI Layer — Heuristic Default
+### AI Layer â€” Heuristic Default
 
-When `AI_PROVIDER=heuristic` (the default), the chat assistant and fraud-risk scorer use a fully-offline rule-based engine — no API key or network call required. This makes the system usable in air-gapped or low-connectivity deployments.
+When `AI_PROVIDER=heuristic` (the default), the chat assistant and fraud-risk scorer use a fully-offline rule-based engine â€” no API key or network call required. This makes the system usable in air-gapped or low-connectivity deployments.
 
 **Plugging in a real LLM:** Set `AI_PROVIDER=gemini` (or `openai`, `claude`, `azure`) and the matching API key in `.env`. Both the chat assistant and the 8-point fraud pipeline will call that provider, with automatic fallback to heuristic if the API call fails. The abstraction lives entirely in `backend/services/llmProvider.js` and `aiRiskScoringService.js`.
 
@@ -266,7 +266,7 @@ When `AI_PROVIDER=heuristic` (the default), the chat assistant and fraud-risk sc
 
 ### Verifier (Public / Employer)
 - Verify by Certificate ID or QR code scan
-- Offline verification — works with no internet after first key fetch
+- Offline verification â€” works with no internet after first key fetch
 - Revocation list sync for fully offline verification
 - AI Fraud Detection: 8-point analysis with risk score and confidence rating
 - AI chat assistant for verification guidance
@@ -280,7 +280,7 @@ When `AI_PROVIDER=heuristic` (the default), the chat assistant and fraud-risk sc
 
 ---
 
-## ❓ Judge FAQ & Anticipated Questions
+## â“ Judge FAQ & Anticipated Questions
 
 ### 1. "Is the blockchain real or simulated?"
 **Answer**: It is a production-correct simulated ledger backed by SQLite that mirrors the exact interface, block headers, and transaction hashing of an Ethereum EVM smart contract. Swapping a single file ([`backend/utils/blockchain.js`](file:///d:/Certificate_Validator/backend/utils/blockchain.js)) connects the system directly to Polygon Mumbai or Ethereum mainnet via `ethers.js` with zero changes required in any UI page or controller handler.
@@ -303,27 +303,27 @@ When `AI_PROVIDER=heuristic` (the default), the chat assistant and fraud-risk sc
 
 ```
 Certificate_Validator/
-├── backend/
-│   ├── controllers/     # Route handlers (auth, certs, verification, blockchain, AI...)
-│   ├── routes/          # Express routers (13 route modules)
-│   ├── services/        # Business logic (LLM, fraud detection, OCR, passport, templates)
-│   ├── utils/           # Crypto, blockchain ledger, key cache, helpers
-│   ├── uploads/         # Certificate PDFs, QR code images (gitignored)
-│   ├── .env.example     # All required env vars documented
-│   └── server.js        # Express entry point
-│
-├── frontend/
-│   ├── src/
-│   │   ├── pages/       # 18 page components
-│   │   ├── components/  # Shared UI + motion primitives
-│   │   ├── api/         # Axios client modules per domain
-│   │   ├── hooks/       # useReveal (IntersectionObserver)
-│   │   └── utils/       # Offline crypto, QR decoder, wallet store, key cache
-│   ├── .env.example
-│   └── vite.config.js
-│
-├── README.md            # You are here
-└── DEMO_SCRIPT.md       # Live demo walkthrough (added in demo prep phase)
+â”œâ”€â”€ backend/
+â”‚   â”œâ”€â”€ controllers/     # Route handlers (auth, certs, verification, blockchain, AI...)
+â”‚   â”œâ”€â”€ routes/          # Express routers (13 route modules)
+â”‚   â”œâ”€â”€ services/        # Business logic (LLM, fraud detection, OCR, passport, templates)
+â”‚   â”œâ”€â”€ utils/           # Crypto, blockchain ledger, key cache, helpers
+â”‚   â”œâ”€â”€ uploads/         # Certificate PDFs, QR code images (gitignored)
+â”‚   â”œâ”€â”€ .env.example     # All required env vars documented
+â”‚   â””â”€â”€ server.js        # Express entry point
+â”‚
+â”œâ”€â”€ frontend/
+â”‚   â”œâ”€â”€ src/
+â”‚   â”‚   â”œâ”€â”€ pages/       # 18 page components
+â”‚   â”‚   â”œâ”€â”€ components/  # Shared UI + motion primitives
+â”‚   â”‚   â”œâ”€â”€ api/         # Axios client modules per domain
+â”‚   â”‚   â”œâ”€â”€ hooks/       # useReveal (IntersectionObserver)
+â”‚   â”‚   â””â”€â”€ utils/       # Offline crypto, QR decoder, wallet store, key cache
+â”‚   â”œâ”€â”€ .env.example
+â”‚   â””â”€â”€ vite.config.js
+â”‚
+â”œâ”€â”€ README.md            # You are here
+â””â”€â”€ DEMO_SCRIPT.md       # Live demo walkthrough (added in demo prep phase)
 ```
 
 ---
@@ -331,3 +331,4 @@ Certificate_Validator/
 ## License
 
 MIT
+
