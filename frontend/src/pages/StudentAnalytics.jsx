@@ -130,16 +130,7 @@ function StudentAnalytics() {
           </div>
         </motion.div>
       )}
-      {data?.walletStats && (
-        <motion.div className="card" style={{ maxWidth: "900px" }} variants={cardVariants}>
-          <h3>Wallet Activity</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "0.75rem" }}>
-            <StatBox label="Downloads" value={data.walletStats.downloads} />
-            <StatBox label="Shares" value={data.walletStats.shares} />
-            <StatBox label="Verifications" value={data.walletStats.verifications} />
-          </div>
-        </motion.div>
-      )}
+
       {data?.timeline?.length > 0 && (
         <motion.div className="card" style={{ maxWidth: "900px" }} variants={cardVariants}>
           <h3>Certificate Receipt Timeline</h3>
