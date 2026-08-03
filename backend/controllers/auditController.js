@@ -92,17 +92,27 @@ function getStats(req, res) {
       return res.status(403).json({ error: 'Access restricted to university accounts' });
     }
 
-    const totals = db.prepare(`
+    const totalsRaw = db.prepare(`
       SELECT
-        COUNT(*)                                          AS total,
-        SUM(CASE WHEN status = 'SUCCESS' THEN 1 ELSE 0 END) AS success_count,
-        SUM(CASE WHEN status = 'FAILURE' THEN 1 ELSE 0 END) AS failure_count,
-        SUM(CASE WHEN module = 'AUTH'    THEN 1 ELSE 0 END) AS auth_events,
-        SUM(CASE WHEN module = 'CERTIFICATE' THEN 1 ELSE 0 END) AS cert_events,
-        SUM(CASE WHEN module = 'VERIFICATION' THEN 1 ELSE 0 END) AS verify_events,
-        SUM(CASE WHEN module = 'REVOCATION'   THEN 1 ELSE 0 END) AS revoke_events
+        COUNT(*)                                                     AS total,
+        COALESCE(SUM(CASE WHEN UPPER(status) = 'SUCCESS' THEN 1 ELSE 0 END), 0) AS success_count,
+        COALESCE(SUM(CASE WHEN UPPER(status) = 'FAILURE' THEN 1 ELSE 0 END), 0) AS failure_count,
+        COALESCE(SUM(CASE WHEN UPPER(module) = 'AUTH'    THEN 1 ELSE 0 END), 0) AS auth_events,
+        COALESCE(SUM(CASE WHEN UPPER(module) = 'CERTIFICATE' THEN 1 ELSE 0 END), 0) AS cert_events,
+        COALESCE(SUM(CASE WHEN UPPER(module) = 'VERIFICATION' THEN 1 ELSE 0 END), 0) AS verify_events,
+        COALESCE(SUM(CASE WHEN UPPER(module) = 'REVOCATION'   THEN 1 ELSE 0 END), 0) AS revoke_events
       FROM audit_logs
     `).get();
+
+    const totals = {
+      total: totalsRaw?.total || 0,
+      success_count: totalsRaw?.success_count || 0,
+      failure_count: totalsRaw?.failure_count || 0,
+      auth_events: totalsRaw?.auth_events || 0,
+      cert_events: totalsRaw?.cert_events || 0,
+      verify_events: totalsRaw?.verify_events || 0,
+      revoke_events: totalsRaw?.revoke_events || 0,
+    };
 
     res.json(totals);
   } catch (err) {

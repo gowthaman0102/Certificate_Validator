@@ -22,10 +22,12 @@ const INTERACTIVE = [0.4, 0, 0.2, 1];
 // Result panel container — wraps on enter; shake on failure
 const resultPanelVariants = {
   hidden:  { opacity: 0, y: 14 },
-  visible: { opacity: 1, y: 0,  transition: { duration: 0.5, ease: PREMIUM } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: PREMIUM } },
   shake: {
-    x: [0, -4, 4, -4, 4, -2, 0],
-    transition: { duration: 0.3, ease: INTERACTIVE },
+    opacity: 1,
+    y: 0,
+    x: [0, -6, 6, -6, 6, -3, 0],
+    transition: { duration: 0.35, ease: INTERACTIVE },
   },
 };
 
@@ -307,9 +309,11 @@ function Verifier() {
     if (inputMode === 'file') {
       if (!uploadedFile) throw new Error('Choose a certificate file to upload.');
       let payload = await decodeQrFromCertificateFile(uploadedFile);
-      const certLookupId = payload?.cert_id_from_name || (!payload?.hash ? (payload?.certificate_number || payload?.cert_id) : null);
-      if (certLookupId) {
-        const res = await getCertificateByCertNumber(certLookupId);
+      if (!payload) throw new Error('No QR code or valid payload found in uploaded file.');
+
+      // Only query DB if file has no embedded QR code/hash and only a Cert ID text match
+      if (payload?.cert_id_from_name && !payload?.hash) {
+        const res = await getCertificateByCertNumber(payload.cert_id_from_name);
         const cert = res.data;
         return {
           cert_id: cert.id, certificate_number: cert.certificate_number,
@@ -333,11 +337,15 @@ function Verifier() {
       try {
         const res = await verifyCertificate(payload);
         setResult(res.data);
-        // Shake on failure
         if (res.data.result !== 'VALID') setShakeKey(k => k + 1);
       }
       catch (err) {
-        setError(err.response?.data?.error || 'Verification request failed');
+        if (err.response?.data?.result) {
+          setResult(err.response.data);
+          setShakeKey(k => k + 1);
+        } else {
+          setError(err.response?.data?.error || 'Verification request failed');
+        }
       }
       finally { setLoading(false); }
       return;
@@ -999,6 +1007,21 @@ function Verifier() {
                         initial="hidden"
                         animate="visible"
                       />
+                    </svg>
+                  </motion.div>
+                )}
+
+                {/* Tampered / Warning SVG — on HASH_MISMATCH, SIGNATURE_INVALID, TAMPERED, REPLAY_REJECTED */}
+                {!isValid && !isRevoked && (
+                  <motion.div
+                    variants={checkCircleVariants}
+                    initial="hidden"
+                    animate="visible"
+                    style={{ width: 36, height: 36, flexShrink: 0 }}
+                  >
+                    <svg width="36" height="36" viewBox="0 0 36 36">
+                      <circle cx="18" cy="18" r="17" fill="#EF4444" />
+                      <path d="M18 10 V20 M18 24 V25.5" stroke="#ffffff" strokeWidth="3.2" strokeLinecap="round" fill="none" />
                     </svg>
                   </motion.div>
                 )}

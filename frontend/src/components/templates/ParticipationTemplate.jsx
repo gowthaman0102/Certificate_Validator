@@ -9,6 +9,24 @@ const ParticipationTemplate = forwardRef(({ certificate, templatePreset, qrCodeU
     (certId ? `http://localhost:5000/uploads/qr_${certId}.png` :
     `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(certificate?.certificate_number || certificate?.student_name || 'VERIFIED')}`));
 
+  // Helper to remove raw square brackets if present (e.g. "[ IT ]" -> "IT")
+  const cleanStr = (str) => (str ? String(str).replace(/^\[\s*/, '').replace(/\s*\]$/, '').trim() : '');
+
+  const rawCourse = certificate?.course || certificate?.category_detail || body.subHeading || 'Hackathon Innovation Event';
+  const rawUni = certificate?.university_name || 'Organizing Committee';
+  const rawDate = certificate?.issue_date || new Date().toISOString().split('T')[0];
+
+  const eventName = cleanStr(rawCourse);
+  const universityName = cleanStr(rawUni);
+  const issueDate = cleanStr(rawDate);
+
+  // General formal content matching all hackathons & technical events
+  const bodyParagraphs = body.lines && body.lines.length > 0 ? body.lines : [
+    `has actively participated in ${eventName}, demonstrating exceptional technical creativity,`,
+    `innovative problem-solving ability, and collaborative engineering excellence in developing impactful technology solutions.`,
+    `In recognition of outstanding teamwork, analytical proficiency, and competitive dedication.`,
+  ];
+
   const containerStyle = {
     width: '850px',
     height: '580px',
@@ -23,29 +41,17 @@ const ParticipationTemplate = forwardRef(({ certificate, templatePreset, qrCodeU
     boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
   };
 
-  const formatText = (text) => {
-    if (!text) return null;
-    const lines = Array.isArray(text) ? text : String(text).split('\n');
-    return lines.map((line, i) => (
-      <span key={i}>
-        {line}
-        <br />
-      </span>
-    ));
-  };
-
   return (
     <div ref={ref} style={containerStyle}>
-      {/* ── TOP DUAL-TONE BLUE BANNER (NO TEXT) ───────────────────────── */}
-      <div style={{ width: '100%', height: '70px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ width: '100%', height: '52px', backgroundColor: '#1A63B4' }}></div>
-        {/* Slanted darker ocean blue stripe */}
+      {/* ── TOP DUAL-TONE BLUE BANNER ───────────────────────── */}
+      <div style={{ width: '100%', height: '62px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ width: '100%', height: '46px', backgroundColor: '#1A63B4' }}></div>
         <div style={{
           position: 'absolute',
           bottom: '0',
           left: '-2%',
           width: '104%',
-          height: '24px',
+          height: '22px',
           backgroundColor: '#0D47A1',
           transform: 'rotate(-1.2deg)',
           transformOrigin: 'left center'
@@ -53,41 +59,53 @@ const ParticipationTemplate = forwardRef(({ certificate, templatePreset, qrCodeU
       </div>
 
       {/* ── MAIN CERTIFICATE CONTENT AREA ─────────────────────────────── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '15px 40px 10px 40px', zIndex: 2, textAlign: 'center' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 45px 8px 45px', zIndex: 2, textAlign: 'center' }}>
         
         {/* Certificate Heading */}
-        <h1 style={{ color: '#1C539A', fontSize: '2.1rem', fontWeight: 700, margin: '0 0 6px 0', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+        <h1 style={{ color: '#1C539A', fontSize: '2.0rem', fontWeight: 700, margin: '0 0 4px 0', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
           CERTIFICATE OF PARTICIPATION
         </h1>
-        <div style={{ width: '60px', height: '3px', backgroundColor: '#1C539A', margin: '0 auto 16px auto' }}></div>
+        <div style={{ width: '60px', height: '3px', backgroundColor: '#1C539A', margin: '0 auto 12px auto' }}></div>
 
         {/* Subtext */}
-        <div style={{ color: '#64748b', fontSize: '0.85rem', fontFamily: 'Arial, sans-serif', marginBottom: '6px' }}>
-          This certificate is presented to
+        <div style={{ color: '#64748b', fontSize: '0.82rem', fontFamily: 'Arial, sans-serif', marginBottom: '4px' }}>
+          This certificate is proudly presented to
         </div>
 
         {/* Student Name */}
-        <div style={{ width: '70%', borderBottom: '2px solid #1C539A', paddingBottom: '4px', margin: '0 auto 14px auto' }}>
-          <div style={{ color: '#1C539A', fontSize: '2.4rem', fontWeight: 'bold', letterSpacing: '0.02em' }}>
+        <div style={{ width: '70%', borderBottom: '2px solid #1C539A', paddingBottom: '3px', margin: '0 auto 10px auto' }}>
+          <div style={{ color: '#1C539A', fontSize: '2.2rem', fontWeight: 'bold', letterSpacing: '0.02em' }}>
             {certificate.student_name || 'Full Name'}
           </div>
         </div>
 
-        {/* Participation Event / Program Info */}
-        <div style={{ color: '#64748b', fontSize: '0.85rem', fontFamily: 'Arial, sans-serif', marginBottom: '4px' }}>
-          for successful participation in
-        </div>
-        
-        <div style={{ color: '#1C539A', fontSize: '1.15rem', fontWeight: 'bold', marginBottom: '2px' }}>
-          [ {certificate.course || body.subHeading || 'Event / Program Name'} ]
+        {/* Event Title */}
+        <div style={{ color: '#1C539A', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '8px' }}>
+          {eventName}
         </div>
 
-        <div style={{ color: '#64748b', fontSize: '0.78rem', fontFamily: 'Arial, sans-serif', marginBottom: '14px' }}>
-          [ {certificate.issue_date || new Date().toISOString().split('T')[0]} ] • [ {certificate.university_name || 'Location / Platform'} ]
+        {/* ── RICH GENERAL CONTENT PARAGRAPH (MATCHES ALL HACKATHONS) ── */}
+        <div style={{
+          maxWidth: '680px',
+          color: '#334155',
+          fontSize: '0.86rem',
+          fontFamily: 'Arial, sans-serif',
+          lineHeight: 1.55,
+          marginBottom: '10px',
+          textAlign: 'center'
+        }}>
+          {bodyParagraphs.map((line, idx) => (
+            <p key={idx} style={{ margin: '0 0 3px 0' }}>{line}</p>
+          ))}
         </div>
 
-        {/* ── MIDDLE CENTER QR CODE (REPLACING TICK MARK) ────────────────── */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '4px 0 10px 0' }}>
+        {/* Event Meta Line */}
+        <div style={{ color: '#64748b', fontSize: '0.78rem', fontFamily: 'Arial, sans-serif', marginBottom: '10px', fontWeight: 600 }}>
+          <span>{issueDate}</span> • <span>Organized by {universityName}</span>
+        </div>
+
+        {/* ── MIDDLE CENTER QR CODE ────────────────── */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '2px 0 8px 0' }}>
           <img
             src={activeQrUrl}
             alt="Official QR Code"
@@ -95,20 +113,20 @@ const ParticipationTemplate = forwardRef(({ certificate, templatePreset, qrCodeU
               e.target.onerror = null;
               e.target.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(certificate?.certificate_number || certificate?.student_name || 'VERIFIED')}`;
             }}
-            style={{ width: '105px', height: '105px', border: '2px solid #1C539A', display: 'block', imageRendering: 'pixelated', backgroundColor: '#FFFFFF', padding: '4px' }}
+            style={{ width: '95px', height: '95px', border: '2px solid #1C539A', display: 'block', imageRendering: 'pixelated', backgroundColor: '#FFFFFF', padding: '3px' }}
           />
         </div>
 
         {/* ── BOTTOM SIGNATURE / DATE ROW ───────────────────────────────── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%', marginTop: 'auto', padding: '0 20px 10px 20px' }}>
-          <div style={{ textAlign: 'center', width: '200px' }}>
-            <div style={{ borderBottom: '2px solid #94A3B8', height: '30px', marginBottom: '6px' }}></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%', marginTop: 'auto', padding: '0 20px 6px 20px' }}>
+          <div style={{ textAlign: 'center', width: '190px' }}>
+            <div style={{ borderBottom: '2px solid #94A3B8', height: '24px', marginBottom: '4px' }}></div>
             <div style={{ color: '#64748b', fontSize: '0.75rem', fontFamily: 'Arial, sans-serif' }}>Authorized Signature</div>
           </div>
 
-          <div style={{ textAlign: 'center', width: '200px' }}>
-            <div style={{ borderBottom: '2px solid #94A3B8', height: '26px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '3px', marginBottom: '6px', color: '#1C539A', fontSize: '0.9rem', fontWeight: 'bold', fontFamily: 'Arial, sans-serif' }}>
-              {certificate.issue_date || new Date().toISOString().split('T')[0]}
+          <div style={{ textAlign: 'center', width: '190px' }}>
+            <div style={{ borderBottom: '2px solid #94A3B8', height: '22px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '2px', marginBottom: '4px', color: '#1C539A', fontSize: '0.88rem', fontWeight: 'bold', fontFamily: 'Arial, sans-serif' }}>
+              {issueDate}
             </div>
             <div style={{ color: '#64748b', fontSize: '0.75rem', fontFamily: 'Arial, sans-serif' }}>Date</div>
           </div>
@@ -116,19 +134,18 @@ const ParticipationTemplate = forwardRef(({ certificate, templatePreset, qrCodeU
       </div>
 
       {/* ── BOTTOM DUAL-TONE BLUE BANNER ──────────────────────────────── */}
-      <div style={{ width: '100%', height: '55px', position: 'relative', overflow: 'hidden', marginTop: 'auto' }}>
-        {/* Slanted darker ocean blue stripe */}
+      <div style={{ width: '100%', height: '48px', position: 'relative', overflow: 'hidden', marginTop: 'auto' }}>
         <div style={{
           position: 'absolute',
           top: '0',
           left: '-2%',
           width: '104%',
-          height: '22px',
+          height: '18px',
           backgroundColor: '#0D47A1',
           transform: 'rotate(1.2deg)',
           transformOrigin: 'left center'
         }}></div>
-        <div style={{ width: '100%', height: '40px', backgroundColor: '#1A63B4', position: 'absolute', bottom: '0' }}></div>
+        <div style={{ width: '100%', height: '34px', backgroundColor: '#1A63B4', position: 'absolute', bottom: '0' }}></div>
       </div>
     </div>
   );

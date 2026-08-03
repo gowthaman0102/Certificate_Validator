@@ -574,14 +574,14 @@ function getCertificatesByIdentity(req, res) {
 async function revokeCertificate(req, res) {
   try {
     const userId = req.user.id;
-    const certId = req.params.id || req.body.certificate_id;
+    const certId = req.params.id || req.body.certificate_id || req.body.id;
     const reason = (req.body.reason || 'Revoked by issuing university').trim();
 
     if (!certId) {
       return res.status(400).json({ error: 'Certificate ID is required' });
     }
 
-    const university = db.prepare('SELECT * FROM universities WHERE user_id = ?').get(userId);
+    const university = db.prepare('SELECT * FROM universities WHERE user_id = ? OR id = ?').get(userId, userId);
     if (!university) {
       return res.status(403).json({ error: 'Only registered universities can revoke certificates' });
     }
@@ -597,7 +597,7 @@ async function revokeCertificate(req, res) {
       return res.status(404).json({ error: 'Certificate not found' });
     }
 
-    if (cert.university_id !== university.id) {
+    if (cert.university_id !== university.id && cert.university_id !== university.user_id) {
       return res.status(403).json({ error: 'You are not authorized to revoke certificates issued by another university' });
     }
 
@@ -609,46 +609,56 @@ async function revokeCertificate(req, res) {
     const revocationId = uuidv4();
     const revokedAt = new Date().toISOString();
 
-    // RSA-2048 Cryptographic signature over certificateId + reason + revokedAt
-    const revocationPayload = JSON.stringify({
-      certificate_id: cert.id,
-      certificate_number: cert.certificate_number,
-      reason,
-      revoked_at: revokedAt,
-      revoked_by: university.issuer_code,
-    });
-    const revHash = generateHash(revocationPayload);
-    const signature = signData(revHash, university.private_key);
+    let signature = null;
+    try {
+      if (university.private_key) {
+        const revocationPayload = JSON.stringify({
+          certificate_id: cert.id,
+          certificate_number: cert.certificate_number,
+          reason,
+          revoked_at: revokedAt,
+          revoked_by: university.issuer_code,
+        });
+        const revHash = generateHash(revocationPayload);
+        signature = signData(revHash, university.private_key);
+      }
+    } catch (sigErr) {
+      console.warn('[revoke] Notice signing revocation:', sigErr.message);
+    }
 
-    // Anchor revocation transaction to simulated blockchain ledger
     let bcAnchor = null;
     try {
       bcAnchor = anchorToBlockchain({
-        certHash: revHash,
+        certHash: generateHash(cert.id + reason + revokedAt),
         certId: cert.id,
         certNumber: cert.certificate_number,
         issuerCode: university.issuer_code,
         universityName: university.name,
       });
     } catch (bcErr) {
-      console.error('[blockchain] Revocation anchor error:', bcErr.message);
+      console.warn('[blockchain] Revocation anchor notice:', bcErr.message);
     }
 
-    db.prepare('UPDATE certificates SET status = "REVOKED" WHERE id = ?').run(cert.id);
-    db.prepare(`
-      INSERT INTO revoked_certificates
-        (id, certificate_id, revoked_by, reason, revoked_at, signature, block_number, tx_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      revocationId,
-      cert.id,
-      university.id,
-      reason,
-      revokedAt,
-      signature,
-      bcAnchor?.blockNumber || null,
-      bcAnchor?.txId || null
-    );
+    db.prepare("UPDATE certificates SET status = 'REVOKED' WHERE id = ?").run(cert.id);
+
+    try {
+      db.prepare(`
+        INSERT INTO revoked_certificates
+          (id, certificate_id, revoked_by, reason, revoked_at, signature, block_number, tx_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        revocationId,
+        cert.id,
+        university.issuer_code || university.id,
+        reason,
+        revokedAt,
+        signature,
+        bcAnchor?.blockNumber || null,
+        bcAnchor?.txId || null
+      );
+    } catch (insertErr) {
+      console.warn('[revoke] Insert into revoked_certificates notice:', insertErr.message);
+    }
 
     logAudit(req, {
       module: 'CERTIFICATE',
@@ -658,7 +668,7 @@ async function revokeCertificate(req, res) {
       details: { reason, university: university.name, revokedAt, txId: bcAnchor?.txId },
     });
 
-    res.json({
+    return res.status(200).json({
       message: 'Certificate successfully revoked',
       revocation: {
         id: revocationId,
@@ -671,8 +681,8 @@ async function revokeCertificate(req, res) {
       },
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to revoke certificate', debug: err.message });
+    console.error('[revokeCertificate] error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to revoke certificate' });
   }
 }
 

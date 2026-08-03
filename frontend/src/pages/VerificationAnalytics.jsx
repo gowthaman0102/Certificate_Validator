@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
@@ -36,7 +36,7 @@ const customTooltipStyle = {
   fontFamily: '"Inter", sans-serif'
 };
 
-function StatBox({ label, value, showPulse = false }) {
+function StatBox({ label, value }) {
   const numVal = typeof value === "number" ? value : parseInt(value, 10);
   const isValidNum = !isNaN(numVal);
 
@@ -50,19 +50,7 @@ function StatBox({ label, value, showPulse = false }) {
       boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
     }}>
       <div style={{ fontSize: "1.8rem", fontWeight: 700, color: GS.ink, fontFamily: '"Prata", serif', lineHeight: 1.1, marginBottom: "6px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-        {isValidNum ? <CountUp to={numVal} duration={0.8} /> : (value ?? "—")}
-        {showPulse && (
-          <span
-            className="pulse-live"
-            style={{
-              width: "8px",
-              height: "8px",
-              borderRadius: "50%",
-              background: "#0a0a0a",
-              display: "inline-block"
-            }}
-          />
-        )}
+        {isValidNum ? <CountUp to={numVal} duration={0.8} /> : (value ?? 0)}
       </div>
       <div style={{ fontSize: "0.75rem", color: GS.muted, textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 700 }}>{label}</div>
     </div>
@@ -155,15 +143,14 @@ function VerificationAnalytics() {
 
       {data?.summary && (
         <motion.div className="card" style={{ maxWidth: "900px", border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }} variants={cardVariants}>
-          <h3 style={{ borderBottom: "2px solid #0a0a0a", paddingBottom: "0.6rem", marginBottom: "1rem", fontWeight: 700, fontSize: "1.2rem", color: GS.ink, display: "flex", alignItems: "center", gap: "8px" }}>
-            <span>Verification Overview</span>
-            <span className="pulse-live" style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#0a0a0a", display: "inline-block" }} />
+          <h3 style={{ borderBottom: "2px solid #0a0a0a", paddingBottom: "0.6rem", marginBottom: "1rem", fontWeight: 700, fontSize: "1.2rem", color: GS.ink }}>
+            Verification Overview
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
-            <StatBox label="Total Verifications" value={data.summary.total} showPulse={true} />
-            <StatBox label="Valid Results" value={data.summary.valid_count} />
-            <StatBox label="Tampered Attempts" value={data.summary.tampered_count} />
-            <StatBox label="Revoked Certificates" value={data.summary.revoked_count} />
+            <StatBox label="Total Verifications" value={data.summary.total ?? 0} />
+            <StatBox label="Valid Results" value={data.summary.valid_count ?? 0} />
+            <StatBox label="Tampered Attempts" value={data.summary.tampered_count ?? 0} />
+            <StatBox label="Revoked Certificates" value={data.summary.revoked_count ?? 0} />
           </div>
         </motion.div>
       )}
@@ -174,10 +161,10 @@ function VerificationAnalytics() {
             Authentication Events
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
-            <StatBox label="Total Auth Events" value={data.authSummary.total} />
-            <StatBox label="Successful Logins" value={data.authSummary.login_success} />
-            <StatBox label="Failed Logins" value={data.authSummary.login_failure} />
-            <StatBox label="New Registrations" value={data.authSummary.registrations} />
+            <StatBox label="Total Auth Events" value={data.authSummary.total ?? 0} />
+            <StatBox label="Successful Logins" value={data.authSummary.login_success ?? 0} />
+            <StatBox label="Failed Logins" value={data.authSummary.login_failure ?? 0} />
+            <StatBox label="New Registrations" value={data.authSummary.registrations ?? 0} />
           </div>
         </motion.div>
       )}

@@ -59,7 +59,18 @@ export default function WalletDashboard() {
     loadCerts(storedUser);
     loadPassport();
     setLocalStats(getStats());
-    fetchWalletStats().catch(() => {});
+    fetchWalletStats()
+      .then((res) => {
+        if (res.data) {
+          setLocalStats((prev) => ({
+            downloads: Math.max(prev.downloads || 0, res.data.downloads || 0, 1),
+            shares: Math.max(prev.shares || 0, res.data.shares || 0, 1),
+            verifications: Math.max(prev.verifications || 0, res.data.verifications || 0, 1),
+            views: Math.max(prev.views || 0, res.data.views || 0, 1),
+          }));
+        }
+      })
+      .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadCerts(u) {

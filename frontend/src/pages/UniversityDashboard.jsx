@@ -161,11 +161,16 @@ function UniversityDashboard() {
     setRevoking(true);
     try {
       await revokeCertificate(revokeTarget.id, revokeReason.trim());
+      alert(`Certificate ${revokeTarget.certificate_number || ''} has been successfully revoked.`);
       setRevokeTarget(null);
       setRevokeReason("");
-      loadCertificates(university.id);
+      if (university?.id) {
+        loadCertificates(university.id);
+      } else {
+        window.location.reload();
+      }
     } catch (err) {
-      alert(err.response?.data?.error || "Failed to revoke certificate");
+      alert(err.response?.data?.error || err.message || "Failed to revoke certificate");
     } finally {
       setRevoking(false);
     }

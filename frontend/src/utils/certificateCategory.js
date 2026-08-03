@@ -56,40 +56,41 @@ export const DETAIL_PLACEHOLDER = {
  * and return a tailored { subHeading, lines[] } descriptor.
  */
 function detectParticipationSubtype(detail, course) {
-  const d = detail.toLowerCase();
+  const d = (detail || '').toLowerCase();
+  const c = (course || '').toLowerCase();
 
   // Hackathon variants
-  if (d.includes('hackathon') || d.includes('hack')) {
+  if (d.includes('hackathon') || d.includes('hack') || c.includes('hackathon') || c.includes('hack')) {
     return {
-      subHeading: 'Hackathon Certificate',
+      subHeading: 'Hackathon & Innovation Challenge',
       lines: [
-        `participated in the ${detail},`,
-        `demonstrating exceptional problem-solving ability, innovative thinking,`,
-        `and technical expertise in a competitive national-level event.`,
+        `has actively participated in the ${detail || course || 'Hackathon Innovation Challenge'},`,
+        `demonstrating exceptional technical creativity, innovative problem-solving,`,
+        `and collaborative engineering excellence in developing impactful real-world technology solutions.`,
       ],
     };
   }
 
   // Smart India Hackathon specifically
-  if (d.includes('sih') || d.includes('smart india')) {
+  if (d.includes('sih') || d.includes('smart india') || c.includes('sih')) {
     return {
       subHeading: 'Smart India Hackathon',
       lines: [
-        `participated in the Smart India Hackathon,`,
-        `contributing towards innovative solutions for real-world national challenges`,
-        `through collaborative engineering and creative problem-solving.`,
+        `has participated in the Smart India Hackathon,`,
+        `contributing innovative technology solutions towards solving national challenges`,
+        `through collaborative engineering, creative problem-solving, and technical dedication.`,
       ],
     };
   }
 
   // Workshop
-  if (d.includes('workshop')) {
+  if (d.includes('workshop') || c.includes('workshop')) {
     return {
-      subHeading: 'Workshop Participation',
+      subHeading: 'Technical Workshop',
       lines: [
-        `has actively participated in the ${detail},`,
-        `gaining hands-on exposure to cutting-edge tools, methodologies,`,
-        `and industry best practices in the domain of ${course || 'the relevant field'}.`,
+        `has actively participated in the ${detail || course || 'Technical Workshop'},`,
+        `gaining hands-on experience with cutting-edge tools, modern methodologies,`,
+        `and industry best practices in engineering and technology.`,
       ],
     };
   }
@@ -97,11 +98,11 @@ function detectParticipationSubtype(detail, course) {
   // Seminar / Symposium
   if (d.includes('seminar') || d.includes('symposium') || d.includes('conference')) {
     return {
-      subHeading: 'Seminar / Conference',
+      subHeading: 'Academic Symposium & Conference',
       lines: [
-        `has successfully participated in the ${detail},`,
-        `engaging with thought leaders and subject matter experts`,
-        `and contributing to the academic discourse in ${course || 'the relevant field'}.`,
+        `has successfully participated in the ${detail || course || 'Conference'},`,
+        `engaging with domain experts, subject leaders, and academic peers`,
+        `and contributing to the advancement of technological discourse.`,
       ],
     };
   }
@@ -112,26 +113,11 @@ function detectParticipationSubtype(detail, course) {
     d.includes('competitive') || d.includes('olympiad') || d.includes('quiz')
   ) {
     return {
-      subHeading: 'Competitive Event',
+      subHeading: 'Competitive Coding Event',
       lines: [
-        `has successfully participated in the ${detail},`,
-        `showcasing strong analytical skills, logical reasoning,`,
-        `and a competitive spirit in the field of ${course || 'engineering and technology'}.`,
-      ],
-    };
-  }
-
-  // Sports / Cultural
-  if (
-    d.includes('sports') || d.includes('cultural') ||
-    d.includes('fest') || d.includes('game') || d.includes('athletics')
-  ) {
-    return {
-      subHeading: 'Event Participation',
-      lines: [
-        `has actively participated in the ${detail},`,
-        `demonstrating sportsmanship, teamwork, and dedication`,
-        `in representing the institution at the event.`,
+        `has successfully participated in the ${detail || course || 'Competitive Coding Event'},`,
+        `showcasing strong algorithmic skills, analytical reasoning,`,
+        `and technical proficiency in a competitive environment.`,
       ],
     };
   }
@@ -140,8 +126,8 @@ function detectParticipationSubtype(detail, course) {
   return {
     subHeading: 'Participation Certificate',
     lines: [
-      `has successfully participated in the ${detail || 'specified programme'},`,
-      `demonstrating commitment, engagement, and collaborative spirit`,
+      `has successfully participated in ${detail || course || 'the Hackathon & Technical Event'},`,
+      `demonstrating active commitment, creative problem-solving, and collaborative spirit`,
       `throughout the duration of the event.`,
     ],
   };
