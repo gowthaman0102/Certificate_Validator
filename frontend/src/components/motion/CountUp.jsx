@@ -17,11 +17,9 @@ export function CountUp({
   style     = {},
 }) {
   const nodeRef = useRef(null);
-  const ran     = useRef(false);
 
   useEffect(() => {
-    if (!trigger || ran.current) return;
-    ran.current = true;
+    if (!trigger) return;
 
     const node = nodeRef.current;
     if (!node) return;
