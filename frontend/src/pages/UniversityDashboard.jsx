@@ -91,6 +91,12 @@ function UniversityDashboard() {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     if (!token || user.role !== "UNIVERSITY") { navigate("/university-login"); return; }
     loadUniversity();
+
+    const interval = setInterval(() => {
+      loadVerificationActivity();
+    }, 4000);
+
+    return () => clearInterval(interval);
   }, []);
 
   async function loadUniversity() {

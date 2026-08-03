@@ -53,7 +53,17 @@ function verifyCertificate(req, res) {
       return res.status(400).json({ error: 'Incomplete QR data provided' });
     }
 
-    const university = db.prepare('SELECT * FROM universities WHERE issuer_code = ?').get(issuer_id);
+    let university = db.prepare('SELECT * FROM universities WHERE issuer_code = ?').get(issuer_id);
+    if (!university) {
+      university = db.prepare('SELECT * FROM universities WHERE id = ?').get(issuer_id);
+    }
+    if (!university) {
+      const certRec = db.prepare('SELECT university_id FROM certificates WHERE id = ? OR certificate_number = ?').get(cert_id, certificate_number);
+      if (certRec) {
+        university = db.prepare('SELECT * FROM universities WHERE id = ?').get(certRec.university_id);
+      }
+    }
+
     if (!university) {
       logAudit(req, { module: 'VERIFICATION', action: 'VERIFY', status: 'FAILURE', resource_id: certificate_number, details: { result: 'TAMPERED', reason: 'Unknown issuer' } });
       return res.json({

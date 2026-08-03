@@ -357,6 +357,8 @@ function Verifier() {
         setKeySource('network (now cached for future offline use)');
       }
       const verifyResult = await verifyOffline(payload, publicKeyPem);
+      // Asynchronously log verification event to backend so university activity feed updates live
+      verifyCertificate(payload).catch(() => {});
       if (verifyResult.result === 'VALID') {
         const revokedStatus = isCertRevokedLocally(payload.cert_id);
         if (revokedStatus === true)
