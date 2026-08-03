@@ -9,6 +9,7 @@ import InternshipTemplate        from './InternshipTemplate';
 import ProjectTemplate           from './ProjectTemplate';
 import BonafideTemplate          from './BonafideTemplate';
 import ParticipationTemplate     from './ParticipationTemplate';
+import { normalizeCategoryName } from '../../utils/certificateCategory';
 
 /* ─────────────────────────────────────────────────────────────────
    Certificate Materialise Animation System
@@ -47,7 +48,7 @@ function CertificateMaterialise({ children, width = 850, height = 580 }) {
    ──────────────────────────────────────────────────────────────── */
 const TemplateSelector = forwardRef((props, ref) => {
   const { certificate } = props;
-  const category = certificate?.certificate_category;
+  const category = normalizeCategoryName(certificate?.certificate_category);
 
   let TemplateComponent;
   let width = 850;

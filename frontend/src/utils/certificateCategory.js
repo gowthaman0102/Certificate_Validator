@@ -147,7 +147,7 @@ function detectParticipationSubtype(detail, course) {
  * }}
  */
 export function getCertificateBody(cert) {
-  const category  = (cert.certificate_category || 'Course Completion Certificate').trim();
+  const category  = normalizeCategoryName(cert.certificate_category) || 'Course Completion Certificate';
   const detail    = (cert.certificate_detail   || '').trim();
   const course    = (cert.course               || '').trim();
   const regNo     = (cert.register_number      || '').trim();
@@ -287,11 +287,33 @@ export function getCertificateBody(cert) {
 }
 
 /**
+ * Normalizes any variation of category string to its exact canonical category name.
+ * e.g. "Graduation Certificate" -> "Degree / Graduation Certificate"
+ */
+export function normalizeCategoryName(rawCategory) {
+  if (!rawCategory) return '';
+  const str = String(rawCategory).trim().toLowerCase();
+
+  if (str.includes('gradua') || str.includes('degree')) return 'Degree / Graduation Certificate';
+  if (str.includes('intern')) return 'Internship Completion Certificate';
+  if (str.includes('project')) return 'Project Completion Certificate';
+  if (str.includes('distinc')) return 'Distinction Certificate';
+  if (str.includes('merit')) return 'Merit Certificate';
+  if (str.includes('bonafide')) return 'Bonafide Certificate';
+  if (str.includes('participat')) return 'Participation Certificate';
+  if (str.includes('excel')) return 'Academic Excellence Certificate';
+  if (str.includes('course')) return 'Course Completion Certificate';
+
+  return String(rawCategory).trim();
+}
+
+/**
  * Returns the emoji label for a stored category value.
  * Safe to call with null/undefined — returns the value unchanged.
  */
 export function getCategoryLabel(value) {
   if (!value) return '—';
-  const found = CATEGORIES.find((c) => c.value === value);
+  const norm = normalizeCategoryName(value);
+  const found = CATEGORIES.find((c) => c.value === norm || c.value === value);
   return found ? found.label : value;
 }

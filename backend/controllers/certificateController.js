@@ -22,6 +22,23 @@ const NEEDS_DETAIL_CATEGORIES = new Set([
   'Bonafide Certificate',
 ]);
 
+function normalizeCategoryName(rawCategory) {
+  if (!rawCategory) return '';
+  const str = String(rawCategory).trim().toLowerCase();
+
+  if (str.includes('gradua') || str.includes('degree')) return 'Degree / Graduation Certificate';
+  if (str.includes('intern')) return 'Internship Completion Certificate';
+  if (str.includes('project')) return 'Project Completion Certificate';
+  if (str.includes('distinc')) return 'Distinction Certificate';
+  if (str.includes('merit')) return 'Merit Certificate';
+  if (str.includes('bonafide')) return 'Bonafide Certificate';
+  if (str.includes('participat')) return 'Participation Certificate';
+  if (str.includes('excel')) return 'Academic Excellence Certificate';
+  if (str.includes('course')) return 'Course Completion Certificate';
+
+  return String(rawCategory).trim();
+}
+
 /**
  * Strict 3-way credential verification helper:
  * Ensures student_name, register_number, and student_email are all provided
@@ -154,7 +171,7 @@ async function uploadCertificate(req, res) {
     // ── Duplicate restriction check ───────────────────────────────────────────
     const normalizedRegNo  = register_number.trim();
     const normalizedEmail  = student_email ? student_email.trim().toLowerCase() : null;
-    const certCategory     = (certificate_category || '').trim();
+    const certCategory     = normalizeCategoryName(certificate_category);
     const certDetail       = (certificate_detail   || '').trim();
 
     if (RESTRICTED_CATEGORIES.has(certCategory)) {
@@ -406,7 +423,7 @@ async function bulkUploadCertificates(req, res) {
         const start_year      = (row.start_year || '').trim();
         const student_email   = (row.student_email || '').trim();
         const issue_date      = (row.issue_date || '').trim() || new Date().toISOString().split('T')[0];
-        const certCategory    = (row.certificate_category || '').trim();
+        const certCategory    = normalizeCategoryName(row.certificate_category);
         const certDetail      = (row.certificate_detail   || '').trim();
 
         if (!certCategory) {
