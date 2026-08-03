@@ -817,10 +817,7 @@ function Verifier() {
                       <span style={{ color: '#666666', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase' }}>Student Name</span><br />
                       <strong>{batchModalItem.result.certificate.student_name}</strong>
                     </div>
-                    <div>
-                      <span style={{ color: '#666666', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase' }}>Course</span><br />
-                      <strong>{batchModalItem.result.certificate.course}</strong>
-                    </div>
+
                     <div>
                       <span style={{ color: '#666666', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase' }}>Issue Date</span><br />
                       <strong>{batchModalItem.result.certificate.issue_date}</strong>
@@ -1031,10 +1028,7 @@ function Verifier() {
                     <span style={{ color: '#666666', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Student Name</span><br />
                     <strong style={{ color: '#0a0a0a' }}>{result.certificate.student_name}</strong>
                   </motion.div>
-                  <motion.div variants={fieldVariants}>
-                    <span style={{ color: '#666666', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Department / Course</span><br />
-                    <strong style={{ color: '#0a0a0a' }}>{result.certificate.course}</strong>
-                  </motion.div>
+
                   <motion.div variants={fieldVariants}>
                     <span style={{ color: '#666666', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Issue Date</span><br />
                     <strong style={{ color: '#0a0a0a' }}>{result.certificate.issue_date}</strong>
