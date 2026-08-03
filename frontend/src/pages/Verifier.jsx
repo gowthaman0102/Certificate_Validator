@@ -9,7 +9,6 @@ import { decodeQrFromCertificateFile } from '../utils/qrDecoder';
 import { getCategoryLabel } from '../utils/certificateCategory';
 import CategoryCertificateTemplate from '../components/templates/CategoryCertificateTemplate';
 import VerifierBackgroundDecorations from '../components/VerifierBackgroundDecorations';
-import FraudAnalysisModal from '../components/FraudAnalysisModal';
 import useHeaderHeight from '../hooks/useHeaderHeight';
 
 const GS = { ink: '#0a0a0a', muted: '#666666', subtle: '#999999', border: '#0a0a0a', bg: '#ffffff', mid: '#8c8c8c' };
@@ -75,7 +74,6 @@ function Verifier() {
   // shake key: changing it re-triggers the animation
   const [shakeKey, setShakeKey]     = useState(0);
   const fileInputRef = useRef(null);
-  const [showFraudModal, setShowFraudModal] = useState(false);
 
   /* ── Batch Verification State (Phase 6) ── */
   const [batchFiles, setBatchFiles] = useState([]);
@@ -814,31 +812,7 @@ function Verifier() {
                 {batchModalItem.result.message || batchModalItem.result.reason}
               </p>
 
-              {/* Action Bar: AI Fraud Analysis */}
-              <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-                <button
-                  className="btn"
-                  onClick={() => setShowFraudModal(true)}
-                  style={{
-                    background: '#0a0a0a',
-                    color: '#ffffff',
-                    border: '2px solid #0a0a0a',
-                    borderRadius: '25px',
-                    padding: '0.65rem 1.5rem',
-                    fontSize: '0.88rem',
-                    fontWeight: 800,
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                    boxShadow: '0 4px 14px rgba(10,10,10,0.25)',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  AI Fraud Risk Analysis
-                </button>
-              </div>
+
 
               {/* Metadata Grid */}
               {batchModalItem.result.certificate && (
@@ -1047,32 +1021,7 @@ function Verifier() {
               {result.message || result.reason}
             </p>
 
-            {/* Action Bar for Verified Certificate: AI Fraud Analysis */}
-            <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1.25rem' }}>
-              <button
-                className="btn"
-                onClick={() => setShowFraudModal(true)}
-                style={{
-                  background: '#0a0a0a',
-                  color: '#ffffff',
-                  border: '2px solid #0a0a0a',
-                  borderRadius: '25px',
-                  padding: '0.7rem 1.8rem',
-                  fontSize: '0.9rem',
-                  fontWeight: 800,
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  boxShadow: '0 4px 16px rgba(10,10,10,0.3)',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                AI Fraud Risk Analysis
-              </button>
-            </div>
+
 
             {/* Certificate Metadata Grid — staggered field reveal */}
             {result.certificate && (
@@ -1228,13 +1177,7 @@ function Verifier() {
         )}
       </AnimatePresence>
 
-      {/* AI Fraud Analysis Modal */}
-      {showFraudModal && (
-        <FraudAnalysisModal
-          result={result}
-          onClose={() => setShowFraudModal(false)}
-        />
-      )}
+
     </div>
   );
 }
