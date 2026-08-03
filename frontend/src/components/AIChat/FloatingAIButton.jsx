@@ -82,30 +82,6 @@ export default function FloatingAIButton() {
             <GradRobotIcon size={34} color="#0a0a0a" />
           )}
         </motion.div>
-
-        {/* Unread Badge */}
-        {!isOpen && unreadCount > 0 && (
-          <span
-            style={{
-              position: 'absolute',
-              top: '-4px',
-              right: '-4px',
-              background: GS.ink,
-              color: '#ffffff',
-              border: `1.5px solid ${GS.ink}`,
-              fontSize: '0.65rem',
-              fontWeight: 800,
-              width: '20px',
-              height: '20px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            !
-          </span>
-        )}
       </motion.div>
 
       {/* Chat Drawer Window with AnimatePresence */}

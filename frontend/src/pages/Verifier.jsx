@@ -434,7 +434,7 @@ function Verifier() {
           <div style={inputMode === 'certId' ? tabActive : tabInactive} onClick={() => { setInputMode('certId'); setResult(null); setError(''); }}>Certificate ID</div>
           <div style={inputMode === 'qr'     ? tabActive : tabInactive} onClick={() => { setInputMode('qr');     setResult(null); setError(''); }}>Paste QR Data</div>
           <div style={inputMode === 'file'   ? tabActive : tabInactive} onClick={() => { setInputMode('file');   setResult(null); setError(''); }}>Upload Certificate</div>
-          <div style={inputMode === 'batch'  ? tabActive : tabInactive} onClick={() => { setInputMode('batch');  setResult(null); setError(''); }}>📁 Batch Verification</div>
+          <div style={inputMode === 'batch'  ? tabActive : tabInactive} onClick={() => { setInputMode('batch');  setResult(null); setError(''); }}>Batch Verification</div>
         </div>
 
         {/* ── QR Input — with animated scan-line ── */}

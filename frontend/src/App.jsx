@@ -53,8 +53,7 @@ const pageVariants = {
 
 /* ── PageWrapper ───────────────────────────────────────────────────
    Wraps every routed page in a motion.div that AnimatePresence
-   transitions between. The `key` must be the route pathname so
-   AnimatePresence knows when to swap.
+   transitions between.
    ──────────────────────────────────────────────────────────────── */
 function PageWrapper({ children }) {
   return (
@@ -71,7 +70,7 @@ function PageWrapper({ children }) {
 }
 
 /* ── Top-of-page Progress Bar ──────────────────────────────────────
-   2px, var(--color-ink) black.  Triggered by LoadingContext.
+   2px, var(--color-ink) black. Triggered by LoadingContext.
    Animates scaleX 0→1, then fades out on completion.
    ──────────────────────────────────────────────────────────────── */
 function ProgressBar({ visible }) {
@@ -102,15 +101,16 @@ function ProgressBar({ visible }) {
 
 /* ── Animated Routes ───────────────────────────────────────────────
    Must be a child of BrowserRouter so useLocation() works.
-   AnimatePresence mode="wait" ensures exit animation completes
-   before the next page enters.
+   Keying Routes on location.key ensures React treats every navigation
+   (even returning to Home) as a fresh route mount so entrance sequences
+   replay cleanly.
    ──────────────────────────────────────────────────────────────── */
 function AnimatedRoutes() {
   const location = useLocation();
 
   return (
     <AnimatePresence mode="wait" initial={false}>
-      <Routes location={location} key={location.pathname}>
+      <Routes location={location} key={location.key}>
         <Route path="/"                          element={<PageWrapper><Home /></PageWrapper>} />
         <Route path="/university-login"          element={<PageWrapper><UniversityLogin /></PageWrapper>} />
         <Route path="/student-login"             element={<PageWrapper><StudentLogin /></PageWrapper>} />

@@ -47,6 +47,29 @@ app.get('/api/ai/provider', (req, res) => {
   res.json({ provider: key, ...meta });
 });
 
+// Public aggregate stats summary endpoint for Home page
+app.get('/api/stats/summary', (req, res) => {
+  try {
+    const certsCount = db.prepare("SELECT COUNT(*) as count FROM certificates WHERE status != 'REVOKED'").get()?.count || 0;
+    const uniCount   = db.prepare("SELECT COUNT(*) as count FROM universities").get()?.count || 0;
+    const verifCount = db.prepare("SELECT COUNT(*) as count FROM verification_events").get()?.count || 0;
+    const walletVerifCount = db.prepare("SELECT COUNT(*) as count FROM wallet_events WHERE event_type = 'VERIFY'").get()?.count || 0;
+
+    res.json({
+      certificates_issued: certsCount,
+      institutions_onboarded: uniCount,
+      verifications_performed: verifCount + walletVerifCount,
+    });
+  } catch (err) {
+    console.error('Error fetching stats summary:', err);
+    res.json({
+      certificates_issued: 0,
+      institutions_onboarded: 0,
+      verifications_performed: 0,
+    });
+  }
+});
+
 app.use('/api', authRoutes);
 app.use('/api', universityRoutes);
 app.use('/api', certificateRoutes);
