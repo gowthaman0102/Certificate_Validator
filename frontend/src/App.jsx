@@ -20,7 +20,7 @@ import DigitalSkillPassport  from './pages/DigitalSkillPassport';
 import PublicSkillPassport   from './pages/PublicSkillPassport';
 import TemplateManager       from './pages/TemplateManager';
 import PublicDisclosureView  from './pages/PublicDisclosureView';
-import OfflineIndicator      from './components/OfflineIndicator';
+
 import GuidedTourModal       from './components/GuidedTourModal';
 
 const FloatingAIButton = lazy(() => import('./components/AIChat/FloatingAIButton'));
@@ -148,7 +148,7 @@ function App() {
     <LoadingContext.Provider value={{ start, stop }}>
       <BrowserRouter>
         <ProgressBar visible={loading} />
-        <OfflineIndicator />
+
         <GuidedTourModal />
         <AnimatedRoutes />
         <Suspense fallback={null}>
