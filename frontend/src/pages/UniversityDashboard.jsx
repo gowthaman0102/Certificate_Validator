@@ -80,8 +80,35 @@ function UniversityDashboard() {
   const [bulkError, setBulkError] = useState("");
   const [selectedCert, setSelectedCert] = useState(null);
   const [certSearchQuery, setCertSearchQuery] = useState("");
+  const [isDraggingBulk, setIsDraggingBulk] = useState(false);
   const hiddenCertRef = useRef(null);
   const modalCertRef = useRef(null);
+  const bulkFileInputRef = useRef(null);
+
+  const handleBulkDragOver = (e) => {
+    e.preventDefault();
+    setIsDraggingBulk(true);
+  };
+
+  const handleBulkDragLeave = (e) => {
+    e.preventDefault();
+    setIsDraggingBulk(false);
+  };
+
+  const handleBulkDrop = (e) => {
+    e.preventDefault();
+    setIsDraggingBulk(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const droppedFile = e.dataTransfer.files[0];
+      if (droppedFile.name.endsWith('.xlsx') || droppedFile.name.endsWith('.xls') || droppedFile.name.endsWith('.csv')) {
+        setBulkFile(droppedFile);
+        setBulkError("");
+        setBulkResults(null);
+      } else {
+        setBulkError("Please upload a valid Excel spreadsheet (.xlsx or .xls)");
+      }
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -399,7 +426,59 @@ function UniversityDashboard() {
         <p style={{ color: GS.muted, fontSize: "0.85rem", marginBottom: "1rem", lineHeight: "1.5" }}>
           Upload an Excel file (.xlsx) with mandatory columns: <strong>Name</strong>, <strong>Register Number</strong>, <strong>Student Email</strong>, <strong>Department / Course</strong>, <strong>CGPA</strong>, <strong>Year of Passing</strong>, <strong>Issue Date</strong>, <strong>Certificate Category</strong>, and <strong>Certificate Detail</strong> (if required by category). All fields mandatory in single issuance are also mandatory in bulk issuance.
         </p>
-        <input type="file" accept=".xlsx,.xls" onChange={handleBulkFileChange} />
+        {!bulkFile ? (
+          <div
+            onDragOver={handleBulkDragOver}
+            onDragLeave={handleBulkDragLeave}
+            onDrop={handleBulkDrop}
+            onClick={() => bulkFileInputRef.current?.click()}
+            style={{
+              border: `2px dashed ${isDraggingBulk ? "#0a0a0a" : "#ccc"}`,
+              borderRadius: "16px",
+              padding: "2rem 1.5rem",
+              textAlign: "center",
+              cursor: "pointer",
+              background: isDraggingBulk ? "#f1f5f9" : "#fafafa",
+              transition: "all 0.2s ease",
+              userSelect: "none",
+              marginBottom: "1rem"
+            }}
+          >
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>📊</div>
+            <div style={{ fontWeight: 700, color: "#0a0a0a", fontSize: "1rem", marginBottom: "0.3rem" }}>
+              {isDraggingBulk ? "Drop your Excel file here" : "Drag & Drop your Excel file here"}
+            </div>
+            <div style={{ color: "#666", fontSize: "0.85rem", marginBottom: "0.9rem" }}>
+              or click to browse from your computer (.xlsx, .xls)
+            </div>
+            <div style={{ display: "inline-block", background: "#0a0a0a", color: "#ffffff", fontSize: "0.82rem", fontWeight: 600, padding: "0.45rem 1.3rem", borderRadius: "20px", pointerEvents: "none" }}>
+              Browse File
+            </div>
+            <input
+              ref={bulkFileInputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleBulkFileChange}
+              style={{ display: "none" }}
+            />
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f8fafc", border: "1.5px solid #0a0a0a", borderRadius: "12px", padding: "0.85rem 1.25rem", marginBottom: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <span style={{ fontSize: "1.4rem" }}>📊</span>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: "0.92rem", color: "#0a0a0a" }}>{bulkFile.name}</div>
+                <div style={{ fontSize: "0.78rem", color: "#666" }}>{(bulkFile.size / 1024).toFixed(1)} KB</div>
+              </div>
+            </div>
+            <button
+              onClick={() => { setBulkFile(null); setBulkResults(null); setBulkError(""); }}
+              style={{ background: "#ef4444", color: "#ffffff", border: "none", borderRadius: "6px", padding: "0.35rem 0.75rem", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}
+            >
+              ✕ Remove
+            </button>
+          </div>
+        )}
         <div style={{ marginTop: "1rem" }}>
           <button className="btn" onClick={handleBulkIssue} disabled={!bulkFile || bulkProcessing}>
             {bulkProcessing ? "Processing..." : "Issue Certificates from Excel"}
