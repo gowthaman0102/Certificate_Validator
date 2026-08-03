@@ -85,8 +85,6 @@ function UniversityDashboard() {
 
   const [verifications, setVerifications] = useState([]);
   const [totalVerificationsMonth, setTotalVerificationsMonth] = useState(0);
-  const [emailNotify, setEmailNotify] = useState(false);
-  const [notifyMsg, setNotifyMsg] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -578,37 +576,16 @@ function UniversityDashboard() {
             </p>
           </div>
           
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-            <span style={{ fontSize: "0.82rem", fontWeight: 700, background: "#0a0a0a", color: "#ffffff", padding: "0.25rem 0.85rem", borderRadius: "16px" }}>
+          <div>
+            <span style={{ fontSize: "0.82rem", fontWeight: 700, background: "#0a0a0a", color: "#ffffff", padding: "0.25rem 0.85rem", borderRadius: "16px", fontFamily: '"Inter", sans-serif' }}>
               Verifications This Month: <CountUp to={totalVerificationsMonth} duration={0.8} />
             </span>
-
-            {/* Email Notification Preference Toggle (Phase 2) */}
-            <label style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontSize: "0.78rem", fontWeight: 600, color: GS.ink, cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={emailNotify}
-                onChange={(e) => {
-                  setEmailNotify(e.target.checked);
-                  setNotifyMsg(e.target.checked ? "✉️ Email notification alerts enabled" : "Disabled notification alerts");
-                  setTimeout(() => setNotifyMsg(""), 2500);
-                }}
-                style={{ cursor: "pointer" }}
-              />
-              Notify me by email
-            </label>
           </div>
         </div>
 
-        {notifyMsg && (
-          <div style={{ fontSize: "0.78rem", background: "#f1f5f9", border: "1px solid #0a0a0a", padding: "0.4rem 0.8rem", borderRadius: "6px", marginBottom: "0.85rem", color: GS.ink, fontWeight: 600 }}>
-            {notifyMsg}
-          </div>
-        )}
-
         <div className="cert-list">
           {verifications.length === 0 ? (
-            <p style={{ color: GS.muted, fontSize: "0.88rem" }}>No verifications recorded yet. When employers or verifiers check credentials on the Verifier page, live feedback will appear here.</p>
+            <p style={{ color: GS.muted, fontSize: "0.88rem" }}>No verifications recorded yet.</p>
           ) : (
             verifications.map((v, idx) => (
               <motion.div

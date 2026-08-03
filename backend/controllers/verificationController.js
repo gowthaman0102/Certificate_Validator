@@ -101,6 +101,7 @@ function verifyCertificate(req, res) {
     };
 
     if (hashStatus === 'MISMATCH') {
+      recordVerificationEvent(university?.id, cert_id || certRecord?.id, certificate_number, student_name, req.body.verifier_org, 'HASH_MISMATCH', verifiedAt);
       logAudit(req, { module: 'VERIFICATION', action: 'VERIFY', status: 'FAILURE', resource_id: certificate_number, details: { result: 'HASH_MISMATCH' } });
       return res.json({
         result: 'HASH_MISMATCH',
@@ -119,6 +120,7 @@ function verifyCertificate(req, res) {
       const sigValid = verifySignature(hash, signatureHex, university.public_key);
       signatureStatus = sigValid ? 'VALID' : 'INVALID';
     } catch (sigErr) {
+      recordVerificationEvent(university?.id, cert_id || certRecord?.id, certificate_number, student_name, req.body.verifier_org, 'SIGNATURE_ERROR', verifiedAt);
       return res.json({
         result: 'SIGNATURE_INVALID',
         reason: 'Signature verification error — invalid key format or corrupted signature',
@@ -129,6 +131,7 @@ function verifyCertificate(req, res) {
     }
 
     if (signatureStatus === 'INVALID') {
+      recordVerificationEvent(university?.id, cert_id || certRecord?.id, certificate_number, student_name, req.body.verifier_org, 'SIGNATURE_INVALID', verifiedAt);
       logAudit(req, { module: 'VERIFICATION', action: 'VERIFY', status: 'FAILURE', resource_id: certificate_number, details: { result: 'SIGNATURE_INVALID' } });
       return res.json({
         result: 'SIGNATURE_INVALID',
@@ -161,6 +164,7 @@ function verifyCertificate(req, res) {
         }
       }
 
+      recordVerificationEvent(university?.id, cert_id || cert?.id, certificate_number, student_name, req.body.verifier_org, 'REVOKED', verifiedAt);
       logAudit(req, { module: 'VERIFICATION', action: 'VERIFY', status: 'SUCCESS', resource_id: certificate_number, details: { result: 'REVOKED', student_name, course, reason: revocationRecord?.reason, revocationSigValid } });
       return res.json({
         result: 'REVOKED',
@@ -230,14 +234,19 @@ function verifyCertificate(req, res) {
 }
 
 function recordVerificationEvent(universityId, certId, certNumber, studentName, verifierOrg, result, verifiedAt) {
-  if (!universityId) return;
+  let targetUniId = universityId;
+  if (!targetUniId && (certId || certNumber)) {
+    const cert = db.prepare('SELECT university_id FROM certificates WHERE id = ? OR certificate_number = ?').get(certId, certNumber);
+    if (cert) targetUniId = cert.university_id;
+  }
+  if (!targetUniId) return;
   try {
     const eventId = uuidv4();
     db.prepare(`
       INSERT INTO verification_events
         (id, university_id, certificate_id, certificate_number, student_name, verifier_org, verification_result, verified_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(eventId, universityId, certId || 'UNKNOWN', certNumber || '—', studentName || 'Student', verifierOrg || 'Anonymous Verifier', result, verifiedAt);
+    `).run(eventId, targetUniId, certId || 'UNKNOWN', certNumber || '—', studentName || 'Student', verifierOrg || 'Anonymous Verifier', result, verifiedAt);
   } catch (err) {
     console.error('[verification_events] Log error:', err.message);
   }
