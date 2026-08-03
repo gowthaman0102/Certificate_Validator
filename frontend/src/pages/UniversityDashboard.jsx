@@ -305,62 +305,24 @@ function UniversityDashboard() {
 
       <motion.div className="card" variants={cardVariants}>
         <h3 style={{ fontWeight: 700, fontSize: "1.2rem", color: "#0a0a0a", borderBottom: "2px solid #0a0a0a", paddingBottom: "0.4rem", marginBottom: "1.2rem" }}>Issue New Certificate</h3>
-        {error && <div className="error-msg">{error}</div>}
-        {(() => {
-          const errLower = (error || "").toLowerCase();
-          const isNameErr = errLower.includes("student name") || errLower.includes("name");
-          const isRegNoErr = errLower.includes("register number") || errLower.includes("register");
-          const isEmailErr = errLower.includes("email");
-          const isCourseErr = errLower.includes("course") || errLower.includes("department");
+        {error && (
+          <div className="error-msg" style={{ background: "#fef2f2", border: "2px solid #dc2626", borderLeft: "6px solid #dc2626", color: "#991b1b", padding: "0.85rem 1.1rem", borderRadius: "10px", fontWeight: 600, fontSize: "0.9rem", marginBottom: "1.25rem", boxShadow: "0 4px 14px rgba(220,38,38,0.12)", display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            <span style={{ fontSize: "1.15rem" }}>⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
+        <form onSubmit={handleIssueCertificate}>
+          <label>Student Name</label>
+          <input value={studentName} onChange={(e) => { setStudentName(e.target.value); if (error) setError(""); }} required />
 
-          const getErrStyle = (isErr) => isErr ? {
-            border: "2px solid #dc2626",
-            backgroundColor: "#fef2f2",
-            outline: "none",
-            boxShadow: "0 0 0 3px rgba(220, 38, 38, 0.2)",
-            color: "#991b1b"
-          } : {};
+          <label>Register Number</label>
+          <input value={registerNumber} onChange={(e) => { setRegisterNumber(e.target.value); if (error) setError(""); }} required placeholder="e.g. 21CS1042" />
 
-          return (
-            <form onSubmit={handleIssueCertificate}>
-              <label style={isNameErr ? { color: "#dc2626", fontWeight: 700 } : {}}>Student Name</label>
-              <input
-                value={studentName}
-                onChange={(e) => { setStudentName(e.target.value); if (error) setError(""); }}
-                required
-                style={getErrStyle(isNameErr)}
-              />
-              {isNameErr && <span style={{ color: "#dc2626", fontSize: "0.78rem", fontWeight: 600, marginTop: "-0.4rem", marginBottom: "0.8rem", display: "block" }}>⚠ Provided Student Name does not match registered record</span>}
+          <label>Student Email</label>
+          <input type="email" value={studentEmail} onChange={(e) => { setStudentEmail(e.target.value); if (error) setError(""); }} placeholder="student@example.com" required />
 
-              <label style={isRegNoErr ? { color: "#dc2626", fontWeight: 700 } : {}}>Register Number</label>
-              <input
-                value={registerNumber}
-                onChange={(e) => { setRegisterNumber(e.target.value); if (error) setError(""); }}
-                required
-                placeholder="e.g. 21CS1042"
-                style={getErrStyle(isRegNoErr)}
-              />
-              {isRegNoErr && <span style={{ color: "#dc2626", fontSize: "0.78rem", fontWeight: 600, marginTop: "-0.4rem", marginBottom: "0.8rem", display: "block" }}>⚠ Check Register Number</span>}
-
-              <label style={isEmailErr ? { color: "#dc2626", fontWeight: 700 } : {}}>Student Email</label>
-              <input
-                type="email"
-                value={studentEmail}
-                onChange={(e) => { setStudentEmail(e.target.value); if (error) setError(""); }}
-                placeholder="student@example.com"
-                required
-                style={getErrStyle(isEmailErr)}
-              />
-              {isEmailErr && <span style={{ color: "#dc2626", fontSize: "0.78rem", fontWeight: 600, marginTop: "-0.4rem", marginBottom: "0.8rem", display: "block" }}>⚠ Check Student Email</span>}
-
-              <label style={isCourseErr ? { color: "#dc2626", fontWeight: 700 } : {}}>Department / Course</label>
-              <input
-                value={course}
-                onChange={(e) => { setCourse(e.target.value); if (error) setError(""); }}
-                required
-                style={getErrStyle(isCourseErr)}
-              />
-              {isCourseErr && <span style={{ color: "#dc2626", fontSize: "0.78rem", fontWeight: 600, marginTop: "-0.4rem", marginBottom: "0.8rem", display: "block" }}>⚠ Check Department / Course</span>}
+          <label>Department / Course</label>
+          <input value={course} onChange={(e) => { setCourse(e.target.value); if (error) setError(""); }} required />
           <div style={{ display: "flex", gap: "1rem" }}>
             <div style={{ flex: 1 }}><label>CGPA</label><input value={cgpa} onChange={(e) => setCgpa(e.target.value)} required placeholder="8.7" /></div>
             <div style={{ flex: 1 }}><label>Start Year (optional)</label><input type="number" min="1950" max="2100" value={startYear} onChange={(e) => setStartYear(e.target.value)} placeholder="2022" /></div>
@@ -399,8 +361,6 @@ function UniversityDashboard() {
             {issuing ? "Issuing..." : "Issue Certificate"}
           </button>
           </form>
-          );
-        })()}
 
         {lastIssued && (
           <div style={{ marginTop: "1.5rem" }}>
