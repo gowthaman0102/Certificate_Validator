@@ -79,6 +79,7 @@ function UniversityDashboard() {
   const [bulkResults, setBulkResults] = useState(null);
   const [bulkError, setBulkError] = useState("");
   const [selectedCert, setSelectedCert] = useState(null);
+  const [certSearchQuery, setCertSearchQuery] = useState("");
   const hiddenCertRef = useRef(null);
   const modalCertRef = useRef(null);
 
@@ -455,51 +456,115 @@ function UniversityDashboard() {
         )}
       </motion.div>
 
-      <motion.div className="card" variants={cardVariants}>
-        <h3 style={{ fontWeight: 700, fontSize: "1.2rem", color: "#0a0a0a", borderBottom: "2px solid #0a0a0a", paddingBottom: "0.4rem", marginBottom: "1.2rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span>Issued Certificates</span>
-          <span style={{ fontSize: "0.82rem", fontWeight: 700, background: "#0a0a0a", color: "#ffffff", border: "1px solid #0a0a0a", padding: "0.2rem 0.8rem", borderRadius: "16px", fontFamily: '"Inter", sans-serif' }}>
-            Total: <CountUp to={certificates.length} duration={0.6} />
-          </span>
-        </h3>
-        <div className="cert-list">
-          {certificates.length === 0 && <p style={{ color: GS.muted }}>No certificates issued yet.</p>}
-          {certificates.map((cert, index) => (
-            <motion.div
-              className="cert-item card-lift"
-              key={cert.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.03, ease: PREMIUM }}
-              style={{ cursor: "pointer", transition: "background 0.15s ease" }}
-              onClick={() => setSelectedCert(cert)}
-            >
-              <div>
-                <strong>{cert.student_name}</strong> — {cert.course}
-                <div style={{ fontSize: "0.8rem", color: GS.muted, display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", marginTop: "2px" }}>
-                  <span>{cert.certificate_number}</span>
-                  <button onClick={(e) => { e.stopPropagation(); handleCopyId(cert.certificate_number); }} style={copyBtnStyle}>
-                    {copiedId === cert.certificate_number ? "Copied!" : "Copy"}
-                  </button>
-                  <span>| Reg: {cert.register_number} | {cert.end_year}</span>
-                </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                <span className={`status-badge ${cert.status === "VALID" ? "status-valid" : "status-revoked"}`}>{cert.status}</span>
-                {cert.status === "VALID" && (
-                  <button
-                    className="btn-secondary"
-                    onClick={(e) => { e.stopPropagation(); setRevokeTarget(cert); setRevokeReason(""); }}
-                    style={{ fontSize: "0.8rem", padding: "0.3rem 0.8rem" }}
-                  >
-                    Revoke
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
+      {(() => {
+        const filteredCertificates = certificates.filter((cert) => {
+          if (!certSearchQuery.trim()) return true;
+          const q = certSearchQuery.toLowerCase().trim();
+          return (
+            (cert.student_name || "").toLowerCase().includes(q) ||
+            (cert.register_number || "").toLowerCase().includes(q) ||
+            (cert.course || "").toLowerCase().includes(q) ||
+            (cert.certificate_number || "").toLowerCase().includes(q) ||
+            (cert.certificate_category || "").toLowerCase().includes(q) ||
+            (cert.status || "").toLowerCase().includes(q)
+          );
+        });
+
+        return (
+          <motion.div className="card" variants={cardVariants}>
+            <h3 style={{ fontWeight: 700, fontSize: "1.2rem", color: "#0a0a0a", borderBottom: "2px solid #0a0a0a", paddingBottom: "0.4rem", marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>Issued Certificates</span>
+              <span style={{ fontSize: "0.82rem", fontWeight: 700, background: "#0a0a0a", color: "#ffffff", border: "1px solid #0a0a0a", padding: "0.2rem 0.8rem", borderRadius: "16px", fontFamily: '"Inter", sans-serif' }}>
+                {certSearchQuery ? `Matching: ${filteredCertificates.length} / Total: ${certificates.length}` : `Total: ${certificates.length}`}
+              </span>
+            </h3>
+
+            {/* Search input for Issued Certificates */}
+            <div style={{ marginBottom: "1rem", position: "relative" }}>
+              <input
+                type="text"
+                placeholder="🔍 Search certificates by Student Name, Register Number, Course, Certificate ID, Category or Status..."
+                value={certSearchQuery}
+                onChange={(e) => setCertSearchQuery(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "0.65rem 2.5rem 0.65rem 0.9rem",
+                  fontSize: "0.88rem",
+                  borderRadius: "8px",
+                  border: "1.5px solid #0a0a0a",
+                  background: "#ffffff",
+                  color: "#0a0a0a",
+                  outline: "none",
+                  boxSizing: "border-box"
+                }}
+              />
+              {certSearchQuery && (
+                <button
+                  onClick={() => setCertSearchQuery("")}
+                  style={{
+                    position: "absolute",
+                    right: "10px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    fontSize: "0.9rem",
+                    fontWeight: 700,
+                    color: "#666"
+                  }}
+                  title="Clear Search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div className="cert-list">
+              {certificates.length === 0 && <p style={{ color: GS.muted }}>No certificates issued yet.</p>}
+              {certificates.length > 0 && filteredCertificates.length === 0 && (
+                <p style={{ color: GS.muted, fontStyle: "italic", padding: "0.5rem 0" }}>
+                  No certificates match "{certSearchQuery}". Try searching by a different name, register number, or course.
+                </p>
+              )}
+              {filteredCertificates.map((cert, index) => (
+                <motion.div
+                  className="cert-item card-lift"
+                  key={cert.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.03, ease: PREMIUM }}
+                  style={{ cursor: "pointer", transition: "background 0.15s ease" }}
+                  onClick={() => setSelectedCert(cert)}
+                >
+                  <div>
+                    <strong>{cert.student_name}</strong> — {cert.course}
+                    <div style={{ fontSize: "0.8rem", color: GS.muted, display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", marginTop: "2px" }}>
+                      <span>{cert.certificate_number}</span>
+                      <button onClick={(e) => { e.stopPropagation(); handleCopyId(cert.certificate_number); }} style={copyBtnStyle}>
+                        {copiedId === cert.certificate_number ? "Copied!" : "Copy"}
+                      </button>
+                      <span>| Reg: {cert.register_number} | {cert.end_year}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                    <span className={`status-badge ${cert.status === "VALID" ? "status-valid" : "status-revoked"}`}>{cert.status}</span>
+                    {cert.status === "VALID" && (
+                      <button
+                        className="btn-secondary"
+                        onClick={(e) => { e.stopPropagation(); setRevokeTarget(cert); setRevokeReason(""); }}
+                        style={{ fontSize: "0.8rem", padding: "0.3rem 0.8rem" }}
+                      >
+                        Revoke
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        );
+      })()}
 
       {/* ── VERIFICATION ACTIVITY FEED (Phase 2) ────────────────────────────── */}
       <motion.div className="card" variants={cardVariants}>
