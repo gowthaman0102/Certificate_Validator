@@ -24,6 +24,7 @@ import {
 } from "../api/blockchain";
 import BlockchainExplorerDecorations from "../components/decorations/BlockchainExplorerDecorations";
 import { CountUp, SkeletonCard } from "../components/motion";
+import useHeaderHeight from "../hooks/useHeaderHeight";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -247,49 +248,11 @@ function AnimatedRow({ anchor, index, isNewest, isSelected, onClick }) {
 // This owns the "simulated ledger" choice openly rather than hiding it.
 
 function LedgerBadge() {
-  const [show, setShow] = useState(false);
   return (
     <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: "6px" }}>
       <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748b", letterSpacing: "0.5px" }}>
         SIMULATED LEDGER — Ethereum-Compatible Hash Anchoring
       </p>
-      <span
-        onMouseEnter={() => setShow(true)}
-        onMouseLeave={() => setShow(false)}
-        style={{
-          fontSize: "0.6rem",
-          fontWeight: 700,
-          letterSpacing: "0.05em",
-          textTransform: "uppercase",
-          background: "#0a0a0a",
-          color: "#ffffff",
-          padding: "1px 6px",
-          borderRadius: "3px",
-          cursor: "help",
-          whiteSpace: "nowrap",
-        }}
-      >
-        Polygon testnet-ready ⓘ
-      </span>
-      {show && (
-        <div style={{
-          position: "absolute",
-          top: "calc(100% + 6px)",
-          left: 0,
-          background: "#1a1a1a",
-          color: "#f0f0f0",
-          fontSize: "0.72rem",
-          padding: "8px 12px",
-          borderRadius: "6px",
-          width: "280px",
-          zIndex: 20,
-          lineHeight: 1.6,
-          boxShadow: "0 4px 14px rgba(0,0,0,0.45)",
-          pointerEvents: "none",
-        }}>
-          <strong>Migration path:</strong> Swap <code style={{ background: "rgba(255,255,255,0.1)", padding: "1px 4px", borderRadius: "2px" }}>backend/utils/blockchain.js</code> for an <code style={{ background: "rgba(255,255,255,0.1)", padding: "1px 4px", borderRadius: "2px" }}>ethers.js</code> provider pointing at Polygon/Ethereum. The data model, API routes, and this explorer require zero other changes — the interface is already contract-compatible.
-        </div>
-      )}
     </div>
   );
 }
@@ -297,6 +260,7 @@ function LedgerBadge() {
 
 
 function BlockchainExplorer() {
+  useHeaderHeight(".dashboard-header");
   const [stats,     setStats]     = useState(null);
   const [anchors,   setAnchors]   = useState([]);
   const [page,      setPage]      = useState(1);

@@ -166,7 +166,11 @@ function getFullPassport(userId, userEmail, userRegNumber) {
     })),
   ].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
+  const careerReadiness = calculateCareerReadinessScore({ certificates, skills });
+
   return {
+    user_id: userId,
+    shareUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/student/profile/${userId}`,
     profile,
     skills,
     projects,
@@ -178,13 +182,71 @@ function getFullPassport(userId, userEmail, userRegNumber) {
     timeline: timelineItems,
     completionPercentage,
     profileScore,
+    careerReadiness,
     settings,
+  };
+}
+
+/**
+ * Modular Career Readiness Scoring Function
+ * Computes a 0 - 100 Readiness Score based on real credential signals:
+ * 1. Certifications & Diversity (Max 35 pts)
+ * 2. Internship & Practical Experience (Max 30 pts)
+ * 3. Verified Skills Breadth (Max 20 pts)
+ * 4. Academic Standing / CGPA (Max 15 pts)
+ */
+function calculateCareerReadinessScore({ certificates = [], skills = [] }) {
+  const validCerts = certificates.filter(c => c.status === 'VALID');
+  if (validCerts.length === 0 && skills.length === 0) {
+    return { score: 0, level: 'Needs Signal', hasData: false, breakdown: {} };
+  }
+
+  // 1. Certifications Count & Category Diversity (Max 35 pts)
+  const categories = new Set(validCerts.map(c => c.certificate_category).filter(Boolean));
+  const certScore = Math.min(35, validCerts.length * 10 + categories.size * 5);
+
+  // 2. Internship / Practical Experience Signal (Max 30 pts)
+  const internshipCerts = validCerts.filter(c => 
+    (c.certificate_category && c.certificate_category.toLowerCase().includes('internship')) ||
+    (c.course && c.course.toLowerCase().includes('internship'))
+  );
+  const internshipScore = Math.min(30, internshipCerts.length * 30);
+
+  // 3. Skills Signal (Max 20 pts)
+  const skillScore = Math.min(20, skills.length * 5);
+
+  // 4. Academic Standing / CGPA (Max 15 pts)
+  let cgpaScore = 10;
+  const firstWithCgpa = validCerts.find(c => c.cgpa && !isNaN(parseFloat(c.cgpa)));
+  if (firstWithCgpa) {
+    const cgpaVal = parseFloat(firstWithCgpa.cgpa);
+    cgpaScore = Math.min(15, Math.round((cgpaVal / 10) * 15));
+  }
+
+  const totalScore = Math.min(100, certScore + internshipScore + skillScore + cgpaScore);
+
+  let level = 'Emerging';
+  if (totalScore >= 80) level = 'Job Ready';
+  else if (totalScore >= 60) level = 'High Potential';
+  else if (totalScore >= 40) level = 'Developing';
+
+  return {
+    score: totalScore,
+    level,
+    hasData: true,
+    breakdown: {
+      certifications: certScore,
+      internships: internshipScore,
+      skills: skillScore,
+      academicStanding: cgpaScore,
+    }
   };
 }
 
 module.exports = {
   calculateCompletionPercentage,
   calculateProfileScore,
+  calculateCareerReadinessScore,
   getVerifiedStudentCertificates,
   getFullPassport,
 };

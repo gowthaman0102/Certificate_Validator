@@ -1,20 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { getStudentCertificates } from "../api/client";
-import CertificateTemplate from "../components/CertificateTemplate";
-import { downloadCertificateAsPDF } from "../utils/certificatePdf";
+import WalletIndexList from "../components/wallet/WalletIndexList";
+import WalletDetailPane from "../components/wallet/WalletDetailPane";
 import StudentDashboardDecorations from "../components/StudentDashboardDecorations";
 import { CountUp, SkeletonCard } from "../components/motion";
+import useHeaderHeight from "../hooks/useHeaderHeight";
 
 const GS = { ink: "#0a0a0a", muted: "#666666", subtle: "#999999", border: "#0a0a0a", bg: "#ffffff" };
 const PREMIUM = [0.16, 1, 0.3, 1];
-
-const copyBtnStyle = {
-  background: "transparent", border: `1px solid ${GS.border}`, borderRadius: "0",
-  color: GS.ink, fontSize: "0.7rem", padding: "1px 6px", cursor: "pointer",
-  fontFamily: "'Inter', sans-serif",
-};
 
 const containerVariants = {
   hidden: {},
@@ -29,6 +24,7 @@ const cardVariants = {
 };
 
 function StudentDashboard() {
+  useHeaderHeight(".dashboard-header");
   const navigate = useNavigate();
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,8 +32,19 @@ function StudentDashboard() {
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [registerNumber, setRegisterNumber] = useState("");
-  const [copiedId, setCopiedId] = useState("");
-  const hiddenCertRefs = useRef({});
+
+  // Master-Detail filter & selection state
+  const [search, setSearch]             = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [selectedCertId, setSelectedCertId] = useState(null);
+  const [mobileView, setMobileView]     = useState("list");
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    function onResize() { setIsMobile(window.innerWidth < 768); }
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -55,7 +62,16 @@ function StudentDashboard() {
     setError(""); setLoading(true);
     try {
       const res = await getStudentCertificates({ email, registerNumber: regNumber });
-      setCertificates(Array.isArray(res.data) ? res.data : []);
+      const list = Array.isArray(res.data) ? res.data : [];
+      setCertificates(list);
+      if (list.length > 0) {
+        const sorted = [...list].sort((a, b) => {
+          const d1 = a.issue_date || a.created_at || 0;
+          const d2 = b.issue_date || b.created_at || 0;
+          return new Date(d2) - new Date(d1);
+        });
+        setSelectedCertId(sorted[0].id);
+      }
     } catch {
       setError("Failed to load certificates");
     } finally {
@@ -69,24 +85,50 @@ function StudentDashboard() {
     navigate("/");
   }
 
-  function getHiddenRef(certId) {
-    if (!hiddenCertRefs.current[certId]) hiddenCertRefs.current[certId] = { current: null };
-    return hiddenCertRefs.current[certId];
+  function handleClearFilters() {
+    setSearch("");
+    setStatusFilter("ALL");
   }
 
-  async function handleDownload(cert) {
-    const ref = getHiddenRef(cert.id);
-    await downloadCertificateAsPDF(ref, `certificate_${cert.certificate_number}`);
-  }
+  const filtered = useMemo(() => {
+    let result = [...certificates];
 
-  async function handleCopyId(certNumber) {
-    try {
-      await navigator.clipboard.writeText(certNumber);
-      setCopiedId(certNumber);
-      setTimeout(() => setCopiedId(""), 1500);
-    } catch {
-      alert("Certificate ID: " + certNumber);
+    if (statusFilter === "VALID")   result = result.filter((c) => c.status === "VALID");
+    if (statusFilter === "REVOKED") result = result.filter((c) => c.status === "REVOKED");
+
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter((c) =>
+        (c.course || "").toLowerCase().includes(q) ||
+        (c.certificate_number || "").toLowerCase().includes(q) ||
+        (c.student_name || "").toLowerCase().includes(q)
+      );
     }
+
+    result.sort((a, b) => {
+      const d1 = a.issue_date || a.created_at || 0;
+      const d2 = b.issue_date || b.created_at || 0;
+      return new Date(d2) - new Date(d1);
+    });
+
+    return result;
+  }, [certificates, search, statusFilter]);
+
+  useEffect(() => {
+    if (filtered.length > 0 && !filtered.find((c) => c.id === selectedCertId)) {
+      setSelectedCertId(filtered[0].id);
+    }
+  }, [filtered, selectedCertId]);
+
+  const selectedCert = certificates.find((c) => c.id === selectedCertId) || null;
+
+  function handleSelectCert(id) {
+    setSelectedCertId(id);
+    if (isMobile) setMobileView("detail");
+  }
+
+  function handleMobileBack() {
+    setMobileView("list");
   }
 
   return (
@@ -121,103 +163,71 @@ function StudentDashboard() {
 
       {!loading && (
         <motion.div className="card" variants={cardVariants}>
-          <h3>
-            Results (<CountUp to={certificates.length} duration={0.6} />)
-          </h3>
-          {certificates.length === 0 && (
-            <p style={{ color: GS.muted }}>No certificates found for your email.</p>
-          )}
-          <div className="cert-list">
-            {certificates.map((cert, index) => {
-              const isRevoked = cert.status === "REVOKED";
-              return (
-                <motion.div
-                  key={cert.id}
-                  className="card-lift"
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, delay: index * 0.04, ease: PREMIUM }}
-                  style={{
-                    background: GS.bg,
-                    border: `1.5px solid ${isRevoked ? "#0a0a0a" : GS.border}`,
-                    padding: "1.25rem",
-                    marginBottom: "0.75rem",
-                    opacity: isRevoked ? 0.75 : 1,
-                    filter: isRevoked ? "grayscale(0.8)" : "none",
-                    position: "relative",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
-                    <div>
-                      <div style={{ fontSize: "1.05rem", fontWeight: 600, color: GS.ink }}>{cert.student_name}</div>
-                      {isRevoked && (
-                        <div style={{ fontSize: "0.75rem", color: "#dc2626", fontWeight: 700, marginTop: "2px" }}>
-                          ⚠️ Certificate Revoked by Issuing University
-                        </div>
-                      )}
-                    </div>
-                    <span className={`status-badge ${isRevoked ? "status-revoked" : "status-valid"}`} style={isRevoked ? { background: "#0a0a0a", color: "#ffffff", border: "1px solid #0a0a0a" } : {}}>
-                      {isRevoked ? "REVOKED" : cert.status}
-                    </span>
-                  </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.6rem 1.5rem", background: GS.bg, border: `1px solid ${GS.border}`, padding: "1rem", marginBottom: "1.25rem", fontSize: "0.85rem" }}>
-                  <div><span style={{ color: GS.muted }}>Course</span><br /><strong style={{ color: GS.ink }}>{cert.course}</strong></div>
-                  <div><span style={{ color: GS.muted }}>Duration</span><br /><strong style={{ color: GS.ink }}>{cert.start_year} - {cert.end_year}</strong></div>
-                  <div>
-                    <span style={{ color: GS.muted }}>Certificate ID</span><br />
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                      <strong style={{ color: GS.ink }}>{cert.certificate_number}</strong>
-                      <button onClick={() => handleCopyId(cert.certificate_number)} style={copyBtnStyle}>
-                        {copiedId === cert.certificate_number ? "Copied!" : "Copy"}
-                      </button>
-                    </div>
-                  </div>
-                  <div><span style={{ color: GS.muted }}>Issue Date</span><br /><strong style={{ color: GS.ink }}>{cert.issue_date}</strong></div>
-                  <div><span style={{ color: GS.muted }}>Issuing University</span><br /><strong style={{ color: GS.ink }}>{cert.university_name || cert.issuer_id || "—"}</strong></div>
-                  <div><span style={{ color: GS.muted }}>Student Email</span><br /><strong style={{ color: GS.ink }}>{cert.student_email}</strong></div>
-                </div>
-                {(() => {
-                  const isVertical = cert.certificate_category === "Degree / Graduation Certificate";
-                  return (
-                    <div style={{
-                      background: "#f8f9fa",
-                      border: `1px solid ${GS.border}`,
-                      borderRadius: "12px",
-                      padding: "1rem 0.5rem",
-                      overflow: "hidden",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "flex-start",
-                      height: isVertical ? "420px" : "315px",
-                      marginBottom: "1rem",
-                      boxSizing: "border-box"
-                    }}>
-                      <div style={{
-                        transform: isVertical ? "scale(0.46)" : "scale(0.52)",
-                        transformOrigin: "top center",
-                        marginBottom: isVertical ? "-475px" : "-275px"
-                      }}>
-                        <CertificateTemplate certificate={cert} qrCodeUrl={`http://localhost:5000/uploads/qr_${cert.id}.png`} />
-                      </div>
-                    </div>
-                  );
-                })()}
-                <div style={{ textAlign: "center", marginTop: "1rem", display: "flex", gap: "0.5rem", justifyContent: "center", flexWrap: "wrap" }}>
-                  <button className="btn" onClick={() => handleDownload(cert)}>Download PDF</button>
-                  {cert.file_path && (
-                    <a href={`http://localhost:5000${cert.file_path}`} target="_blank" rel="noreferrer"
-                      style={{ color: GS.ink, fontSize: "0.85rem", fontWeight: 500, textDecoration: "underline", alignSelf: "center" }}>
-                      View Original PDF
-                    </a>
-                  )}
-                </div>
-                <div style={{ position: "fixed", top: 0, left: "-9999px", width: "800px", zIndex: -1, pointerEvents: "none" }}>
-                  <CertificateTemplate ref={getHiddenRef(cert.id)} certificate={cert} qrCodeUrl={`http://localhost:5000/uploads/qr_${cert.id}.png`} />
-                </div>
-              </motion.div>
-            );
-          })}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            <h3 style={{ margin: 0 }}>
+              Results (<CountUp to={certificates.length} duration={0.6} />)
+            </h3>
           </div>
+
+          {certificates.length === 0 ? (
+            <p style={{ color: GS.muted, padding: "2rem 0", textAlign: "center" }}>No certificates found for your account.</p>
+          ) : isMobile ? (
+            /* ── MOBILE: Single-column slide-over behavior ── */
+            <AnimatePresence mode="wait">
+              {mobileView === "list" ? (
+                <motion.div
+                  key="mobile-list"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <WalletIndexList
+                    certificates={certificates}
+                    filteredCertificates={filtered}
+                    selectedCertId={selectedCertId}
+                    onSelectCert={handleSelectCert}
+                    search={search}
+                    setSearch={setSearch}
+                    statusFilter={statusFilter}
+                    setStatusFilter={setStatusFilter}
+                    onClearFilters={handleClearFilters}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="mobile-detail"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <WalletDetailPane
+                    cert={selectedCert}
+                    onBackMobile={handleMobileBack}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          ) : (
+            /* ── DESKTOP: Side-by-side split view ── */
+            <div className="wallet-split-container">
+              <WalletIndexList
+                certificates={certificates}
+                filteredCertificates={filtered}
+                selectedCertId={selectedCertId}
+                onSelectCert={handleSelectCert}
+                search={search}
+                setSearch={setSearch}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                onClearFilters={handleClearFilters}
+              />
+              <WalletDetailPane
+                cert={selectedCert}
+              />
+            </div>
+          )}
         </motion.div>
       )}
     </motion.div>

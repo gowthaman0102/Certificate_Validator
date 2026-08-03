@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Prata&family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Prata&family=Inter:wght@400;500;600;700;800;900&display=swap');
 @import './styles/wallet.css';
 
 /* ============================================================
@@ -706,16 +706,34 @@ label:has(+ textarea:focus)::after {
 
 input[type="date"] {
   cursor: pointer !important;
+  color-scheme: light;
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="date"]::-webkit-inner-spin-button {
-  display: none !important;
-  -webkit-appearance: none !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  width: 0 !important;
-  height: 0 !important;
+input[type="date"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  background-color: transparent !important;
+  background: transparent !important;
+  color: inherit !important;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field:focus,
+input[type="date"]::-webkit-datetime-edit-day-field:focus,
+input[type="date"]::-webkit-datetime-edit-year-field:focus {
+  background-color: #e2e8f0 !important;
+  background: #e2e8f0 !important;
+  color: #0a0a0a !important;
+  outline: none !important;
+  border-radius: 2px !important;
+}
+
+input[type="date"]::selection,
+input[type="date"] *::selection {
+  background: #e2e8f0 !important;
+  color: #0a0a0a !important;
 }
 
 .cert-list {
@@ -1888,7 +1906,7 @@ input[type="date"], input[type="file"], select, textarea,
 /* Toast container â€” fixed top-right, stacks multiple toasts */
 .toast-container {
   position: fixed;
-  top: 5.5rem;       /* clears the 90px fixed header */
+  top: calc(var(--header-height, 135px) + 12px);       /* clears the fixed header dynamically */
   right: 1.5rem;
   z-index: 10000;
   display: flex;

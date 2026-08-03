@@ -5,6 +5,7 @@ import { fetchAuditLogs, fetchAuditStats, downloadAuditCSV } from "../api/audit"
 import { getUniversityVerifications } from "../api/client";
 import AuditLogDecorations from "../components/AuditLogDecorations";
 import { CountUp, SkeletonCard } from "../components/motion";
+import useHeaderHeight from "../hooks/useHeaderHeight";
 
 const MODULES  = ["", "AUTH", "CERTIFICATE", "VERIFICATION", "REVOCATION", "WALLET"];
 const ACTIONS  = ["", "LOGIN", "LOGOUT", "REGISTER", "ISSUE", "BULK_ISSUE", "VERIFY", "REVOKE", "DOWNLOAD", "SHARE", "VIEW"];
@@ -62,6 +63,7 @@ function SmallBadge({ text, colours }) {
 }
 
 function AuditLog() {
+  useHeaderHeight(".dashboard-header");
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [rows, setRows] = useState([]);

@@ -17,6 +17,7 @@ const chatRoutes       = require('./routes/chatAssistantRoutes');
 const passportRoutes   = require('./routes/passportRoutes');
 const templateRoutes   = require('./routes/templateRoutes');
 const disclosureRoutes = require('./routes/disclosureRoutes');
+const goalRoutes       = require('./routes/goalRoutes');
 
 const app = express();
 
@@ -84,6 +85,7 @@ app.use('/api', chatRoutes);
 app.use('/api/passport', passportRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api', disclosureRoutes);
+app.use('/api/goals', goalRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

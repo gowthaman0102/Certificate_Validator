@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
@@ -8,6 +8,7 @@ import { jsPDF } from "jspdf";
 import { fetchStudentAnalytics } from "../api/analytics";
 import StudentAnalyticsDecorations from "../components/decorations/StudentAnalyticsDecorations";
 import { CountUp, SkeletonCard, SkeletonStat } from "../components/motion";
+import useHeaderHeight from "../hooks/useHeaderHeight";
 
 const GS = { ink: "#0a0a0a", muted: "#666666", subtle: "#999999", border: "#0a0a0a", bg: "#ffffff", mid: "#8c8c8c" };
 const PREMIUM = [0.16, 1, 0.3, 1];
@@ -40,6 +41,7 @@ function StatBox({ label, value }) {
 }
 
 function StudentAnalytics() {
+  useHeaderHeight(".dashboard-header");
   const navigate = useNavigate();
   const pageRef = useRef(null);
   const [data, setData] = useState(null);

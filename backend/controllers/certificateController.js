@@ -544,29 +544,38 @@ function getCertificatesByIdentity(req, res) {
     if (!registerNumber && !email) {
       return res.status(400).json({ error: 'email or registerNumber query parameter is required' });
     }
+    const cleanEmail = (email || '').trim();
+    const cleanRegNo = (registerNumber || '').trim();
+
     let certs;
-    if (registerNumber) {
-      const normalized = registerNumber.trim();
+    if (cleanEmail && cleanRegNo) {
       certs = db.prepare(`
         SELECT c.*, u.name as university_name
         FROM certificates c
-        JOIN universities u ON c.university_id = u.id
+        LEFT JOIN universities u ON c.university_id = u.id
+        WHERE (LOWER(c.student_email) = LOWER(?) OR (c.register_number = ? AND c.register_number != ''))
+        ORDER BY c.created_at DESC
+      `).all(cleanEmail, cleanRegNo);
+    } else if (cleanRegNo) {
+      certs = db.prepare(`
+        SELECT c.*, u.name as university_name
+        FROM certificates c
+        LEFT JOIN universities u ON c.university_id = u.id
         WHERE c.register_number = ?
         ORDER BY c.created_at DESC
-      `).all(normalized);
+      `).all(cleanRegNo);
     } else {
-      const normalized = email.trim();
       certs = db.prepare(`
         SELECT c.*, u.name as university_name
         FROM certificates c
-        JOIN universities u ON c.university_id = u.id
-        WHERE c.student_email = ?
+        LEFT JOIN universities u ON c.university_id = u.id
+        WHERE LOWER(c.student_email) = LOWER(?)
         ORDER BY c.created_at DESC
-      `).all(normalized);
+      `).all(cleanEmail);
     }
     res.json(certs);
   } catch (err) {
-    console.error(err);
+    console.error('getCertificatesByIdentity error:', err);
     res.status(500).json({ error: 'Failed to fetch certificates' });
   }
 }

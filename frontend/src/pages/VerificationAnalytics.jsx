@@ -8,6 +8,7 @@ import { jsPDF } from "jspdf";
 import { fetchVerificationAnalytics } from "../api/analytics";
 import VerificationAnalyticsDecorations from "../components/decorations/VerificationAnalyticsDecorations";
 import { CountUp, SkeletonCard } from "../components/motion";
+import useHeaderHeight from "../hooks/useHeaderHeight";
 
 const GS = { ink: "#0a0a0a", muted: "#64748b", subtle: "#94a3b8", border: "#0a0a0a", bg: "#ffffff", mid: "#334155" };
 const PREMIUM = [0.16, 1, 0.3, 1];
@@ -58,6 +59,7 @@ function StatBox({ label, value }) {
 }
 
 function VerificationAnalytics() {
+  useHeaderHeight(".dashboard-header");
   const navigate = useNavigate();
   const pageRef = useRef(null);
   const [data, setData] = useState(null);

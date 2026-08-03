@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { CountUp } from "../components/motion";
+import useHeaderHeight from "../hooks/useHeaderHeight";
 
 /* ─────────────────────────────────────────────────────────────
    CredentialVault — Homepage
@@ -465,6 +466,7 @@ function HeroVerificationSimulator() {
 
 /* ── Main Home Component ────────────────────────────────────── */
 function Home() {
+  useHeaderHeight(".brand-header-block, header");
   const shouldReduceMotion = useReducedMotion();
   const location = useLocation();
 

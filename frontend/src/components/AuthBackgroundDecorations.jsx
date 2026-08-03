@@ -6,7 +6,10 @@
    - Right composition: Digital Identity Card, Isometric QR Code, Graduation Cap, Verified Hash Network.
    ───────────────────────────────────────────────────────────── */
 
+import useHeaderHeight from "../hooks/useHeaderHeight";
+
 export function AuthBackgroundDecorations() {
+  useHeaderHeight(".auth-header, .card-header, header");
   return (
     <>
       {/* Left Decorative Vector Composition */}

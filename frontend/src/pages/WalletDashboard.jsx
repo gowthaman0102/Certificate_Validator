@@ -4,12 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getStudentCertificates }            from "../api/client";
 import { recordWalletEvent, fetchWalletStats } from "../api/wallet";
 import { recordEvent, getStats }             from "../utils/walletStore";
-import { getMyPassport }                     from "../api/passport";
-import WalletStats    from "../components/wallet/WalletStats";
-import WalletIndexList from "../components/wallet/WalletIndexList";
-import WalletDetailPane from "../components/wallet/WalletDetailPane";
+import { getMyPassport, updatePassportProfile } from "../api/passport";
+import AchievementTimeline from "../components/wallet/AchievementTimeline";
+import LearningGoalTracker from "../components/wallet/LearningGoalTracker";
+import PortfolioLinksCard from "../components/wallet/PortfolioLinksCard";
 import WalletDashboardDecorations from "../components/decorations/WalletDashboardDecorations";
 import { CountUp, SkeletonCard } from "../components/motion";
+import useHeaderHeight from "../hooks/useHeaderHeight";
 
 const GS = { ink: "#0a0a0a", muted: "#666666", subtle: "#999999", border: "#0a0a0a", bg: "#ffffff" };
 const PREMIUM = [0.16, 1, 0.3, 1];
@@ -25,6 +26,7 @@ const cardVariants = {
 };
 
 export default function WalletDashboard() {
+  useHeaderHeight(".dashboard-header");
   const navigate = useNavigate();
   const [user, setUser]             = useState(null);
   const [certificates, setCerts]    = useState([]);
@@ -32,6 +34,12 @@ export default function WalletDashboard() {
   const [error, setError]           = useState("");
   const [localStats, setLocalStats] = useState({ downloads: 0, shares: 0, verifications: 0, views: 0 });
   const [passportData, setPassportData] = useState(null);
+
+  // Phase 1 Tagline State
+  const [tagline, setTagline]               = useState("");
+  const [editingTagline, setEditingTagline] = useState(false);
+  const [taglineInput, setTaglineInput]     = useState("");
+  const [savingTagline, setSavingTagline]   = useState(false);
 
   // Index list filter state (belongs to the left pane only — does not affect WalletStats)
   const [search, setSearch]             = useState("");
@@ -98,8 +106,27 @@ export default function WalletDashboard() {
   async function loadPassport() {
     try {
       const res = await getMyPassport();
-      setPassportData(res.data.data);
+      const p = res.data?.data;
+      setPassportData(p);
+      if (p?.profile?.headline) {
+        setTagline(p.profile.headline);
+        setTaglineInput(p.profile.headline);
+      }
     } catch { /* Fallback profile values if backend not connected */ }
+  }
+
+  async function handleSaveTagline() {
+    if (!taglineInput.trim()) return;
+    setSavingTagline(true);
+    try {
+      await updatePassportProfile({ headline: taglineInput.trim() });
+      setTagline(taglineInput.trim());
+      setEditingTagline(false);
+    } catch {
+      alert("Failed to save tagline");
+    } finally {
+      setSavingTagline(false);
+    }
   }
 
   const logEvent = useCallback((type, cert) => {
@@ -186,42 +213,198 @@ export default function WalletDashboard() {
         </div>
       </div>
 
-      {/* ── STUDENT ACADEMIC PROFILE CARD ────────────────────────── */}
+      {/* ── STUDENT DIGITAL IDENTITY CARD ────────────────────────── */}
       <motion.div className="card" variants={cardVariants}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem", marginBottom: "1.25rem" }}>
-          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-            <div style={{ width: "64px", height: "64px", background: "#0a0a0a", color: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.8rem", fontWeight: 700, flexShrink: 0 }}>
-              {user?.name ? user.name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : "S")}
-            </div>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap" }}>
-                <h3 style={{ margin: 0, fontSize: "1.6rem", fontWeight: 700, color: "#0a0a0a" }}>{user?.name || "Student Profile"}</h3>
-                <span style={{ background: "#0a0a0a", color: "#ffffff", padding: "0.2rem 0.6rem", fontSize: "0.72rem", fontWeight: 700, borderRadius: "25px" }}>✓ VERIFIED IDENTITY</span>
-                <span style={{ background: "#f5f5f5", border: "1.5px solid #0a0a0a", color: "#0a0a0a", padding: "0.2rem 0.6rem", fontSize: "0.72rem", fontWeight: 700, borderRadius: "25px" }}>⛓ BLOCKCHAIN ANCHORED</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        {(() => {
+          const walletId = `CWID-${user?.id ? user.id.slice(0, 8).toUpperCase() : "STUDENT"}`;
+          const frontendPublicUrl = `${window.location.origin}/student/profile/${user?.id || ""}`;
+          const identityQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(frontendPublicUrl)}`;
 
-        {/* Academic Attributes */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", background: "#f9f9f9", border: "1px solid #0a0a0a", padding: "1.1rem 1.35rem", borderRadius: "16px", marginBottom: "1.25rem", width: "100%", boxSizing: "border-box" }}>
-          <div>
-            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: GS.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>COURSE / MAJOR</span>
-            <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0a0a0a", marginTop: "3px" }}>{certificates[0]?.course || "Information Technology"}</div>
-          </div>
-          <div>
-            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: GS.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>UNIVERSITY</span>
-            <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0a0a0a", marginTop: "3px" }}>{certificates[0]?.university_name || "Issuing University"}</div>
-          </div>
-          <div>
-            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: GS.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>GRADUATION YEAR</span>
-            <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0a0a0a", marginTop: "3px" }}>{certificates[0]?.end_year || "2026"}</div>
-          </div>
-          <div>
-            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: GS.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>REGISTER NUMBER</span>
-            <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0a0a0a", marginTop: "3px", fontFamily: "monospace" }}>{user?.register_number || "—"}</div>
-          </div>
-        </div>
+          return (
+            <>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1.25rem", marginBottom: "1.25rem" }}>
+                <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start", flex: 1, minWidth: "260px" }}>
+                  <div style={{ width: "68px", height: "68px", background: "#0a0a0a", color: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.9rem", fontWeight: 700, flexShrink: 0, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+                    {user?.name ? user.name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : "S")}
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap" }}>
+                      <h3 style={{ margin: 0, fontSize: "1.6rem", fontWeight: 700, color: "#0a0a0a" }}>{user?.name || "Student Profile"}</h3>
+                      <span style={{ background: "#0a0a0a", color: "#ffffff", padding: "0.2rem 0.6rem", fontSize: "0.72rem", fontWeight: 700, borderRadius: "25px" }}>✓ VERIFIED IDENTITY</span>
+                      <span style={{ background: "#f5f5f5", border: "1.5px solid #0a0a0a", color: "#0a0a0a", padding: "0.2rem 0.6rem", fontSize: "0.72rem", fontWeight: 700, borderRadius: "25px" }}>⛓ BLOCKCHAIN ANCHORED</span>
+                    </div>
+
+                    {/* Tagline / Professional Headline — Modern Pill & Badge Style */}
+                    <div style={{ marginTop: "6px" }}>
+                      {editingTagline ? (
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "#ffffff", border: "1.5px solid #0a0a0a", borderRadius: "20px", padding: "0.15rem 0.25rem 0.15rem 0.75rem", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+                          <input
+                            type="text"
+                            value={taglineInput}
+                            onChange={(e) => setTaglineInput(e.target.value)}
+                            placeholder="e.g. Aspiring Full Stack Developer & AI Specialist"
+                            autoFocus
+                            style={{
+                              border: "none",
+                              outline: "none",
+                              fontSize: "0.82rem",
+                              fontWeight: 500,
+                              color: "#0a0a0a",
+                              width: "250px",
+                              background: "transparent"
+                            }}
+                            onKeyDown={(e) => { if (e.key === "Enter") handleSaveTagline(); if (e.key === "Escape") setEditingTagline(false); }}
+                          />
+                          <button
+                            onClick={handleSaveTagline}
+                            disabled={savingTagline}
+                            style={{
+                              background: "#0a0a0a",
+                              color: "#ffffff",
+                              border: "none",
+                              borderRadius: "14px",
+                              padding: "0.25rem 0.65rem",
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.25rem"
+                            }}
+                          >
+                            {savingTagline ? "..." : "Save"}
+                          </button>
+                          <button
+                            onClick={() => setEditingTagline(false)}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: "#64748b",
+                              cursor: "pointer",
+                              fontSize: "0.85rem",
+                              padding: "0.2rem 0.4rem",
+                              fontWeight: 700
+                            }}
+                            title="Cancel"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : tagline ? (
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem", background: "#f1f5f9", padding: "0.25rem 0.75rem", borderRadius: "20px", border: "1px solid #e2e8f0" }}>
+                          <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#1e293b" }}>
+                            "{tagline}"
+                          </span>
+                          <button
+                            onClick={() => { setTaglineInput(tagline); setEditingTagline(true); }}
+                            style={{
+                              background: "#ffffff",
+                              border: "1px solid #cbd5e1",
+                              borderRadius: "50%",
+                              width: "22px",
+                              height: "22px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              cursor: "pointer",
+                              color: "#475569",
+                              padding: 0
+                            }}
+                            title="Edit Tagline"
+                          >
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setTaglineInput(""); setEditingTagline(true); }}
+                          style={{
+                            background: "#f8fafc",
+                            border: "1px dashed #94a3b8",
+                            color: "#475569",
+                            padding: "0.25rem 0.75rem",
+                            borderRadius: "20px",
+                            fontSize: "0.8rem",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.35rem"
+                          }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                          </svg>
+                          <span>Add professional tagline</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Identity QR Code & Quick Public Access Card */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.35rem", background: "#ffffff", border: "1.5px solid #0a0a0a", padding: "0.6rem 0.85rem", borderRadius: "14px", boxShadow: "0 2px 10px rgba(0,0,0,0.06)", minWidth: "150px" }}>
+                  <a href={frontendPublicUrl} target="_blank" rel="noreferrer" title="Click to view public profile web page" style={{ textDecoration: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <img src={identityQrUrl} alt="Digital Identity QR" style={{ width: "72px", height: "72px", borderRadius: "6px" }} />
+                  </a>
+                  <span style={{ fontSize: "0.68rem", fontWeight: 700, fontFamily: "monospace", color: "#0a0a0a", letterSpacing: "0.04em" }}>{walletId}</span>
+
+                  {/* Copy Link Button */}
+                  <div style={{ marginTop: "2px", width: "100%", textAlign: "center" }}>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(frontendPublicUrl);
+                        alert("Public portfolio link copied to clipboard:\n" + frontendPublicUrl);
+                      }}
+                      style={{
+                        background: "#0a0a0a",
+                        color: "#ffffff",
+                        border: "none",
+                        padding: "0.3rem 0.8rem",
+                        borderRadius: "14px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        width: "100%"
+                      }}
+                      title="Copy public link to clipboard"
+                    >
+                      Copy Link
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Academic Attributes */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "1rem", background: "#f9f9f9", border: "1px solid #0a0a0a", padding: "1.1rem 1.35rem", borderRadius: "16px", marginBottom: "1.25rem", width: "100%", boxSizing: "border-box" }}>
+                <div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: GS.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>COURSE / MAJOR</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0a0a0a", marginTop: "3px" }}>{certificates[0]?.course || "Information Technology"}</div>
+                </div>
+                <div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: GS.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>UNIVERSITY</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0a0a0a", marginTop: "3px" }}>{certificates[0]?.university_name || "Issuing University"}</div>
+                </div>
+                <div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: GS.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>GRADUATION YEAR</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0a0a0a", marginTop: "3px" }}>{certificates[0]?.end_year || "2026"}</div>
+                </div>
+                <div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: GS.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>REGISTER NUMBER</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0a0a0a", marginTop: "3px", fontFamily: "monospace" }}>{user?.register_number || "—"}</div>
+                </div>
+                <div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: GS.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>WALLET ID</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0a0a0a", marginTop: "3px", fontFamily: "monospace" }}>{walletId}</div>
+                </div>
+              </div>
+            </>
+          );
+        })()}
 
         {/* Profile Score & Completion Bar */}
         <div style={{ display: "flex", gap: "1.5rem", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", width: "100%" }}>
@@ -242,80 +425,117 @@ export default function WalletDashboard() {
         </div>
       </motion.div>
 
-      {/* ── WALLET ACTIVITY SUMMARY (always reflects full count — unaffected by filters) ── */}
-      <motion.div className="card" variants={cardVariants}>
-        <WalletStats stats={localStats} totalCerts={certificates.length} />
+      {/* ── PHASE 2: SKILL PASSPORT PREVIEW ────────────────────────── */}
+      <motion.div className="card" variants={cardVariants} style={{ marginBottom: "1.25rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.75rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: GS.ink }}>
+              Skill Passport Preview
+            </h3>
+          </div>
+          <button
+            className="btn"
+            style={{ fontSize: "0.82rem", padding: "0.4rem 0.85rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+            onClick={() => navigate("/skill-passport")}
+            id="wallet-view-skill-passport-btn"
+          >
+            View full Skill Passport →
+          </button>
+        </div>
+
+        {(() => {
+          const recordedSkills = passportData?.skills || [];
+
+          if (recordedSkills.length === 0) {
+            return (
+              <div style={{ background: "#f8fafc", border: "1px dashed #cbd5e1", padding: "1.25rem", borderRadius: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
+                <span style={{ color: GS.muted, fontSize: "0.88rem", fontWeight: 500 }}>
+                  No skills added yet to your Digital Skill Passport.
+                </span>
+                <button
+                  className="btn"
+                  style={{ fontSize: "0.78rem", padding: "0.3rem 0.75rem" }}
+                  onClick={() => navigate("/skill-passport")}
+                >
+                  + Add Skills in Passport
+                </button>
+              </div>
+            );
+          }
+
+          return (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", alignItems: "center" }}>
+              {recordedSkills.slice(0, 10).map((sk, idx) => (
+                <span
+                  key={sk.id || idx}
+                  style={{
+                    background: "#0a0a0a",
+                    color: "#ffffff",
+                    padding: "0.35rem 0.8rem",
+                    borderRadius: "20px",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.4rem",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.06)"
+                  }}
+                >
+                  <span>{sk.skill_name}</span>
+                  {sk.proficiency && (
+                    <span style={{ background: "rgba(255,255,255,0.2)", padding: "0.1rem 0.4rem", borderRadius: "10px", fontSize: "0.68rem" }}>
+                      {sk.proficiency}
+                    </span>
+                  )}
+                </span>
+              ))}
+              {recordedSkills.length > 10 && (
+                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: GS.muted, padding: "0.35rem 0.5rem" }}>
+                  +{recordedSkills.length - 10} more
+                </span>
+              )}
+            </div>
+          );
+        })()}
+      </motion.div>
+
+      {/* ── PHASE 3: ACHIEVEMENT TIMELINE ──────────────────────────── */}
+      <motion.div className="card" variants={cardVariants} style={{ marginBottom: "1.25rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+          <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: GS.ink }}>
+            Achievement Timeline
+          </h3>
+        </div>
+
+        <AchievementTimeline
+          timelineItems={passportData?.timeline || []}
+          certificates={certificates}
+        />
+      </motion.div>
+
+      {/* ── LEARNING GOAL TRACKER & HABIT MONITOR ────────────────────── */}
+      <motion.div className="card" variants={cardVariants} style={{ marginBottom: "1.25rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+          <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: GS.ink }}>
+            Learning Goal Tracker & Habit Monitor
+          </h3>
+        </div>
+
+        <LearningGoalTracker />
+      </motion.div>
+
+      {/* ── PHASE 6: PORTFOLIO LINKS SECTION ──────────────────────── */}
+      <motion.div className="card" variants={cardVariants} style={{ marginBottom: "1.25rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+          <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: GS.ink }}>
+            Verified Portfolio Links
+          </h3>
+        </div>
+
+        <PortfolioLinksCard />
       </motion.div>
 
       {error && <motion.div className="card" variants={cardVariants}><div className="error-msg">{error}</div></motion.div>}
-
-      {/* ── MASTER-DETAIL SPLIT VIEW ─────────────────────────────── */}
-      <motion.div className="card" variants={cardVariants}>
-        {certificates.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "3rem 1.5rem", color: GS.muted }}>
-            <p style={{ fontSize: "1.1rem", fontWeight: 700, color: GS.ink, marginBottom: "0.5rem" }}>No certificates in your wallet</p>
-            <p style={{ fontSize: "0.85rem" }}>Your issued digital credentials will appear here once the university issues them.</p>
-          </div>
-        ) : isMobile ? (
-          /* ── MOBILE: Single-column slide-over behavior ── */
-          <AnimatePresence mode="wait">
-            {mobileView === "list" ? (
-              <motion.div
-                key="mobile-list"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <WalletIndexList
-                  certificates={certificates}
-                  filteredCertificates={filtered}
-                  selectedCertId={selectedCertId}
-                  onSelectCert={handleSelectCert}
-                  search={search}
-                  setSearch={setSearch}
-                  statusFilter={statusFilter}
-                  setStatusFilter={setStatusFilter}
-                  onClearFilters={handleClearFilters}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="mobile-detail"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <WalletDetailPane
-                  cert={selectedCert}
-                  onDownload={handleDownload}
-                  onBackMobile={handleMobileBack}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        ) : (
-          /* ── DESKTOP: Side-by-side split view ── */
-          <div className="wallet-split-container">
-            <WalletIndexList
-              certificates={certificates}
-              filteredCertificates={filtered}
-              selectedCertId={selectedCertId}
-              onSelectCert={handleSelectCert}
-              search={search}
-              setSearch={setSearch}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              onClearFilters={handleClearFilters}
-            />
-            <WalletDetailPane
-              cert={selectedCert}
-              onDownload={handleDownload}
-            />
-          </div>
-        )}
-      </motion.div>
     </motion.div>
   );
 }

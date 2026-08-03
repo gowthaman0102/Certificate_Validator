@@ -42,4 +42,9 @@ router.delete('/licenses/:id', passportController.deleteLicense);
 router.post('/settings', passportController.updateSettings);
 router.post('/log-export', passportController.logExportAudit);
 
+router.get('/ai-insights', passportController.getAICareerInsights);
+router.get('/portfolio-links', passportController.getPortfolioLinks);
+router.post('/portfolio-links', passportController.addPortfolioLink);
+router.delete('/portfolio-links/:id', passportController.deletePortfolioLink);
+
 module.exports = router;

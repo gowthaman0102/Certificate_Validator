@@ -10,6 +10,7 @@ import { getCategoryLabel } from '../utils/certificateCategory';
 import CategoryCertificateTemplate from '../components/templates/CategoryCertificateTemplate';
 import VerifierBackgroundDecorations from '../components/VerifierBackgroundDecorations';
 import FraudAnalysisModal from '../components/FraudAnalysisModal';
+import useHeaderHeight from '../hooks/useHeaderHeight';
 
 const GS = { ink: '#0a0a0a', muted: '#666666', subtle: '#999999', border: '#0a0a0a', bg: '#ffffff', mid: '#8c8c8c' };
 
@@ -56,6 +57,7 @@ const checkPathVariants = {
 };
 
 function Verifier() {
+  useHeaderHeight('.dashboard-header');
   /* ── Verification State ── */
   const [inputMode, setInputMode]   = useState('certId');
   const [mode, setMode]             = useState('online');

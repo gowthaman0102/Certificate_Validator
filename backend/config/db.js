@@ -109,7 +109,30 @@ function initDB() {
       FOREIGN KEY (university_id) REFERENCES universities(id)
     );
     CREATE INDEX IF NOT EXISTS idx_verif_events_uni ON verification_events(university_id);
-    CREATE INDEX IF NOT EXISTS idx_verif_events_cert ON verification_events(certificate_id);
+    CREATE TABLE IF NOT EXISTS student_portfolio_links (
+      id TEXT PRIMARY KEY,
+      student_user_id TEXT NOT NULL,
+      link_type TEXT NOT NULL,
+      url TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (student_user_id) REFERENCES users(id)
+    );
+    CREATE TABLE IF NOT EXISTS student_learning_goals (
+      id TEXT PRIMARY KEY,
+      student_user_id TEXT NOT NULL,
+      goal_title TEXT NOT NULL,
+      category TEXT DEFAULT 'General',
+      target_date TEXT,
+      priority TEXT DEFAULT 'Medium',
+      progress_percentage INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'IN_PROGRESS',
+      current_streak INTEGER DEFAULT 0,
+      last_checked_in TEXT,
+      notes TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (student_user_id) REFERENCES users(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_learning_goals_user ON student_learning_goals(student_user_id);
   `);
 
   // Audit log table — safe migration, never modifies existing tables

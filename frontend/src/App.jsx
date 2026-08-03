@@ -122,6 +122,7 @@ function AnimatedRoutes() {
         <Route path="/student"                   element={<PageWrapper><StudentDashboard /></PageWrapper>} />
         <Route path="/student-dashboard"         element={<PageWrapper><StudentDashboard /></PageWrapper>} />
         <Route path="/passport"                  element={<Navigate to="/wallet" replace />} />
+        <Route path="/skill-passport"            element={<PageWrapper><DigitalSkillPassport /></PageWrapper>} />
         <Route path="/student/profile/:id"       element={<PageWrapper><PublicSkillPassport /></PageWrapper>} />
         <Route path="/verify"                    element={<PageWrapper><Verifier /></PageWrapper>} />
         <Route path="/wallet"                    element={<PageWrapper><WalletDashboard /></PageWrapper>} />

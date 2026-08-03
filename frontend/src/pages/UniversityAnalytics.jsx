@@ -11,6 +11,7 @@ import { jsPDF } from "jspdf";
 import { fetchUniversityAnalytics } from "../api/analytics";
 import UniversityAnalyticsDecorations from "../components/decorations/UniversityAnalyticsDecorations";
 import { CountUp, SkeletonCard } from "../components/motion";
+import useHeaderHeight from "../hooks/useHeaderHeight";
 
 const GS = { ink: "#0a0a0a", muted: "#64748b", subtle: "#94a3b8", border: "#0a0a0a", bg: "#ffffff", mid: "#334155" };
 const PREMIUM = [0.16, 1, 0.3, 1];
@@ -100,6 +101,7 @@ function StatCard({ label, value, subtext, icon }) {
 }
 
 function UniversityAnalytics() {
+  useHeaderHeight(".dashboard-header");
   const navigate = useNavigate();
   const pageRef = useRef(null);
   const donutCardRef = useRef(null);
