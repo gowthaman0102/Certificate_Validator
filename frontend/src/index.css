@@ -1640,14 +1640,9 @@ input[type="date"], input[type="file"], select, textarea,
   100% { transform: translateY(0);    opacity: 0.9; }
 }
 
-/* Failure shake â€” 3 oscillations, 300ms total */
+/* Failure shake — disabled for smooth UI */
 @keyframes shakeX {
-  0%, 100% { transform: translateX(0);   }
-  16%       { transform: translateX(-4px); }
-  33%       { transform: translateX( 4px); }
-  50%       { transform: translateX(-4px); }
-  66%       { transform: translateX( 4px); }
-  83%       { transform: translateX(-2px); }
+  0%, 100% { transform: none; }
 }
 
 /* Live-block pulse (opacity only) */
@@ -1662,14 +1657,14 @@ input[type="date"], input[type="file"], select, textarea,
   50%       { transform: scale(1.04); }
 }
 
-/* Page transition: vertical drift fade */
+/* Page transition: clean opacity fade without vertical jump */
 @keyframes pageFadeIn {
-  0%   { opacity: 0; transform: translateY(8px); }
-  100% { opacity: 1; transform: translateY(0);   }
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
 }
 @keyframes pageFadeOut {
-  0%   { opacity: 1; transform: translateY(0);    }
-  100% { opacity: 0; transform: translateY(-8px); }
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* Progress bar fill */

@@ -21,14 +21,9 @@ const INTERACTIVE = [0.4, 0, 0.2, 1];
 
 // Result panel container — wraps on enter; shake on failure
 const resultPanelVariants = {
-  hidden:  { opacity: 0, y: 14 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: PREMIUM } },
-  shake: {
-    opacity: 1,
-    y: 0,
-    x: [0, -6, 6, -6, 6, -3, 0],
-    transition: { duration: 0.35, ease: INTERACTIVE },
-  },
+  hidden:  { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.3, ease: PREMIUM } },
+  shake:   { opacity: 1, transition: { duration: 0.3, ease: INTERACTIVE } },
 };
 
 // Staggered field reveal inside result card (name, course, date, hash...)
