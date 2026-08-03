@@ -83,20 +83,11 @@ function UniversityDashboard() {
   const hiddenCertRef = useRef(null);
   const modalCertRef = useRef(null);
 
-  const [verifications, setVerifications] = useState([]);
-  const [totalVerificationsMonth, setTotalVerificationsMonth] = useState(0);
-
   useEffect(() => {
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     if (!token || user.role !== "UNIVERSITY") { navigate("/university-login"); return; }
     loadUniversity();
-
-    const interval = setInterval(() => {
-      loadVerificationActivity();
-    }, 4000);
-
-    return () => clearInterval(interval);
   }, []);
 
   async function loadUniversity() {
@@ -105,17 +96,8 @@ function UniversityDashboard() {
       const res = await getMyUniversity();
       setUniversity(res.data);
       loadCertificates(res.data.id);
-      loadVerificationActivity();
     } catch { setUniversity(null); }
     finally { setLoading(false); }
-  }
-
-  async function loadVerificationActivity() {
-    try {
-      const res = await getUniversityVerifications();
-      setVerifications(res.data.verifications || []);
-      setTotalVerificationsMonth(res.data.totalThisMonth || 0);
-    } catch (e) { console.error(e); }
   }
 
   async function loadCertificates(universityId) {
@@ -570,56 +552,7 @@ function UniversityDashboard() {
         );
       })()}
 
-      {/* ── VERIFICATION ACTIVITY FEED (Phase 2) ────────────────────────────── */}
-      <motion.div className="card" variants={cardVariants}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2px solid #0a0a0a", paddingBottom: "0.5rem", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
-          <div>
-            <h3 style={{ margin: 0, fontWeight: 700, fontSize: "1.2rem", color: GS.ink }}>
-              Verification Activity
-            </h3>
-            <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: GS.muted }}>
-              Real-time feed of verifiers checking your institution's credentials.
-            </p>
-          </div>
-          
-          <div>
-            <span style={{ fontSize: "0.82rem", fontWeight: 700, background: "#0a0a0a", color: "#ffffff", padding: "0.25rem 0.85rem", borderRadius: "16px", fontFamily: '"Inter", sans-serif' }}>
-              Verifications This Month: <CountUp to={totalVerificationsMonth} duration={0.8} />
-            </span>
-          </div>
-        </div>
 
-        <div className="cert-list">
-          {verifications.length === 0 ? (
-            <p style={{ color: GS.muted, fontSize: "0.88rem" }}>No verifications recorded yet.</p>
-          ) : (
-            verifications.map((v, idx) => (
-              <motion.div
-                key={v.id || idx}
-                className="cert-item card-lift"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: idx * 0.03, ease: PREMIUM }}
-                style={{ background: "#ffffff", border: `1.5px solid ${GS.border}`, borderRadius: "8px", padding: "0.75rem 1rem", marginBottom: "0.5rem" }}
-              >
-                <div>
-                  <div style={{ fontWeight: 700, color: GS.ink, fontSize: "0.9rem" }}>
-                    Certificate <code>{v.certificate_number}</code> ({v.student_name || "Student"}) was verified by <strong>{v.verifier_org || "Anonymous Verifier"}</strong>
-                  </div>
-                  <div style={{ fontSize: "0.78rem", color: GS.muted, marginTop: "2px" }}>
-                    {new Date(v.verified_at).toLocaleString("en-IN", { hour12: false })}
-                  </div>
-                </div>
-                <div>
-                  <span className={`status-badge ${v.verification_result === "VALID" ? "status-valid" : "status-revoked"}`}>
-                    {v.verification_result}
-                  </span>
-                </div>
-              </motion.div>
-            ))
-          )}
-        </div>
-      </motion.div>
 
       {/* ── CERTIFICATE PREVIEW MODAL ───────────────────────────────────── */}
       <AnimatePresence>
