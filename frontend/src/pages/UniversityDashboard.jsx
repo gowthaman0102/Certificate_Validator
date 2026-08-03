@@ -409,9 +409,8 @@ function UniversityDashboard() {
 
       <motion.div className="card" variants={cardVariants}>
         <h3 style={{ fontWeight: 700, fontSize: "1.2rem", color: "#0a0a0a", borderBottom: "2px solid #0a0a0a", paddingBottom: "0.4rem", marginBottom: "1.2rem" }}>Bulk Issue Certificates</h3>
-        <p style={{ color: GS.muted, fontSize: "0.85rem", marginBottom: "1rem" }}>
-          Upload an Excel file (.xlsx) with required columns: <strong>Name</strong>, <strong>Register Number</strong>, <strong>Student Email</strong>, <strong>Department / Course</strong>, <strong>CGPA</strong>, and <strong>Year of Passing</strong>.
-          Certificate Category, Certificate Detail, Start Year, and Issue Date are optional.
+        <p style={{ color: GS.muted, fontSize: "0.85rem", marginBottom: "1rem", lineHeight: "1.5" }}>
+          Upload an Excel file (.xlsx) with mandatory columns: <strong>Name</strong>, <strong>Register Number</strong>, <strong>Student Email</strong>, <strong>Department / Course</strong>, <strong>CGPA</strong>, <strong>Year of Passing</strong>, <strong>Issue Date</strong>, <strong>Certificate Category</strong>, and <strong>Certificate Detail</strong> (if required by category). All fields mandatory in single issuance are also mandatory in bulk issuance.
         </p>
         <input type="file" accept=".xlsx,.xls" onChange={handleBulkFileChange} />
         <div style={{ marginTop: "1rem" }}>
@@ -419,19 +418,38 @@ function UniversityDashboard() {
             {bulkProcessing ? "Processing..." : "Issue Certificates from Excel"}
           </button>
         </div>
-        {bulkError && <div className="error-msg" style={{ marginTop: "1rem" }}>{bulkError}</div>}
+        {bulkError && (
+          <div className="error-msg" style={{ marginTop: "1rem", background: "#fef2f2", border: "2px solid #dc2626", borderLeft: "6px solid #dc2626", color: "#991b1b", padding: "0.85rem 1.1rem", borderRadius: "10px", fontWeight: 600, fontSize: "0.9rem", boxShadow: "0 4px 14px rgba(220,38,38,0.12)", display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            <span>⚠️</span>
+            <span>{bulkError}</span>
+          </div>
+        )}
         {bulkResults && (
-          <div style={{ marginTop: "1rem", background: GS.bg, border: `1px solid ${GS.border}`, padding: "1rem", fontSize: "0.85rem" }}>
-            <p style={{ fontWeight: 600, color: GS.ink, marginBottom: "0.5rem" }}>Bulk Upload Summary</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.4rem 1rem" }}>
-              <div><span style={{ color: GS.muted }}>Total Rows:</span> <strong>{bulkResults.total}</strong></div>
-              <div><span style={{ color: GS.muted }}>Issued:</span> <strong>{bulkResults.succeeded}</strong></div>
-              <div><span style={{ color: GS.muted }}>Skipped:</span> <strong>{bulkResults.skipped_restricted ?? 0}</strong></div>
-              <div><span style={{ color: GS.muted }}>Failed:</span> <strong>{bulkResults.failed}</strong></div>
+          <div style={{
+            marginTop: "1rem",
+            background: bulkResults.failed > 0 ? "#fef2f2" : "#f0fdf4",
+            border: bulkResults.failed > 0 ? "2px solid #dc2626" : "2px solid #10b981",
+            borderLeft: bulkResults.failed > 0 ? "6px solid #dc2626" : "6px solid #10b981",
+            padding: "1.1rem",
+            borderRadius: "10px",
+            fontSize: "0.88rem",
+            boxShadow: bulkResults.failed > 0 ? "0 4px 14px rgba(220,38,38,0.12)" : "0 4px 14px rgba(16,185,129,0.12)",
+            color: bulkResults.failed > 0 ? "#991b1b" : "#065f46"
+          }}>
+            <p style={{ fontWeight: 700, fontSize: "0.95rem", marginBottom: "0.6rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <span>{bulkResults.failed > 0 ? "⚠️ Bulk Upload Summary" : "✓ Bulk Upload Summary"}</span>
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.4rem 1rem", marginBottom: "0.6rem" }}>
+              <div><span>Total Rows:</span> <strong>{bulkResults.total}</strong></div>
+              <div><span>Issued:</span> <strong>{bulkResults.succeeded}</strong></div>
+              <div><span>Skipped:</span> <strong>{bulkResults.skipped_restricted ?? 0}</strong></div>
+              <div><span style={{ color: bulkResults.failed > 0 ? "#dc2626" : "inherit" }}>Failed:</span> <strong style={{ color: bulkResults.failed > 0 ? "#dc2626" : "inherit" }}>{bulkResults.failed}</strong></div>
             </div>
-            <p style={{ marginTop: "0.5rem", color: GS.muted }}>{bulkResults.message}</p>
+            <p style={{ marginTop: "0.5rem", fontWeight: 600 }}>{bulkResults.message}</p>
             {bulkResults.results?.filter(r => !r.success).map((r, i) => (
-              <div key={i} style={{ marginTop: "0.3rem", fontSize: "0.78rem", color: GS.ink }}>Row {r.row} ({r.register_number}): {r.error}</div>
+              <div key={i} style={{ marginTop: "0.4rem", padding: "0.4rem 0.6rem", background: "#ffffff", border: "1px solid #fca5a5", borderRadius: "6px", fontSize: "0.82rem", color: "#991b1b", fontWeight: 600 }}>
+                ⚠️ Row {r.row} ({r.register_number}): {r.error}
+              </div>
             ))}
           </div>
         )}

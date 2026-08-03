@@ -10,6 +10,7 @@ const HEADER_ALIASES = {
   student_email:        ['email', 'studentemail', 'student email', 'student_email'],
   certificate_category: ['certificate category', 'certificatecategory', 'category', 'cert category', 'certificate_category'],
   certificate_detail:   ['certificate detail', 'certificatedetail', 'detail', 'cert detail', 'course detail', 'certificate_detail'],
+  issue_date:           ['issuedate', 'issue date', 'date', 'issue_date'],
 };
 
 function normalizeHeader(header) {
@@ -44,13 +45,23 @@ export async function parseCertificateExcel(file) {
   const headers = rawRows[0];
   const fieldMap = buildFieldMap(headers);
 
-  const requiredFields = ['register_number', 'student_name', 'course', 'cgpa', 'end_year'];
+  const requiredFields = ['register_number', 'student_name', 'student_email', 'course', 'cgpa', 'end_year', 'certificate_category'];
   const missingRequiredColumns = requiredFields.filter((f) => !(f in fieldMap));
 
   if (missingRequiredColumns.length > 0) {
+    const columnLabels = {
+      register_number: 'Register Number',
+      student_name: 'Name',
+      student_email: 'Student Email',
+      course: 'Department / Course',
+      cgpa: 'CGPA',
+      end_year: 'Year of Passing',
+      certificate_category: 'Certificate Category',
+    };
+    const readableMissing = missingRequiredColumns.map(f => columnLabels[f] || f).join(', ');
     throw new Error(
-      `Could not find required column(s): ${missingRequiredColumns.join(', ')}. ` +
-      `Expected headers like: Register Number, Name, Department, CGPA, Year of Passing.`
+      `Excel sheet is missing mandatory column(s): ${readableMissing}. ` +
+      `All fields mandatory in single issuance must also be present in bulk issuance Excel sheet.`
     );
   }
 

@@ -14,6 +14,14 @@ const RESTRICTED_CATEGORIES = new Set([
   'Distinction Certificate',
 ]);
 
+const NEEDS_DETAIL_CATEGORIES = new Set([
+  'Course Completion Certificate',
+  'Internship Completion Certificate',
+  'Project Completion Certificate',
+  'Participation Certificate',
+  'Bonafide Certificate',
+]);
+
 /**
  * Strict 3-way credential verification helper:
  * Ensures student_name, register_number, and student_email are all provided
@@ -390,19 +398,36 @@ async function bulkUploadCertificates(req, res) {
       const rowNum = i + 2;
 
       try {
-        const student_name    = row.student_name;
-        const register_number = row.register_number;
-        const course          = row.course;
-        const cgpa            = row.cgpa;
-        const end_year        = row.end_year;
-        const start_year      = row.start_year || '';
-        const student_email   = row.student_email || null;
-        const issue_date      = row.issue_date || new Date().toISOString().split('T')[0];
-        const certCategory    = (row.certificate_category || 'Course Completion Certificate').trim();
+        const student_name    = (row.student_name || '').trim();
+        const register_number = (row.register_number || '').trim();
+        const course          = (row.course || '').trim();
+        const cgpa            = (row.cgpa || '').trim();
+        const end_year        = (row.end_year || '').trim();
+        const start_year      = (row.start_year || '').trim();
+        const student_email   = (row.student_email || '').trim();
+        const issue_date      = (row.issue_date || '').trim() || new Date().toISOString().split('T')[0];
+        const certCategory    = (row.certificate_category || '').trim();
         const certDetail      = (row.certificate_detail   || '').trim();
 
-        if (!student_name || !register_number || !student_email || !course || !end_year) {
-          results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'missing_fields', error: 'Missing required field(s): Student Name, Register Number, and Student Email are required' });
+        if (!certCategory) {
+          results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'missing_fields', error: "Missing mandatory field: 'Certificate Category' must be specified in Excel row" });
+          continue;
+        }
+
+        if (!student_name || !register_number || !student_email || !course || !cgpa || !end_year) {
+          const missing = [];
+          if (!student_name) missing.push('Student Name');
+          if (!register_number) missing.push('Register Number');
+          if (!student_email) missing.push('Student Email');
+          if (!course) missing.push('Department / Course');
+          if (!cgpa) missing.push('CGPA');
+          if (!end_year) missing.push('Year of Passing');
+          results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'missing_fields', error: `Missing mandatory field(s): ${missing.join(', ')}` });
+          continue;
+        }
+
+        if (NEEDS_DETAIL_CATEGORIES.has(certCategory) && !certDetail) {
+          results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'missing_fields', error: `Missing mandatory field: 'Certificate Detail' is required for '${certCategory}'` });
           continue;
         }
 
