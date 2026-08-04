@@ -486,9 +486,12 @@ function UniversityDashboard() {
           </button>
         </div>
         {bulkError && (
-          <div className="error-msg" style={{ marginTop: "1rem", background: "#fef2f2", border: "2px solid #dc2626", borderLeft: "6px solid #dc2626", color: "#991b1b", padding: "0.85rem 1.1rem", borderRadius: "10px", fontWeight: 600, fontSize: "0.9rem", boxShadow: "0 4px 14px rgba(220,38,38,0.12)", display: "flex", alignItems: "center", gap: "0.6rem" }}>
-            <span>⚠️</span>
-            <span>{bulkError}</span>
+          <div className="error-msg" style={{ marginTop: "1rem", background: "#fef2f2", border: "2px solid #dc2626", borderLeft: "6px solid #dc2626", color: "#991b1b", padding: "0.85rem 1.1rem", borderRadius: "10px", fontWeight: 600, fontSize: "0.9rem", boxShadow: "0 4px 14px rgba(220,38,38,0.12)", display: "flex", alignItems: "center", gap: "0.6rem", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+              <span>⚠️</span>
+              <span>{bulkError}</span>
+            </div>
+            <button onClick={() => setBulkError("")} title="Dismiss" style={{ background: "transparent", border: "none", cursor: "pointer", color: "#991b1b", fontSize: "1.1rem", fontWeight: 700, lineHeight: 1, padding: "0 2px", flexShrink: 0 }}>✕</button>
           </div>
         )}
         {bulkResults && (
@@ -503,9 +506,10 @@ function UniversityDashboard() {
             boxShadow: bulkResults.failed > 0 ? "0 4px 14px rgba(220,38,38,0.12)" : "0 4px 14px rgba(16,185,129,0.12)",
             color: bulkResults.failed > 0 ? "#991b1b" : "#065f46"
           }}>
-            <p style={{ fontWeight: 700, fontSize: "0.95rem", marginBottom: "0.6rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            <div style={{ fontWeight: 700, fontSize: "0.95rem", marginBottom: "0.6rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem" }}>
               <span>{bulkResults.failed > 0 ? "⚠️ Bulk Upload Summary" : "✓ Bulk Upload Summary"}</span>
-            </p>
+              <button onClick={() => setBulkResults(null)} title="Dismiss" style={{ background: "transparent", border: "none", cursor: "pointer", color: "inherit", fontSize: "1.1rem", fontWeight: 700, lineHeight: 1, padding: "0 2px", flexShrink: 0, opacity: 0.7 }}>✕</button>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.4rem 1rem", marginBottom: "0.6rem" }}>
               <div><span>Total Rows:</span> <strong>{bulkResults.total}</strong></div>
               <div><span>Issued:</span> <strong>{bulkResults.succeeded}</strong></div>
