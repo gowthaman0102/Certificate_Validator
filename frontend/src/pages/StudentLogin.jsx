@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { loginUser } from "../api/client";
@@ -68,9 +68,10 @@ function StudentLogin() {
 
         <form onSubmit={handleSubmit}>
           <RevealItem delay={0.06}>
-            <label>Student email or register number</label>
+            <label>Email or Register No.</label>
             <input
               type="text"
+              placeholder="Enter email or register number"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               required

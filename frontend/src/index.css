@@ -291,8 +291,9 @@ button.btn-secondary:hover:not(:disabled),
   gap: 0.5rem !important;
   width: 100% !important;
   max-width: 100% !important;
+  box-sizing: border-box !important;
   font-family: var(--font-body) !important;
-  font-size: 0.68rem !important;
+  font-size: 0.65rem !important;
   font-weight: 700 !important;
   color: #3a3a3a !important;
   background: none !important;
@@ -302,10 +303,11 @@ button.btn-secondary:hover:not(:disabled),
   margin-top: 1.25rem !important;
   margin-bottom: 0.45rem !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
+  letter-spacing: 0.04em !important;
   line-height: 1 !important;
   white-space: nowrap !important;
   overflow: hidden !important;
+  text-overflow: ellipsis !important;
   user-select: none;
   box-shadow: none !important;
   transition: color 0.2s ease !important;
