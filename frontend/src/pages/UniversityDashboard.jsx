@@ -216,6 +216,8 @@ function UniversityDashboard() {
       if (rows.length === 0) { setBulkError("No data rows found in the spreadsheet."); return; }
       const res = await bulkUploadCertificates(rows);
       setBulkResults(res.data);
+      setBulkFile(null);
+      if (bulkFileInputRef.current) bulkFileInputRef.current.value = "";
       loadCertificates(university.id);
     } catch (err) { setBulkError(err.response?.data?.error || err.message || "Bulk issuance failed"); }
     finally { setBulkProcessing(false); }
