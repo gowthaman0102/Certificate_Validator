@@ -540,7 +540,7 @@ function Home() {
             <div className="orbit-diagram-container">
               <div className="dot-matrix-pattern top-right" />
 
-              <svg className="orbit-svg" viewBox="0 0 540 400" fill="none">
+              <svg className="orbit-svg" viewBox="0 0 540 370" fill="none">
                 {/* Outer & Inner Dotted Rings with Synchronized Line Junction Nodes */}
                 <g className="diagram-ring-spin-outer">
                   <circle cx="270" cy="190" r="150" stroke="#e0e0e0" strokeWidth="1" strokeDasharray="3 3" />
@@ -570,7 +570,7 @@ function Home() {
                   className="diagram-line-flow"
                 />
                 <polyline
-                  points="140 308, 160 308, 185 235, 205 235"
+                  points="140 290, 160 290, 185 235, 205 235"
                   stroke="#0a0a0a" strokeWidth="1.2" fill="none"
                   className="diagram-line-flow"
                 />
@@ -580,13 +580,13 @@ function Home() {
                   className="diagram-line-flow"
                 />
                 <polyline
-                  points="400 308, 380 308, 355 235, 335 235"
+                  points="400 290, 380 290, 355 235, 335 235"
                   stroke="#0a0a0a" strokeWidth="1.2" fill="none"
                   className="diagram-line-flow"
                 />
 
                 {/* Dashed vertical center guide line */}
-                <line x1="270" y1="230" x2="270" y2="295" stroke="#0a0a0a" strokeWidth="1.5" strokeDasharray="3 3" />
+                <line x1="270" y1="230" x2="270" y2="275" stroke="#0a0a0a" strokeWidth="1.5" strokeDasharray="3 3" />
 
                 {/* Native SVG animateMotion Traveling Data Dots along Connector Lines */}
                 {!shouldReduceMotion && (
@@ -598,10 +598,10 @@ function Home() {
                       <animateMotion dur="4s" repeatCount="indefinite" path="M 400 72 L 380 72 L 355 145 L 335 145 L 270 190" begin="1s" />
                     </circle>
                     <circle r="3" fill="#0a0a0a">
-                      <animateMotion dur="4s" repeatCount="indefinite" path="M 140 308 L 160 308 L 185 235 L 205 235 L 270 190" begin="2s" />
+                      <animateMotion dur="4s" repeatCount="indefinite" path="M 140 290 L 160 290 L 185 235 L 205 235 L 270 190" begin="2s" />
                     </circle>
                     <circle r="3" fill="#0a0a0a">
-                      <animateMotion dur="4s" repeatCount="indefinite" path="M 400 308 L 380 308 L 355 235 L 335 235 L 270 190" begin="3s" />
+                      <animateMotion dur="4s" repeatCount="indefinite" path="M 400 290 L 380 290 L 355 235 L 335 235 L 270 190" begin="3s" />
                     </circle>
                   </>
                 )}
@@ -623,7 +623,7 @@ function Home() {
                 </foreignObject>
 
                 {/* Phase 1: Trusted by Blockchain Badge with Pure CSS badgePulse (3s loop) */}
-                <foreignObject x="180" y="305" width="180" height="65" style={{ overflow: "visible" }}>
+                <foreignObject x="180" y="280" width="180" height="65" style={{ overflow: "visible" }}>
                   <motion.div className="trusted-blockchain-group-inner" variants={trustedBadgeVariants} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
                     <div
                       className="center-verified-badge diagram-badge-pulse"
@@ -651,7 +651,7 @@ function Home() {
                   </motion.div>
                 </foreignObject>
 
-                <foreignObject x="0" y="260" width="130" height="120" style={{ overflow: "visible" }}>
+                <foreignObject x="0" y="240" width="130" height="120" style={{ overflow: "visible" }}>
                   <motion.div className="diagram-node diagram-node-bl" variants={nodeSpringVariants} style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "100%" }}>
                     <div className="node-icon-circle diagram-icon-pulse-3"><ShieldCheckNodeIcon size={20} /></div>
                     <div className="node-text-group">
@@ -671,7 +671,7 @@ function Home() {
                   </motion.div>
                 </foreignObject>
 
-                <foreignObject x="410" y="260" width="130" height="120" style={{ overflow: "visible" }}>
+                <foreignObject x="410" y="240" width="130" height="120" style={{ overflow: "visible" }}>
                   <motion.div className="diagram-node diagram-node-br" variants={nodeSpringVariants} style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "100%" }}>
                     <div className="node-icon-circle diagram-icon-pulse-4"><MagnifierGlassIcon size={20} /></div>
                     <div className="node-text-group">
