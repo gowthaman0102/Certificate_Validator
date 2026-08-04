@@ -2155,22 +2155,22 @@ input[type="date"], input[type="file"], select, textarea,
 
 @keyframes cornerFloatTL {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(3px); }
+  50% { transform: translateY(2px); }
 }
 
 @keyframes cornerFloatTR {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(3px); }
+  50% { transform: translateY(2px); }
 }
 
 @keyframes cornerFloatBL {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-3px); }
+  50% { transform: translateY(0px); }
 }
 
 @keyframes cornerFloatBR {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-3px); }
+  50% { transform: translateY(0px); }
 }
 
 @keyframes iconPulseRing {

@@ -641,7 +641,7 @@ function Home() {
                 </foreignObject>
 
                 {/* Phase 1: 4 Corner Icon Nodes with Continuous Float Drift & Icon Pulse Rings */}
-                <foreignObject x="0" y="14" width="130" height="120" style={{ overflow: "visible" }}>
+                <foreignObject x="0" y="14" width="140" height="120" style={{ overflow: "visible" }}>
                   <motion.div className="diagram-node diagram-node-tl" variants={nodeSpringVariants} style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "100%" }}>
                     <div className="node-icon-circle diagram-icon-pulse-1"><TemplePillarsIcon size={20} /></div>
                     <div className="node-text-group">
@@ -651,7 +651,7 @@ function Home() {
                   </motion.div>
                 </foreignObject>
 
-                <foreignObject x="0" y="240" width="130" height="120" style={{ overflow: "visible" }}>
+                <foreignObject x="-5" y="235" width="145" height="130" style={{ overflow: "visible" }}>
                   <motion.div className="diagram-node diagram-node-bl" variants={nodeSpringVariants} style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "100%" }}>
                     <div className="node-icon-circle diagram-icon-pulse-3"><ShieldCheckNodeIcon size={20} /></div>
                     <div className="node-text-group">
@@ -661,7 +661,7 @@ function Home() {
                   </motion.div>
                 </foreignObject>
 
-                <foreignObject x="410" y="14" width="130" height="120" style={{ overflow: "visible" }}>
+                <foreignObject x="400" y="14" width="140" height="120" style={{ overflow: "visible" }}>
                   <motion.div className="diagram-node diagram-node-tr" variants={nodeSpringVariants} style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "100%" }}>
                     <div className="node-icon-circle diagram-icon-pulse-2"><PersonUserIcon size={20} /></div>
                     <div className="node-text-group">
@@ -671,7 +671,7 @@ function Home() {
                   </motion.div>
                 </foreignObject>
 
-                <foreignObject x="410" y="240" width="130" height="120" style={{ overflow: "visible" }}>
+                <foreignObject x="400" y="235" width="145" height="130" style={{ overflow: "visible" }}>
                   <motion.div className="diagram-node diagram-node-br" variants={nodeSpringVariants} style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "100%" }}>
                     <div className="node-icon-circle diagram-icon-pulse-4"><MagnifierGlassIcon size={20} /></div>
                     <div className="node-text-group">
