@@ -81,9 +81,13 @@ function verifyOnBlockchain(certHash) {
  * @returns {Array}
  */
 function getRecentAnchors(limit = 20, offset = 0) {
-  return db.prepare(
-    'SELECT * FROM blockchain_anchors ORDER BY block_number DESC LIMIT ? OFFSET ?'
-  ).all(limit, offset);
+  return db.prepare(`
+    SELECT ba.* FROM blockchain_anchors ba
+    WHERE ba.issuer_code IN (SELECT issuer_code FROM universities WHERE issuer_code IS NOT NULL)
+       OR LOWER(ba.university_name) IN (SELECT LOWER(name) FROM universities WHERE name IS NOT NULL)
+    ORDER BY ba.block_number DESC
+    LIMIT ? OFFSET ?
+  `).all(limit, offset);
 }
 
 /**
@@ -105,9 +109,10 @@ function getAnchorByTxId(txId) {
 function searchAnchors(query) {
   const q = `%${query}%`;
   return db.prepare(`
-    SELECT * FROM blockchain_anchors
-    WHERE tx_id LIKE ? OR certificate_number LIKE ? OR cert_hash LIKE ?
-    ORDER BY block_number DESC
+    SELECT ba.* FROM blockchain_anchors ba
+    WHERE (ba.issuer_code IN (SELECT issuer_code FROM universities WHERE issuer_code IS NOT NULL) OR LOWER(ba.university_name) IN (SELECT LOWER(name) FROM universities WHERE name IS NOT NULL))
+      AND (ba.tx_id LIKE ? OR ba.certificate_number LIKE ? OR ba.cert_hash LIKE ?)
+    ORDER BY ba.block_number DESC
     LIMIT 50
   `).all(q, q, q);
 }
@@ -117,9 +122,12 @@ function searchAnchors(query) {
  * @returns {{ totalTransactions, latestBlock, network, genesisHash }}
  */
 function getNetworkStats() {
-  const row = db.prepare(
-    'SELECT COUNT(*) as total, MAX(block_number) as latest FROM blockchain_anchors'
-  ).get();
+  const row = db.prepare(`
+    SELECT COUNT(*) as total, MAX(block_number) as latest
+    FROM blockchain_anchors ba
+    WHERE ba.issuer_code IN (SELECT issuer_code FROM universities WHERE issuer_code IS NOT NULL)
+       OR LOWER(ba.university_name) IN (SELECT LOWER(name) FROM universities WHERE name IS NOT NULL)
+  `).get();
   return {
     totalTransactions: row.total || 0,
     latestBlock:       row.latest || 0,
