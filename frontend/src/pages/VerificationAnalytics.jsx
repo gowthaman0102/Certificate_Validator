@@ -157,19 +157,6 @@ function VerificationAnalytics() {
         </motion.div>
       )}
 
-      {data?.authSummary && (
-        <motion.div className="card" style={{ maxWidth: "900px", marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }} variants={cardVariants}>
-          <h3 style={{ borderBottom: "2px solid #0a0a0a", paddingBottom: "0.6rem", marginBottom: "1rem", fontWeight: 700, fontSize: "1.2rem", color: GS.ink }}>
-            Authentication Events
-          </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
-            <StatBox label="Total Auth Events" value={data.authSummary.total ?? 0} />
-            <StatBox label="Successful Logins" value={data.authSummary.login_success ?? 0} />
-            <StatBox label="Failed Logins" value={data.authSummary.login_failure ?? 0} />
-            <StatBox label="New Registrations" value={data.authSummary.registrations ?? 0} />
-          </div>
-        </motion.div>
-      )}
 
       {data?.monthly?.length > 0 && (
         <motion.div className="card" style={{ maxWidth: "900px", marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }} variants={cardVariants}>
