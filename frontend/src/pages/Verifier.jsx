@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { verifyCertificate, getPublicKey, getRevokedList, getCertificateByCertNumber } from '../api/client';
 import { verifyOffline } from '../utils/offlineCrypto';
 import { getCachedPublicKey, setCachedPublicKey } from '../utils/keyCache';
-import { cacheRevokedList, isCertRevokedLocally, getLastSyncTime } from '../utils/revocationCache';
+import { cacheRevokedList, isCertRevokedLocally, getLastSyncTime, addRevokedToCache } from '../utils/revocationCache';
 import { decodeQrFromCertificateFile } from '../utils/qrDecoder';
 import { getCategoryLabel } from '../utils/certificateCategory';
 import CategoryCertificateTemplate from '../components/templates/CategoryCertificateTemplate';
@@ -67,9 +67,17 @@ function Verifier() {
   const [lastSync, setLastSync]     = useState(getLastSyncTime());
   const [bcCopied, setBcCopied]     = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  // shake key: changing it re-triggers the animation
   const [shakeKey, setShakeKey]     = useState(0);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    getRevokedList()
+      .then(res => {
+        if (res.data) cacheRevokedList(res.data);
+        setLastSync(getLastSyncTime());
+      })
+      .catch(() => {});
+  }, []);
 
   /* ── Batch Verification State (Phase 6) ── */
   const [batchFiles, setBatchFiles] = useState([]);
@@ -149,7 +157,7 @@ function Verifier() {
           }
           const verifyResult = await verifyOffline(payload, publicKeyPem);
           if (verifyResult.result === 'VALID') {
-            const revokedStatus = isCertRevokedLocally(payload.cert_id);
+            const revokedStatus = isCertRevokedLocally(payload.cert_id, payload.certificate_number, payload.id, payload.cert_id_from_name);
             if (revokedStatus === true) {
               setBatchFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'completed', result: { result: 'REVOKED', reason: 'Appears in revocation list', certificate: verifyResult.certificate } } : f));
             } else {
@@ -336,11 +344,17 @@ function Verifier() {
     if (mode === 'online') {
       try {
         const res = await verifyCertificate(payload);
+        if (res.data?.result === 'REVOKED') {
+          addRevokedToCache(payload.cert_id, payload.certificate_number, payload.id, certNumber);
+        }
         setResult(res.data);
         if (res.data.result !== 'VALID') setShakeKey(k => k + 1);
       }
       catch (err) {
         if (err.response?.data?.result) {
+          if (err.response.data.result === 'REVOKED') {
+            addRevokedToCache(payload.cert_id, payload.certificate_number, payload.id, certNumber);
+          }
           setResult(err.response.data);
           setShakeKey(k => k + 1);
         } else {
@@ -373,13 +387,38 @@ function Verifier() {
         if (uniName) verifyResult.certificate.university_name = uniName;
         if (payload.issuer_code || payload.issuer_id) verifyResult.certificate.issuer_code = payload.issuer_code || payload.issuer_id;
       }
-      // Asynchronously log verification event to backend so university activity feed updates live
-      verifyCertificate(payload).catch(() => {});
-      if (verifyResult.result === 'VALID') {
-        const revokedStatus = isCertRevokedLocally(payload.cert_id);
-        if (revokedStatus === true)
-          setResult({ result: 'REVOKED', reason: 'This certificate appears in the last synced revocation list.', certificate: verifyResult.certificate, algorithm: verifyResult.algorithm, verifiedAt: verifyResult.verifiedAt, verificationMode: verifyResult.verificationMode, hashStatus: verifyResult.hashStatus, signatureStatus: verifyResult.signatureStatus });
-        else if (revokedStatus === null)
+      // Asynchronously log verification event & sync revocation state if online backend is accessible
+      verifyCertificate(payload).then(res => {
+        if (res.data?.result === 'REVOKED') {
+          addRevokedToCache(payload.cert_id, payload.certificate_number, payload.id, certNumber);
+          setResult(prev => {
+            if (prev && prev.result === 'VALID') {
+              return {
+                ...prev,
+                result: 'REVOKED',
+                reason: res.data.reason || 'This certificate has been revoked by the issuing university',
+              };
+            }
+            return prev;
+          });
+        }
+      }).catch(() => {});
+
+      const revokedStatus = isCertRevokedLocally(payload.cert_id, payload.certificate_number, payload.id, payload.cert_id_from_name, certNumber);
+      if (revokedStatus === true) {
+        setResult({
+          result: 'REVOKED',
+          reason: 'This certificate has been revoked by the issuing university (matched in synced revocation list).',
+          certificate: verifyResult.certificate,
+          algorithm: verifyResult.algorithm,
+          verifiedAt: verifyResult.verifiedAt,
+          verificationMode: verifyResult.verificationMode,
+          hashStatus: verifyResult.hashStatus,
+          signatureStatus: verifyResult.signatureStatus
+        });
+        setShakeKey(k => k + 1);
+      } else if (verifyResult.result === 'VALID') {
+        if (revokedStatus === null)
           setResult({ ...verifyResult, message: verifyResult.message + ' (revocation status unknown — sync the revocation list to check)' });
         else
           setResult(verifyResult);

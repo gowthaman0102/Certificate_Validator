@@ -11,6 +11,7 @@ import { downloadCertificateAsPDF } from "../utils/certificatePdf";
 import { parseCertificateExcel } from "../utils/excelParser";
 import { CATEGORIES, NEEDS_DETAIL } from "../utils/certificateCategory";
 import UniversityDashboardDecorations from "../components/UniversityDashboardDecorations";
+import { addRevokedToCache } from "../utils/revocationCache";
 import { CountUp, SkeletonCard } from "../components/motion";
 import useHeaderHeight from "../hooks/useHeaderHeight";
 import { API_BASE } from "../config";
@@ -176,6 +177,7 @@ function UniversityDashboard() {
     setRevoking(true);
     try {
       await revokeCertificate(revokeTarget.id, revokeReason.trim());
+      addRevokedToCache(revokeTarget.id, revokeTarget.certificate_number);
       alert(`Certificate ${revokeTarget.certificate_number || ''} has been successfully revoked.`);
       setRevokeTarget(null);
       setRevokeReason("");
