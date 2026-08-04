@@ -57,10 +57,16 @@ function logAudit(req, opts) {
     const uname  = user_name  || req?.user?.name   || null;
     const urole  = role       || req?.user?.role   || null;
 
-    // Best-effort IP extraction
-    const ip = req
-      ? (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || null)
+    // Best-effort IP extraction with clean loopback normalization
+    let rawIp = req
+      ? (req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || req.ip || null)
       : null;
+    let ip = rawIp;
+    if (ip === '::1' || ip === '::ffff:127.0.0.1') {
+      ip = '127.0.0.1';
+    } else if (ip && ip.startsWith('::ffff:')) {
+      ip = ip.replace('::ffff:', '');
+    }
 
     const detailsStr = details ? JSON.stringify(details) : null;
 

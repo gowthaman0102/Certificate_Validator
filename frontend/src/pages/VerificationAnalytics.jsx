@@ -108,6 +108,13 @@ function VerificationAnalytics() {
   }
 
   function fmt(ts) { if (!ts) return "—"; try { return new Date(ts).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }); } catch { return ts; } }
+  function formatIp(ip) {
+    if (!ip) return "—";
+    let cleanIp = String(ip).trim();
+    if (cleanIp === "::1" || cleanIp === "::ffff:127.0.0.1") return "127.0.0.1";
+    if (cleanIp.startsWith("::ffff:")) return cleanIp.replace("::ffff:", "");
+    return cleanIp;
+  }
   function parseDetail(raw) { try { return JSON.parse(raw); } catch { return {}; } }
 
   const genuineRecent = (data?.recent || []).filter(row => {
@@ -205,7 +212,7 @@ function VerificationAnalytics() {
                 >
                   <div>
                     <div style={{ fontWeight: 700, color: GS.ink, fontSize: "0.92rem" }}>{row.resource_id || "—"}</div>
-                    <div style={{ fontSize: "0.8rem", color: GS.muted, marginTop: "2px" }}>{det.student_name && `${det.student_name} · `}{det.course && `${det.course} · `}IP: {row.ip_address || "—"}</div>
+                    <div style={{ fontSize: "0.8rem", color: GS.muted, marginTop: "2px" }}>{det.student_name && `${det.student_name} · `}{det.course && `${det.course} · `}IP: {formatIp(row.ip_address)}</div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                     <span style={{ fontSize: "0.78rem", color: GS.subtle, fontWeight: 500 }}>{fmt(row.timestamp)}</span>
