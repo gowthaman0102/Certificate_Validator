@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { registerUser } from "../api/client";
@@ -60,13 +60,14 @@ function UniversityRegister() {
           </motion.div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="off">
           <RevealItem delay={0.06}>
             <label>University Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              autoComplete="off"
               required
             />
           </RevealItem>
@@ -77,6 +78,7 @@ function UniversityRegister() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="off"
               required
             />
           </RevealItem>
@@ -87,6 +89,7 @@ function UniversityRegister() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
               required
               minLength={6}
             />

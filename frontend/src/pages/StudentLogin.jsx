@@ -66,7 +66,7 @@ function StudentLogin() {
           </motion.div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="off">
           <RevealItem delay={0.06}>
             <label>Email or Register No.</label>
             <input
@@ -74,6 +74,7 @@ function StudentLogin() {
               placeholder="Enter email or register number"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
+              autoComplete="off"
               required
             />
           </RevealItem>
@@ -84,6 +85,7 @@ function StudentLogin() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
               required
             />
           </RevealItem>
