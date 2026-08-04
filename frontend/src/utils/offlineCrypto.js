@@ -166,6 +166,10 @@ export async function verifyOffline(qrPayload, publicKeyPem) {
     end_year,
     issue_date,
     issuer_id,
+    issuer_code: qrPayload.issuer_code || qrPayload.issuer_id || issuer_id,
+    university_name: qrPayload.university_name || '',
+    certificate_category: qrPayload.certificate_category || '',
+    certificate_detail: qrPayload.certificate_detail || '',
   };
 
   if (hashStatus === 'MISMATCH') {

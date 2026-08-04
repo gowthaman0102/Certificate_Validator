@@ -299,6 +299,8 @@ function Verifier() {
         register_number: cert.register_number, student_name: cert.student_name,
         course: cert.course, cgpa: cert.cgpa ?? '', start_year: cert.start_year ?? '',
         end_year: cert.end_year, issue_date: cert.issue_date, issuer_id: cert.issuer_code,
+        issuer_code: cert.issuer_code, university_name: cert.university_name,
+        certificate_category: cert.certificate_category, certificate_detail: cert.certificate_detail,
         hash: cert.certificate_hash, signature: cert.signature,
       };
     }
@@ -316,6 +318,8 @@ function Verifier() {
           register_number: cert.register_number, student_name: cert.student_name,
           course: cert.course, cgpa: cert.cgpa ?? '', start_year: cert.start_year ?? '',
           end_year: cert.end_year, issue_date: cert.issue_date, issuer_id: cert.issuer_code,
+          issuer_code: cert.issuer_code, university_name: cert.university_name,
+          certificate_category: cert.certificate_category, certificate_detail: cert.certificate_detail,
           hash: cert.certificate_hash, signature: cert.signature,
         };
       }
@@ -350,14 +354,25 @@ function Verifier() {
     try {
       const cached = getCachedPublicKey(payload.issuer_id);
       let publicKeyPem;
-      if (cached) { publicKeyPem = cached.public_key; setKeySource('cache'); }
-      else {
+      let uniName = payload.university_name;
+      if (cached) {
+        publicKeyPem = cached.public_key;
+        uniName = uniName || cached.name;
+        setKeySource('cache');
+      } else {
         const res = await getPublicKey(payload.issuer_id);
         publicKeyPem = res.data.public_key;
+        uniName = uniName || res.data.name;
         setCachedPublicKey(payload.issuer_id, res.data.name, publicKeyPem);
         setKeySource('network (now cached for future offline use)');
       }
       const verifyResult = await verifyOffline(payload, publicKeyPem);
+      if (verifyResult && verifyResult.certificate) {
+        if (payload.certificate_category) verifyResult.certificate.certificate_category = payload.certificate_category;
+        if (payload.certificate_detail) verifyResult.certificate.certificate_detail = payload.certificate_detail;
+        if (uniName) verifyResult.certificate.university_name = uniName;
+        if (payload.issuer_code || payload.issuer_id) verifyResult.certificate.issuer_code = payload.issuer_code || payload.issuer_id;
+      }
       // Asynchronously log verification event to backend so university activity feed updates live
       verifyCertificate(payload).catch(() => {});
       if (verifyResult.result === 'VALID') {
