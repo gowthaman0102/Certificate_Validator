@@ -1075,9 +1075,12 @@ input[type="date"] *::selection {
 
 .node-desc {
   font-family: var(--font-body);
-  font-size: clamp(0.68rem, 1.05vh, 0.74rem);
-  line-height: 1.28;
+  font-size: 0.65rem !important;
+  line-height: 1.25 !important;
   color: #666666;
+  max-width: 145px;
+  margin: 0 auto;
+  text-align: center;
 }
 
 /* -- 2. Features Banner Row -- */
