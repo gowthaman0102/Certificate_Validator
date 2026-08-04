@@ -22,6 +22,8 @@ import {
   fetchRecentAnchors,
   searchBlockchainAnchors,
 } from "../api/blockchain";
+import { getCertificateByCertNumber } from "../api/client";
+import CategoryCertificateTemplate from "../components/templates/CategoryCertificateTemplate";
 import BlockchainExplorerDecorations from "../components/decorations/BlockchainExplorerDecorations";
 import { CountUp, SkeletonCard } from "../components/motion";
 import useHeaderHeight from "../hooks/useHeaderHeight";
@@ -244,6 +246,190 @@ function AnimatedRow({ anchor, index, isNewest, isSelected, onClick }) {
   );
 }
 
+function LedgerDetailModal({ anchor, onClose }) {
+  const [certData, setCertData] = useState(null);
+  const [loadingCert, setLoadingCert] = useState(true);
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (!anchor?.certificate_number) {
+      setLoadingCert(false);
+      return;
+    }
+    setLoadingCert(true);
+    getCertificateByCertNumber(anchor.certificate_number)
+      .then((res) => {
+        if (isMounted) setCertData(res.data);
+      })
+      .catch(() => {
+        if (isMounted) setCertData(null);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingCert(false);
+      });
+    return () => { isMounted = false; };
+  }, [anchor]);
+
+  if (!anchor) return null;
+
+  const detailRows = [
+    { label: "Transaction ID",      value: anchor.tx_id,              copy: true,  isHash: true  },
+    { label: "Block Number",        value: anchor.block_number,       copy: false, isHash: false },
+    { label: "Block Hash",          value: anchor.block_hash,         copy: true,  isHash: true  },
+    { label: "Previous Block Hash", value: anchor.prev_block_hash,    copy: true,  isHash: true  },
+    { label: "Certificate Hash",    value: anchor.cert_hash,          copy: true,  isHash: true  },
+    { label: "Certificate No.",     value: anchor.certificate_number, copy: false, isHash: false },
+    { label: "Issuer Code",         value: anchor.issuer_code,        copy: false, isHash: false },
+    { label: "University",          value: anchor.university_name,    copy: false, isHash: false },
+    { label: "Anchored At",         value: fmtTime(anchor.anchored_at), copy: false, isHash: false },
+    { label: "Network",             value: anchor.network,            copy: false, isHash: false },
+    { label: "Status",              value: anchor.status,             copy: false, isHash: false },
+  ];
+
+  const statusUpper = (anchor.status || "").toUpperCase();
+  const isRevoked = statusUpper === "REVOKED";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        background: "rgba(0, 0, 0, 0.75)",
+        backdropFilter: "blur(6px)",
+        WebkitBackdropFilter: "blur(6px)",
+        zIndex: 10000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "1rem",
+        boxSizing: "border-box"
+      }}
+    >
+      <motion.div
+        initial={{ scale: 0.94, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.94, opacity: 0, y: 20 }}
+        transition={{ duration: 0.3, ease: PREMIUM }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#ffffff",
+          border: "2.5px solid #0a0a0a",
+          borderRadius: "16px",
+          width: "100%",
+          maxWidth: "880px",
+          maxHeight: "90vh",
+          overflowY: "auto",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
+          padding: "1.5rem",
+          position: "relative",
+          boxSizing: "border-box"
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #0a0a0a", paddingBottom: "0.85rem", marginBottom: "1.25rem" }}>
+          <div>
+            <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0a0a0a", fontFamily: '"Prata", serif' }}>
+              Ledger Block & Certificate Details
+            </div>
+            <div style={{ fontSize: "0.82rem", color: "#64748b", marginTop: "2px", fontWeight: 600 }}>
+              Block #{anchor.block_number} · Tx: {truncate(anchor.tx_id, 12)}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            title="Close Pop-up"
+            style={{
+              background: "#f1f5f9",
+              border: "1.5px solid #0a0a0a",
+              borderRadius: "50%",
+              width: "36px",
+              height: "36px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "1.1rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              color: "#0a0a0a",
+              flexShrink: 0
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Certificate Preview Section */}
+        <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0a0a0a", marginBottom: "0.75rem", borderLeft: "4px solid #0a0a0a", paddingLeft: "0.5rem" }}>
+            Visual Certificate Document Preview
+          </div>
+
+          {loadingCert ? (
+            <div style={{ padding: "2rem", textAlign: "center", background: "#f8fafc", borderRadius: "10px", border: "1px dashed #cbd5e1" }}>
+              <SkeletonCard rows={2} heights={["2rem", "6rem"]} gap="0.75rem" />
+            </div>
+          ) : certData ? (
+            <div style={{ position: "relative", borderRadius: "10px", overflow: "hidden", border: "1.5px solid #cbd5e1", background: "#f8fafc", padding: "1rem" }}>
+              <div style={{ transform: "scale(0.92)", transformOrigin: "top center" }}>
+                <CategoryCertificateTemplate
+                  certificate={{
+                    ...certData,
+                    status: isRevoked ? "REVOKED" : (certData.status || "VALID"),
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div style={{ padding: "1.2rem", background: "#f8fafc", borderRadius: "10px", border: "1.5px solid #cbd5e1" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.75rem", fontSize: "0.85rem" }}>
+                <div><span style={{ color: "#64748b" }}>Certificate Number:</span><br /><strong style={{ color: "#0a0a0a" }}>{anchor.certificate_number}</strong></div>
+                <div><span style={{ color: "#64748b" }}>University:</span><br /><strong style={{ color: "#0a0a0a" }}>{anchor.university_name}</strong></div>
+                <div><span style={{ color: "#64748b" }}>Issuer Code:</span><br /><strong style={{ color: "#0a0a0a" }}>{anchor.issuer_code}</strong></div>
+                <div><span style={{ color: "#64748b" }}>Status:</span><br /><span className={`status-badge ${isRevoked ? "status-revoked" : "status-valid"}`}>{anchor.status}</span></div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Ledger Details Table Section */}
+        <div>
+          <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0a0a0a", marginBottom: "0.75rem", borderLeft: "4px solid #0a0a0a", paddingLeft: "0.5rem" }}>
+            Blockchain Transaction & Hash Verification
+          </div>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.84rem" }}>
+            <tbody>
+              {detailRows.map(({ label, value, copy, isHash }) => (
+                <tr key={label} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                  <td style={{ padding: "0.55rem 0.6rem", color: "#64748b", whiteSpace: "nowrap", width: "170px", fontWeight: 600 }}>{label}</td>
+                  <td style={{ padding: "0.55rem 0.6rem", color: "#0a0a0a", wordBreak: "break-all", fontSize: isHash ? "0.8rem" : "0.84rem" }}>
+                    {isHash ? <AnimatedHashSpan value={String(value ?? "—")} /> : String(value ?? "—")}
+                    {copy && value && <CopyBtn value={String(value)} />}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ─── LedgerBadge: visible architecture declaration ───────────────────────────
 // This owns the "simulated ledger" choice openly rather than hiding it.
 
@@ -457,6 +643,15 @@ function BlockchainExplorer() {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {selected && (
+          <LedgerDetailModal
+            anchor={selected}
+            onClose={() => setSelected(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
