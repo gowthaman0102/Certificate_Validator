@@ -173,7 +173,14 @@ function AuditLog() {
     catch { alert("ID: " + id); }
   }
 
-  function fmt(ts) { if (!ts) return "—"; try { return new Date(ts).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }); } catch { return ts; } }
+  function fmt(ts) { if (!ts) return "—"; try { return new Date(ts).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }); } catch { return ts; } }
+  function formatIp(ip) {
+    if (!ip) return "—";
+    let cleanIp = String(ip).trim();
+    if (cleanIp === "::1" || cleanIp === "::ffff:127.0.0.1") return "127.0.0.1";
+    if (cleanIp.startsWith("::ffff:")) return cleanIp.replace("::ffff:", "");
+    return cleanIp;
+  }
   function parseDetails(raw) { if (!raw) return null; try { return JSON.parse(raw); } catch { return null; } }
 
   const copyBtnStyle = { background: "transparent", border: `1px solid ${GS.border}`, borderRadius: "0", color: GS.ink, fontSize: "0.68rem", padding: "1px 5px", cursor: "pointer", fontFamily: "'Inter', sans-serif" };
@@ -299,7 +306,7 @@ function AuditLog() {
                       >
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "0.5rem" }}>
                           <div><span style={{ color: GS.muted }}>Role</span><br /><strong style={{ color: GS.ink }}>{row.role || "—"}</strong></div>
-                          <div><span style={{ color: GS.muted }}>IP Address</span><br /><strong style={{ color: GS.ink }}>{row.ip_address || "—"}</strong></div>
+                          <div><span style={{ color: GS.muted }}>IP Address</span><br /><strong style={{ color: GS.ink }}>{formatIp(row.ip_address)}</strong></div>
                           {row.resource_id && (
                             <div>
                               <span style={{ color: GS.muted }}>Resource ID</span><br />
