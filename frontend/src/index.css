@@ -276,13 +276,13 @@ button.btn-secondary:hover:not(:disabled),
   letter-spacing: 0.02em;
 }
 
-/* â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
-   LUXURY RULED DIVIDER â€” Auth Forms
-   Inspired by: HermÃ¨s catalogues, Swiss private banking forms,
+/* ────────────────────────────────────────────────────────────────────────── 
+   LUXURY RULED DIVIDER — Auth Forms
+   Inspired by: Hermès catalogues, Swiss private banking forms,
    premium luxury brand order forms & notarial documents.
-   A short rule Â· label text Â· long extending rule â€” all muted
+   A short rule · label text · long extending rule — all muted
    at rest, deep black + slightly extended on focus engagement.
-   â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â•  */
+   ──────────────────────────────────────────────────────────────────────────  */
 
 .auth-card form label,
 .auth-card .form-group label {
@@ -313,19 +313,15 @@ button.btn-secondary:hover:not(:disabled),
   transition: color 0.2s ease !important;
 }
 
-/* Short left arm rule â€” clearly visible at rest */
+/* No left arm — heading text aligns to far left edge of input box */
 .auth-card form label::before,
 .auth-card .form-group label::before {
-  content: '' !important;
-  display: block !important;
-  width: 14px !important;
-  height: 1.5px !important;
-  background: #888888 !important;
-  flex-shrink: 0 !important;
-  transition: background 0.2s ease, width 0.2s ease !important;
+  display: none !important;
+  width: 0 !important;
+  content: none !important;
 }
 
-/* Long right arm â€” softly visible at rest */
+/* Long right arm — softly visible at rest */
 .auth-card form label::after,
 .auth-card .form-group label::after {
   content: '' !important;
@@ -337,7 +333,7 @@ button.btn-secondary:hover:not(:disabled),
   transition: background 0.2s ease !important;
 }
 
-/* â”€â”€ Focus: full contrast snap, short arm extends â”€â”€ */
+/* ── Focus: full contrast snap ── */
 .auth-card form div:focus-within > label,
 .auth-card form label:has(+ input:focus),
 .auth-card form label:has(+ select:focus) {
@@ -348,8 +344,7 @@ button.btn-secondary:hover:not(:disabled),
 .auth-card form div:focus-within > label::before,
 .auth-card form label:has(+ input:focus)::before,
 .auth-card form label:has(+ select:focus)::before {
-  background: #0a0a0a !important;
-  width: 22px !important;
+  display: none !important;
 }
 
 .auth-card form div:focus-within > label::after,
@@ -626,13 +621,9 @@ label::before,
 .card label::before,
 form label::before,
 .form-group label::before {
-  content: '' !important;
-  display: block !important;
-  width: 18px !important;
-  height: 1.5px !important;
-  background: #888888 !important;
-  flex-shrink: 0 !important;
-  transition: background 0.25s ease, width 0.25s ease !important;
+  display: none !important;
+  width: 0 !important;
+  content: none !important;
 }
 
 /* Long right arm â€” softly visible at rest */
