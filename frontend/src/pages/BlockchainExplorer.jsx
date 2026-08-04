@@ -384,8 +384,25 @@ function LedgerDetailModal({ anchor, onClose }) {
               <SkeletonCard rows={2} heights={["2rem", "6rem"]} gap="0.75rem" />
             </div>
           ) : certData ? (
-            <div style={{ position: "relative", borderRadius: "10px", overflow: "hidden", border: "1.5px solid #cbd5e1", background: "#f8fafc", padding: "1rem" }}>
-              <div style={{ transform: "scale(0.92)", transformOrigin: "top center" }}>
+            <div style={{
+              position: "relative",
+              borderRadius: "12px",
+              border: "1.5px solid #cbd5e1",
+              background: "#f8fafc",
+              padding: "0.5rem",
+              height: "400px",
+              overflow: "hidden",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "flex-start"
+            }}>
+              <div style={{
+                width: "800px",
+                transform: "scale(0.56)",
+                transformOrigin: "top center",
+                marginTop: "0.2rem",
+                flexShrink: 0
+              }}>
                 <CategoryCertificateTemplate
                   certificate={{
                     ...certData,
