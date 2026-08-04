@@ -18,6 +18,8 @@ const templateRoutes   = require('./routes/templateRoutes');
 const disclosureRoutes = require('./routes/disclosureRoutes');
 const goalRoutes       = require('./routes/goalRoutes');
 
+const app = express();
+
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'https://certificate-validator-yvak.onrender.com',
