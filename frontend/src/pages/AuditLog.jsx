@@ -10,7 +10,7 @@ import useHeaderHeight from "../hooks/useHeaderHeight";
 const MODULES  = ["", "AUTH", "CERTIFICATE", "VERIFICATION", "REVOCATION", "WALLET"];
 const ACTIONS  = ["", "LOGIN", "LOGOUT", "REGISTER", "ISSUE", "BULK_ISSUE", "VERIFY", "REVOKE", "DOWNLOAD", "SHARE", "VIEW"];
 const STATUSES = ["", "SUCCESS", "FAILURE"];
-const ROLES    = ["", "UNIVERSITY", "STUDENT"];
+const ROLES    = ["", "UNIVERSITY", "STUDENT", "PUBLIC_VERIFIER"];
 const PAGE_SIZE = 25;
 
 const GS = { ink: "#0a0a0a", muted: "#666666", subtle: "#999999", border: "#0a0a0a", bg: "#ffffff", mid: "#8c8c8c" };
@@ -277,7 +277,7 @@ function AuditLog() {
                         {fmt(row.timestamp)}
                       </motion.div>
                       <div style={{ fontWeight: 600, color: GS.ink, fontSize: "0.92rem", marginBottom: "4px" }}>
-                        {row.user_name || "—"}
+                        {row.user_name || (row.module === "VERIFICATION" ? "Public Verifier" : "Anonymous / System")}
                         {row.status === "FAILURE" && <span style={{ fontWeight: 400, color: GS.ink, fontSize: "0.78rem", marginLeft: "6px" }}>✕ FAILURE</span>}
                         {row.status === "SUCCESS" && <span style={{ fontWeight: 400, color: GS.muted, fontSize: "0.78rem", marginLeft: "6px" }}>✓ SUCCESS</span>}
                       </div>
@@ -305,7 +305,7 @@ function AuditLog() {
                         style={{ overflow: "hidden", marginTop: "0.75rem", background: GS.bg, border: `1px solid ${GS.border}`, padding: "0.85rem 1rem", fontSize: "0.82rem" }}
                       >
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "0.5rem" }}>
-                          <div><span style={{ color: GS.muted }}>Role</span><br /><strong style={{ color: GS.ink }}>{row.role || "—"}</strong></div>
+                          <div><span style={{ color: GS.muted }}>Role</span><br /><strong style={{ color: GS.ink }}>{row.role || (row.module === "VERIFICATION" ? "PUBLIC_VERIFIER" : "—")}</strong></div>
                           <div><span style={{ color: GS.muted }}>IP Address</span><br /><strong style={{ color: GS.ink }}>{formatIp(row.ip_address)}</strong></div>
                           {row.resource_id && (
                             <div>

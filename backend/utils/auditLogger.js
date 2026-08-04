@@ -51,11 +51,11 @@ function logAudit(req, opts) {
       details     = null,
     } = opts;
 
-    // Prefer req.user (JWT decoded) when available
+    // Prefer req.user (JWT decoded) when available, fallback to PUBLIC_VERIFIER for verification actions
     const uid    = user_id    || req?.user?.id    || null;
-    const email  = user_email || req?.user?.email  || null;
-    const uname  = user_name  || req?.user?.name   || null;
-    const urole  = role       || req?.user?.role   || null;
+    const email  = user_email || req?.user?.email  || (module === 'VERIFICATION' ? 'public@verifier' : null);
+    const uname  = user_name  || req?.user?.name   || (module === 'VERIFICATION' ? 'Public Verifier' : null);
+    const urole  = role       || req?.user?.role   || (module === 'VERIFICATION' ? 'PUBLIC_VERIFIER' : null);
 
     // Best-effort IP extraction with clean loopback normalization
     let rawIp = req
