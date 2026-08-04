@@ -145,7 +145,6 @@ function getVerificationAnalytics(req, res) {
       WHERE UPPER(module) = 'VERIFICATION'
     `).get();
 
-    // Aggregate monthly totals if summaryRaw counts are less
     const monthlyTotal    = monthly.reduce((acc, r) => acc + (r.total || 0), 0);
     const monthlyValid    = monthly.reduce((acc, r) => acc + (r.valid_count || 0), 0);
     const monthlyTampered = monthly.reduce((acc, r) => acc + (r.tampered_count || 0), 0);
@@ -159,7 +158,7 @@ function getVerificationAnalytics(req, res) {
       failure_count: summaryRaw?.failure_count || 0,
     };
 
-    // ── Recent genuine verifications (only valid/revoked authentic certificates, no fake IDs or hash mismatches, deduplicated) ──
+    // ── Recent genuine verifications ─────────────────────────────────────────
     const recent = db.prepare(`
       SELECT timestamp, user_email, status, details, resource_id, ip_address
       FROM audit_logs
@@ -174,6 +173,65 @@ function getVerificationAnalytics(req, res) {
       ORDER BY MAX(timestamp) DESC
       LIMIT 20
     `).all();
+
+    // ── Top 5 most verified certificates ────────────────────────────────────
+    const topCertificates = db.prepare(`
+      SELECT resource_id AS certificate_number,
+             COUNT(*) AS verify_count,
+             MAX(timestamp) AS last_verified,
+             details
+      FROM audit_logs
+      WHERE UPPER(module) = 'VERIFICATION'
+        AND resource_id IS NOT NULL
+        AND resource_id NOT LIKE 'FAKE%'
+        AND resource_id NOT LIKE 'TESTVERIF%'
+      GROUP BY resource_id
+      ORDER BY verify_count DESC
+      LIMIT 5
+    `).all();
+
+    // ── Failure reason breakdown ─────────────────────────────────────────────
+    const allVerifRows = db.prepare(`
+      SELECT details FROM audit_logs
+      WHERE UPPER(module) = 'VERIFICATION' AND details IS NOT NULL
+    `).all();
+
+    let hashMismatch = 0, sigInvalid = 0, replayRejected = 0, unknownIssuer = 0;
+    for (const row of allVerifRows) {
+      const d = row.details.toUpperCase();
+      if (d.includes('HASH_MISMATCH'))    hashMismatch++;
+      if (d.includes('SIGNATURE_INVALID')) sigInvalid++;
+      if (d.includes('REPLAY_REJECTED'))   replayRejected++;
+      if (d.includes('TAMPERED') && d.includes('UNKNOWN')) unknownIssuer++;
+    }
+    const failureBreakdown = { hashMismatch, sigInvalid, replayRejected, unknownIssuer };
+
+    // ── Verification by day of week ──────────────────────────────────────────
+    const byDayRaw = db.prepare(`
+      SELECT strftime('%w', timestamp) AS dow, COUNT(*) AS count
+      FROM audit_logs
+      WHERE UPPER(module) = 'VERIFICATION'
+      GROUP BY dow
+      ORDER BY dow ASC
+    `).all();
+    const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const byDay = DAY_NAMES.map((name, i) => {
+      const found = byDayRaw.find(r => parseInt(r.dow) === i);
+      return { day: name, count: found ? found.count : 0 };
+    });
+
+    // ── Verification by hour of day ──────────────────────────────────────────
+    const byHourRaw = db.prepare(`
+      SELECT strftime('%H', timestamp) AS hr, COUNT(*) AS count
+      FROM audit_logs
+      WHERE UPPER(module) = 'VERIFICATION'
+      GROUP BY hr
+      ORDER BY hr ASC
+    `).all();
+    const byHour = Array.from({ length: 24 }, (_, h) => {
+      const found = byHourRaw.find(r => parseInt(r.hr) === h);
+      return { hour: `${String(h).padStart(2,'0')}:00`, count: found ? found.count : 0 };
+    });
 
     // ── Auth activity summary ────────────────────────────────────────────────
     const authRaw = db.prepare(`
@@ -196,7 +254,7 @@ function getVerificationAnalytics(req, res) {
       registrations: (authRaw?.registrations || 0) > 0 ? authRaw.registrations : baseUsers,
     };
 
-    res.json({ summary, monthly, recent, authSummary });
+    res.json({ summary, monthly, recent, authSummary, topCertificates, failureBreakdown, byDay, byHour });
   } catch (err) {
     console.error('[analyticsController] verification:', err);
     res.status(500).json({ error: 'Failed to fetch verification analytics' });
