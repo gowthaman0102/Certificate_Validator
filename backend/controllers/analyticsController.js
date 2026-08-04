@@ -159,12 +159,19 @@ function getVerificationAnalytics(req, res) {
       failure_count: summaryRaw?.failure_count || 0,
     };
 
-    // ── Recent verifications (last 20 entries) ───────────────────────────────
+    // ── Recent genuine verifications (only valid/revoked authentic certificates, no fake IDs or hash mismatches, deduplicated) ──
     const recent = db.prepare(`
       SELECT timestamp, user_email, status, details, resource_id, ip_address
       FROM audit_logs
       WHERE UPPER(module) = 'VERIFICATION'
-      ORDER BY timestamp DESC
+        AND resource_id IS NOT NULL
+        AND resource_id NOT LIKE 'FAKE%'
+        AND resource_id NOT LIKE 'TESTVERIF%'
+        AND (UPPER(details) LIKE '%VALID%' OR UPPER(details) LIKE '%REVOKED%')
+        AND UPPER(details) NOT LIKE '%MISMATCH%'
+        AND UPPER(details) NOT LIKE '%TAMPER%'
+      GROUP BY resource_id
+      ORDER BY MAX(timestamp) DESC
       LIMIT 20
     `).all();
 

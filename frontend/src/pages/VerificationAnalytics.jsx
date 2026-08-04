@@ -107,8 +107,15 @@ function VerificationAnalytics() {
     } finally { setExporting(""); }
   }
 
-  function fmt(ts) { if (!ts) return "—"; try { return new Date(ts).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }); } catch { return ts; } }
+  function fmt(ts) { if (!ts) return "—"; try { return new Date(ts).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }); } catch { return ts; } }
   function parseDetail(raw) { try { return JSON.parse(raw); } catch { return {}; } }
+
+  const genuineRecent = (data?.recent || []).filter(row => {
+    if (!row.resource_id || row.resource_id.startsWith("FAKE") || row.resource_id.startsWith("TESTVERIF")) return false;
+    const det = parseDetail(row.details);
+    const res = (det.result || row.status || "").toUpperCase();
+    return res === "VALID" || res === "REVOKED";
+  });
 
   if (loading) return (
     <div className="dashboard">
@@ -178,15 +185,15 @@ function VerificationAnalytics() {
         </motion.div>
       )}
 
-      {data?.recent?.length > 0 && (
+      {genuineRecent.length > 0 && (
         <motion.div className="card" style={{ maxWidth: "900px", marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px" }} variants={cardVariants}>
           <h3 style={{ borderBottom: "2px solid #0a0a0a", paddingBottom: "0.6rem", marginBottom: "1rem", fontWeight: 700, fontSize: "1.2rem", color: GS.ink }}>
             Recent Verification Events
           </h3>
           <div className="cert-list">
-            {data.recent.map((row, i) => {
+            {genuineRecent.map((row, i) => {
               const det = parseDetail(row.details);
-              const result = det.result || "—";
+              const result = (det.result || row.status || "VALID").toUpperCase();
               return (
                 <motion.div
                   key={i}
