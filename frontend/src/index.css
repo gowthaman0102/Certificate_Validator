@@ -567,7 +567,7 @@ button.btn-secondary:hover:not(:disabled),
   border-radius: 25px !important;
   padding: 1.75rem;
   margin: 0 auto 1.5rem auto;
-  max-width: 1200px;
+  max-width: 1040px;
   position: relative;
   z-index: 2;
 }

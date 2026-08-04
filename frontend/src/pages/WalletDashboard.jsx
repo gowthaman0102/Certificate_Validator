@@ -391,7 +391,7 @@ export default function WalletDashboard() {
                 </div>
                 <div>
                   <span style={{ fontSize: "0.75rem", fontWeight: 700, color: GS.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>GRADUATION YEAR</span>
-                  <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0a0a0a", marginTop: "3px" }}>{certificates[0]?.end_year || "2026"}</div>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0a0a0a", marginTop: "3px" }}>{certificates[0]?.end_year || "2028"}</div>
                 </div>
                 <div>
                   <span style={{ fontSize: "0.75rem", fontWeight: 700, color: GS.muted, textTransform: "uppercase", letterSpacing: "0.04em" }}>REGISTER NUMBER</span>

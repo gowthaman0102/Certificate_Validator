@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { getPublicPassport } from "../api/passport";
@@ -113,9 +113,9 @@ export default function PublicSkillPassport() {
             </p>
 
             <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", fontSize: "0.85rem", color: GS.muted }}>
-              <span>🏛 <strong>Department:</strong> {profile.department || "Academic"}</span>
-              <span>🎓 <strong>Program:</strong> {profile.program || "Degree"}</span>
-              <span>📅 <strong>Graduation:</strong> {profile.graduation_year || "2026"}</span>
+              <span>🏛 <strong>Department:</strong> {profile.department || (certs[0]?.course ? `${certs[0].course}` : "Academic")}</span>
+              <span>🎓 <strong>Program:</strong> {profile.program || (certs[0]?.certificate_category ? `${certs[0].certificate_category}` : "Degree")}</span>
+              <span>📅 <strong>Graduation:</strong> {profile.graduation_year || (certs[0]?.end_year ? String(certs[0].end_year) : "2028")}</span>
             </div>
 
             {/* Profile Score */}
