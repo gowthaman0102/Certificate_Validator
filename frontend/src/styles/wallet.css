@@ -9,8 +9,8 @@
 /* Lives inside a .card, so no max-width/margin here — inherits from card */
 .wallet-split-container {
   display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 1.5rem;
+  grid-template-columns: 320px 1fr;
+  gap: 1.75rem;
   width: 100%;
   box-sizing: border-box;
   /* stretch: both panes always the same height as the taller one */

@@ -267,7 +267,7 @@ export default function WalletIndexList({
                 </div>
 
                 {/* RIGHT: type tag + event detail */}
-                <div style={{ flexShrink: 0, width: "80px", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                <div style={{ flexShrink: 0, width: "105px", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
                   {/* Type tag */}
                   <span
                     style={{
@@ -286,7 +286,7 @@ export default function WalletIndexList({
                   >
                     {typeTag}
                   </span>
-                  {/* Event / detail name — right-aligned, wraps up to 3 lines */}
+                  {/* Event / detail name — right-aligned, clean ellipsis */}
                   {detail && (
                     <span
                       style={{
@@ -295,14 +295,13 @@ export default function WalletIndexList({
                         color: isSelected ? "rgba(255,255,255,0.65)" : GS.subtle,
                         lineHeight: 1.3,
                         textAlign: "right",
-                        paddingRight: "6px",
-                        wordBreak: "break-word",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: "vertical",
+                        paddingRight: "2px",
+                        whiteSpace: "nowrap",
                         overflow: "hidden",
-                        width: "100%",
+                        textOverflow: "ellipsis",
+                        maxWidth: "100%",
                       }}
+                      title={detail}
                     >
                       {detail}
                     </span>
