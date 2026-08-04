@@ -5,9 +5,10 @@ const { generateHash, signData, verifySignature } = require('../utils/crypto');
 const { v4: uuidv4 } = require('uuid');
 const { createDisclosure, verifyDisclosure } = require('../controllers/disclosureController');
 
+const { getOrCreateTestUniversity } = require('./testHelper');
+
 test('13. Selective Disclosure — Valid Predicate, Refused False Predicate & Tampered Signature Verification', () => {
-  const uni = db.prepare('SELECT * FROM universities LIMIT 1').get();
-  assert.ok(uni, 'University must exist in DB');
+  const uni = getOrCreateTestUniversity();
 
   const certId = uuidv4();
   const certNumber = `DISC-TEST-${Date.now()}`;

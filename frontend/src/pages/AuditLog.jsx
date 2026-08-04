@@ -277,7 +277,14 @@ function AuditLog() {
                         {fmt(row.timestamp)}
                       </motion.div>
                       <div style={{ fontWeight: 600, color: GS.ink, fontSize: "0.92rem", marginBottom: "4px" }}>
-                        {row.user_name || (row.module === "VERIFICATION" ? "Public Verifier" : "Anonymous / System")}
+                        {row.user_name || (
+                          row.module === "VERIFICATION" ? "Public Verifier" :
+                          row.module === "AUTH" ? "Unauthenticated Request" :
+                          row.module === "CERTIFICATE" ? "Issuing Authority" :
+                          row.module === "REVOCATION" ? "Revoking Authority" :
+                          row.module === "WALLET" ? "Certificate Holder" :
+                          "Internal System"
+                        )}
                         {row.status === "FAILURE" && <span style={{ fontWeight: 400, color: GS.ink, fontSize: "0.78rem", marginLeft: "6px" }}>✕ FAILURE</span>}
                         {row.status === "SUCCESS" && <span style={{ fontWeight: 400, color: GS.muted, fontSize: "0.78rem", marginLeft: "6px" }}>✓ SUCCESS</span>}
                       </div>

@@ -5,9 +5,10 @@ const { generateHash, signData, verifySignature } = require('../utils/crypto');
 const { anchorToBlockchain } = require('../utils/blockchain');
 const { v4: uuidv4 } = require('uuid');
 
+const { getOrCreateTestUniversity } = require('./testHelper');
+
 test('9. Cryptographic Certificate Revocation & Blockchain Anchoring', () => {
-  const uni = db.prepare('SELECT * FROM universities LIMIT 1').get();
-  assert.ok(uni, 'University must exist in DB');
+  const uni = getOrCreateTestUniversity();
 
   const certId = uuidv4();
   const certNumber = `REVTEST-${Date.now()}`;

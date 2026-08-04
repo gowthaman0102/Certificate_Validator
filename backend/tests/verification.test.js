@@ -5,9 +5,10 @@ const { generateHash, signData } = require('../utils/crypto');
 const { v4: uuidv4 } = require('uuid');
 const { verifyCertificate } = require('../controllers/verificationController');
 
+const { getOrCreateTestUniversity } = require('./testHelper');
+
 test('10. End-to-End Verification Controller Flow', () => {
-  const uni = db.prepare('SELECT * FROM universities LIMIT 1').get();
-  assert.ok(uni);
+  const uni = getOrCreateTestUniversity();
 
   const certId = uuidv4();
   const certNum = `TESTVERIF-${Date.now()}`;
