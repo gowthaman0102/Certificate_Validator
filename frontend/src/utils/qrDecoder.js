@@ -295,13 +295,15 @@ function parseQrDataString(rawData) {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-export async function decodeQrFromCertificateFile(file) {
+export async function decodeQrFromCertificateFile(file, options = {}) {
   if (!file) throw new Error('No file provided for verification.');
 
   // 1. FAST PATH: Check filename & PDF text stream first (<5ms)
-  const fastResult = await extractFallbackFromTextOrName(file);
-  if (fastResult) {
-    return fastResult;
+  if (!options.skipFastPath) {
+    const fastResult = await extractFallbackFromTextOrName(file);
+    if (fastResult) {
+      return fastResult;
+    }
   }
 
   // 2. SLOW PATH: Multi-scale & multi-region visual canvas scanning

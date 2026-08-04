@@ -319,17 +319,26 @@ function Verifier() {
 
       // Only query DB if file has no embedded QR code/hash and only a Cert ID text match
       if (payload?.cert_id_from_name && !payload?.hash) {
-        const res = await getCertificateByCertNumber(payload.cert_id_from_name);
-        const cert = res.data;
-        return {
-          cert_id: cert.id, certificate_number: cert.certificate_number,
-          register_number: cert.register_number, student_name: cert.student_name,
-          course: cert.course, cgpa: cert.cgpa ?? '', start_year: cert.start_year ?? '',
-          end_year: cert.end_year, issue_date: cert.issue_date, issuer_id: cert.issuer_code,
-          issuer_code: cert.issuer_code, university_name: cert.university_name,
-          certificate_category: cert.certificate_category, certificate_detail: cert.certificate_detail,
-          hash: cert.certificate_hash, signature: cert.signature,
-        };
+        try {
+          const res = await getCertificateByCertNumber(payload.cert_id_from_name);
+          const cert = res.data;
+          return {
+            cert_id: cert.id, certificate_number: cert.certificate_number,
+            register_number: cert.register_number, student_name: cert.student_name,
+            course: cert.course, cgpa: cert.cgpa ?? '', start_year: cert.start_year ?? '',
+            end_year: cert.end_year, issue_date: cert.issue_date, issuer_id: cert.issuer_code,
+            issuer_code: cert.issuer_code, university_name: cert.university_name,
+            certificate_category: cert.certificate_category, certificate_detail: cert.certificate_detail,
+            hash: cert.certificate_hash, signature: cert.signature,
+          };
+        } catch {
+          // If text/filename lookup failed, fall back to visual canvas QR scanning
+          try {
+            const visualPayload = await decodeQrFromCertificateFile(uploadedFile, { skipFastPath: true });
+            if (visualPayload && visualPayload.hash) return visualPayload;
+          } catch {}
+          throw new Error(`Certificate '${payload.cert_id_from_name}' not found in the system registry. Please issue or verify with a valid certificate.`);
+        }
       }
       return payload;
     }

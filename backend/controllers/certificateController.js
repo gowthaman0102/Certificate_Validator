@@ -328,14 +328,15 @@ function getCertificate(req, res) {
 function getCertificateByCertNumber(req, res) {
   try {
     const { certNumber } = req.params;
+    const trimmed = (certNumber || '').trim();
     const cert = db.prepare(`
       SELECT c.*, u.name as university_name, u.issuer_code
       FROM certificates c
       JOIN universities u ON c.university_id = u.id
-      WHERE c.certificate_number = ?
-    `).get(certNumber);
+      WHERE LOWER(c.certificate_number) = LOWER(?) OR LOWER(c.id) = LOWER(?)
+    `).get(trimmed, trimmed);
     if (!cert) {
-      return res.status(404).json({ error: 'Certificate not found for this ID' });
+      return res.status(404).json({ error: `Certificate '${trimmed}' not found in system registry` });
     }
     res.json(cert);
   } catch (err) {
