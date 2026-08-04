@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import CertificateTemplate from "../CertificateTemplate";
 import { downloadCertificateAsPDF } from "../../utils/certificatePdf";
+import { API_BASE } from "../../config";
 
 const GS = { ink: "#0a0a0a", muted: "#666666", subtle: "#999999", border: "#0a0a0a", bg: "#ffffff" };
 
@@ -11,7 +12,6 @@ export default function CertDetailModal({ cert, onClose, onDownload }) {
 
   if (!cert) return null;
 
-  const API_BASE = "http://localhost:5000";
   const qrUrl = `${API_BASE}/uploads/qr_${cert.id}.png`;
   const isVertical = cert.certificate_category === "Degree / Graduation Certificate";
 

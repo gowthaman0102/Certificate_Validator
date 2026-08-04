@@ -18,9 +18,23 @@ const templateRoutes   = require('./routes/templateRoutes');
 const disclosureRoutes = require('./routes/disclosureRoutes');
 const goalRoutes       = require('./routes/goalRoutes');
 
-const app = express();
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'https://certificate-validator-yvak.onrender.com',
+  'http://localhost:5173',
+  'http://localhost:3000',
+].filter(Boolean);
 
-app.use(cors());
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

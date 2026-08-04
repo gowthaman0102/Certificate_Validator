@@ -13,8 +13,7 @@ import { CATEGORIES, NEEDS_DETAIL } from "../utils/certificateCategory";
 import UniversityDashboardDecorations from "../components/UniversityDashboardDecorations";
 import { CountUp, SkeletonCard } from "../components/motion";
 import useHeaderHeight from "../hooks/useHeaderHeight";
-
-const API_BASE = "http://localhost:5000";
+import { API_BASE } from "../config";
 
 const GS = {
   ink:    "#0a0a0a",

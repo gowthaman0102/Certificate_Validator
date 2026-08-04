@@ -7,8 +7,8 @@ import { verifyOffline } from "../../utils/offlineCrypto";
 import { downloadCertificateAsPDF } from "../../utils/certificatePdf";
 import CertificateTemplate from "../CertificateTemplate";
 import { createDisclosure } from "../../api/disclosure";
+import { API_BASE } from "../../config";
 
-const API_BASE = "http://localhost:5000";
 const GS = { ink: "#0a0a0a", muted: "#666666", subtle: "#999999", border: "#0a0a0a", bg: "#ffffff" };
 
 export default function WalletDetailPane({ cert, onDownload, onBackMobile }) {

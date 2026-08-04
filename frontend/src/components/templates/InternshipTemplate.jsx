@@ -1,12 +1,13 @@
 import React, { forwardRef } from 'react';
 import { getCertificateBody } from '../../utils/certificateCategory';
+import { API_BASE } from '../../config';
 
 const InternshipTemplate = forwardRef(({ certificate, templatePreset, qrCodeUrl }, ref) => {
   const body = getCertificateBody(certificate);
   const certId = certificate?.id || certificate?.cert_id;
   const activeQrUrl = qrCodeUrl ||
-    (certificate?.qr_code_url ? `http://localhost:5000${certificate.qr_code_url}` :
-    (certId ? `http://localhost:5000/uploads/qr_${certId}.png` :
+    (certificate?.qr_code_url ? `${API_BASE}${certificate.qr_code_url}` :
+    (certId ? `${API_BASE}/uploads/qr_${certId}.png` :
     `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(certificate?.certificate_number || certificate?.student_name || 'VERIFIED')}`));
 
   const containerStyle = {

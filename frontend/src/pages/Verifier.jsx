@@ -10,6 +10,7 @@ import { getCategoryLabel } from '../utils/certificateCategory';
 import CategoryCertificateTemplate from '../components/templates/CategoryCertificateTemplate';
 import VerifierBackgroundDecorations from '../components/VerifierBackgroundDecorations';
 import useHeaderHeight from '../hooks/useHeaderHeight';
+import { API_BASE } from '../config';
 
 const GS = { ink: '#0a0a0a', muted: '#666666', subtle: '#999999', border: '#0a0a0a', bg: '#ffffff', mid: '#8c8c8c' };
 
@@ -857,7 +858,7 @@ function Verifier() {
                       certificate={{ ...batchModalItem.result.certificate, university_name: batchModalItem.result.certificate.issuer || batchModalItem.result.certificate.university_name || 'Issuing University' }}
                       qrCodeUrl={
                         (batchModalItem.result.certificate.id || batchModalItem.result.certificate.cert_id)
-                          ? `http://localhost:5000/uploads/qr_${batchModalItem.result.certificate.id || batchModalItem.result.certificate.cert_id}.png`
+                          ? `${API_BASE}/uploads/qr_${batchModalItem.result.certificate.id || batchModalItem.result.certificate.cert_id}.png`
                           : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(batchModalItem.result.certificate.certificate_number || batchModalItem.result.certificate.student_name || 'VERIFIED')}`
                       }
                     />
@@ -1080,7 +1081,7 @@ function Verifier() {
                     certificate={{ ...result.certificate, university_name: result.certificate.issuer || result.certificate.university_name || 'Issuing University' }}
                     qrCodeUrl={
                       (result.certificate.id || result.certificate.cert_id)
-                        ? `http://localhost:5000/uploads/qr_${result.certificate.id || result.certificate.cert_id}.png`
+                        ? `${API_BASE}/uploads/qr_${result.certificate.id || result.certificate.cert_id}.png`
                         : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(result.certificate.certificate_number || result.certificate.student_name || 'VERIFIED')}`
                     }
                   />
