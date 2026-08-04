@@ -276,37 +276,39 @@ button.btn-secondary:hover:not(:disabled),
   letter-spacing: 0.02em;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
    LUXURY RULED DIVIDER â€” Auth Forms
    Inspired by: HermÃ¨s catalogues, Swiss private banking forms,
    premium luxury brand order forms & notarial documents.
    A short rule Â· label text Â· long extending rule â€” all muted
    at rest, deep black + slightly extended on focus engagement.
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â•  */
 
 .auth-card form label,
 .auth-card .form-group label {
   display: flex !important;
   align-items: center !important;
-  gap: 0.75rem !important;
+  gap: 0.5rem !important;
   width: 100% !important;
+  max-width: 100% !important;
   font-family: var(--font-body) !important;
-  font-size: 0.7rem !important;
+  font-size: 0.68rem !important;
   font-weight: 700 !important;
   color: #3a3a3a !important;
   background: none !important;
   border: none !important;
   border-radius: 0 !important;
   padding: 0 !important;
-  margin-top: 1.4rem !important;
+  margin-top: 1.25rem !important;
   margin-bottom: 0.45rem !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.13em !important;
+  letter-spacing: 0.05em !important;
   line-height: 1 !important;
   white-space: nowrap !important;
+  overflow: hidden !important;
   user-select: none;
   box-shadow: none !important;
-  transition: color 0.25s ease, letter-spacing 0.25s ease !important;
+  transition: color 0.2s ease !important;
 }
 
 /* Short left arm rule â€” clearly visible at rest */
@@ -314,11 +316,11 @@ button.btn-secondary:hover:not(:disabled),
 .auth-card .form-group label::before {
   content: '' !important;
   display: block !important;
-  width: 18px !important;
+  width: 14px !important;
   height: 1.5px !important;
   background: #888888 !important;
   flex-shrink: 0 !important;
-  transition: background 0.25s ease, width 0.25s ease !important;
+  transition: background 0.2s ease, width 0.2s ease !important;
 }
 
 /* Long right arm â€” softly visible at rest */
@@ -327,9 +329,10 @@ button.btn-secondary:hover:not(:disabled),
   content: '' !important;
   display: block !important;
   flex: 1 !important;
+  min-width: 10px !important;
   height: 1px !important;
   background: #c8c8c8 !important;
-  transition: background 0.25s ease !important;
+  transition: background 0.2s ease !important;
 }
 
 /* â”€â”€ Focus: full contrast snap, short arm extends â”€â”€ */
@@ -337,14 +340,14 @@ button.btn-secondary:hover:not(:disabled),
 .auth-card form label:has(+ input:focus),
 .auth-card form label:has(+ select:focus) {
   color: #0a0a0a !important;
-  letter-spacing: 0.18em !important;
+  font-weight: 800 !important;
 }
 
 .auth-card form div:focus-within > label::before,
 .auth-card form label:has(+ input:focus)::before,
 .auth-card form label:has(+ select:focus)::before {
   background: #0a0a0a !important;
-  width: 28px !important;
+  width: 22px !important;
 }
 
 .auth-card form div:focus-within > label::after,
@@ -360,21 +363,23 @@ button.btn-secondary:hover:not(:disabled),
   width: 100%;
   padding: 0.75rem 1.25rem;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1.5px solid var(--color-border);
   border-radius: 25px !important;
   font-family: var(--font-body);
   font-size: 0.92rem;
   color: var(--color-ink);
-  outline: none;
+  outline: none !important;
   margin-bottom: 0.5rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .auth-card form input:focus,
 .auth-card form select:focus,
 .auth-card .form-group input:focus,
 .auth-card .form-group select:focus {
-  outline: 2px solid var(--color-ink);
-  outline-offset: -2px;
+  border: 2px solid #0a0a0a !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(10, 10, 10, 0.08) !important;
   border-radius: 25px !important;
 }
 
