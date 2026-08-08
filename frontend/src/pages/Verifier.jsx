@@ -1,10 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { verifyCertificate, getPublicKey, getRevokedList, getCertificateByCertNumber } from '../api/client';
-import { verifyOffline } from '../utils/offlineCrypto';
-import { getCachedPublicKey, setCachedPublicKey } from '../utils/keyCache';
-import { cacheRevokedList, isCertRevokedLocally, getLastSyncTime, addRevokedToCache } from '../utils/revocationCache';
+import { verifyCertificate, getRevokedList, getCertificateByCertNumber } from '../api/client';
+import { cacheRevokedList, addRevokedToCache } from '../utils/revocationCache';
 import { decodeQrFromCertificateFile } from '../utils/qrDecoder';
 import { getCategoryLabel } from '../utils/certificateCategory';
 import CategoryCertificateTemplate from '../components/templates/CategoryCertificateTemplate';
@@ -55,16 +53,12 @@ function Verifier() {
   useHeaderHeight('.dashboard-header');
   /* ── Verification State ── */
   const [inputMode, setInputMode]   = useState('certId');
-  const [mode, setMode]             = useState('online');
   const [qrText, setQrText]         = useState('');
   const [certNumber, setCertNumber] = useState('');
   const [uploadedFile, setUploadedFile] = useState(null);
   const [result, setResult]         = useState(null);
   const [error, setError]           = useState('');
   const [loading, setLoading]       = useState(false);
-  const [keySource, setKeySource]   = useState('');
-  const [syncing, setSyncing]       = useState(false);
-  const [lastSync, setLastSync]     = useState(getLastSyncTime());
   const [bcCopied, setBcCopied]     = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [shakeKey, setShakeKey]     = useState(0);
@@ -143,30 +137,9 @@ function Verifier() {
           throw new Error('No QR payload found in file');
         }
 
-        if (mode === 'online') {
-          const res = await verifyCertificate(payload);
-          setBatchFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'completed', result: res.data } : f));
-        } else {
-          const cached = getCachedPublicKey(payload.issuer_id);
-          let publicKeyPem;
-          if (cached) { publicKeyPem = cached.public_key; }
-          else {
-            const res = await getPublicKey(payload.issuer_id);
-            publicKeyPem = res.data.public_key;
-            setCachedPublicKey(payload.issuer_id, res.data.name, publicKeyPem);
-          }
-          const verifyResult = await verifyOffline(payload, publicKeyPem);
-          if (verifyResult.result === 'VALID') {
-            const revokedStatus = isCertRevokedLocally(payload.cert_id, payload.certificate_number, payload.id, payload.cert_id_from_name);
-            if (revokedStatus === true) {
-              setBatchFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'completed', result: { result: 'REVOKED', reason: 'Appears in revocation list', certificate: verifyResult.certificate } } : f));
-            } else {
-              setBatchFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'completed', result: verifyResult } : f));
-            }
-          } else {
-            setBatchFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'completed', result: verifyResult } : f));
-          }
-        }
+        // Always call the authoritative backend API
+        const res = await verifyCertificate(payload);
+        setBatchFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'completed', result: res.data } : f));
       } catch (err) {
         const errReason = err.response?.data?.error || err.message || 'Could not extract or verify QR code';
         setBatchFiles(prev => prev.map((f, idx) => idx === i ? {
@@ -285,7 +258,7 @@ function Verifier() {
 
   function handleAutoFillAndVerify() {
     if (!retrievedQrData) return;
-    setMode('online'); setInputMode('qr'); setQrText(retrievedQrData);
+    setInputMode('qr'); setQrText(retrievedQrData);
     setResult(null); setError(''); setShowGetQrModal(false);
   }
 
@@ -345,104 +318,34 @@ function Verifier() {
   }
 
   async function handleVerify() {
-    setError(''); setResult(null); setKeySource(''); setLoading(true);
+    setError(''); setResult(null); setLoading(true);
     let payload;
     try { payload = await buildPayload(); }
     catch (err) { setError(err.response?.data?.error || err.message || 'Could not read certificate data'); setLoading(false); return; }
 
-    if (mode === 'online') {
-      try {
-        const res = await verifyCertificate(payload);
-        if (res.data?.result === 'REVOKED') {
-          addRevokedToCache(payload.cert_id, payload.certificate_number, payload.id, certNumber);
-        }
-        setResult(res.data);
-        if (res.data.result !== 'VALID') setShakeKey(k => k + 1);
-      }
-      catch (err) {
-        if (err.response?.data?.result) {
-          if (err.response.data.result === 'REVOKED') {
-            addRevokedToCache(payload.cert_id, payload.certificate_number, payload.id, certNumber);
-          }
-          setResult(err.response.data);
-          setShakeKey(k => k + 1);
-        } else {
-          setError(err.response?.data?.error || 'Verification request failed');
-        }
-      }
-      finally { setLoading(false); }
-      return;
-    }
-
     try {
-      const cached = getCachedPublicKey(payload.issuer_id);
-      let publicKeyPem;
-      let uniName = payload.university_name;
-      if (cached) {
-        publicKeyPem = cached.public_key;
-        uniName = uniName || cached.name;
-        setKeySource('cache');
-      } else {
-        const res = await getPublicKey(payload.issuer_id);
-        publicKeyPem = res.data.public_key;
-        uniName = uniName || res.data.name;
-        setCachedPublicKey(payload.issuer_id, res.data.name, publicKeyPem);
-        setKeySource('network (now cached for future offline use)');
+      const res = await verifyCertificate(payload);
+      if (res.data?.result === 'REVOKED') {
+        addRevokedToCache(payload.cert_id, payload.certificate_number, payload.id, certNumber);
       }
-      const verifyResult = await verifyOffline(payload, publicKeyPem);
-      if (verifyResult && verifyResult.certificate) {
-        if (payload.certificate_category) verifyResult.certificate.certificate_category = payload.certificate_category;
-        if (payload.certificate_detail) verifyResult.certificate.certificate_detail = payload.certificate_detail;
-        if (uniName) verifyResult.certificate.university_name = uniName;
-        if (payload.issuer_code || payload.issuer_id) verifyResult.certificate.issuer_code = payload.issuer_code || payload.issuer_id;
-      }
-      // Asynchronously log verification event & sync revocation state if online backend is accessible
-      verifyCertificate(payload).then(res => {
-        if (res.data?.result === 'REVOKED') {
+      setResult(res.data);
+      if (res.data.result !== 'VALID') setShakeKey(k => k + 1);
+    }
+    catch (err) {
+      if (err.response?.data?.result) {
+        if (err.response.data.result === 'REVOKED') {
           addRevokedToCache(payload.cert_id, payload.certificate_number, payload.id, certNumber);
-          setResult(prev => {
-            if (prev && prev.result === 'VALID') {
-              return {
-                ...prev,
-                result: 'REVOKED',
-                reason: res.data.reason || 'This certificate has been revoked by the issuing university',
-              };
-            }
-            return prev;
-          });
         }
-      }).catch(() => {});
-
-      const revokedStatus = isCertRevokedLocally(payload.cert_id, payload.certificate_number, payload.id, payload.cert_id_from_name, certNumber);
-      if (revokedStatus === true) {
-        setResult({
-          result: 'REVOKED',
-          reason: 'This certificate has been revoked by the issuing university (matched in synced revocation list).',
-          certificate: verifyResult.certificate,
-          algorithm: verifyResult.algorithm,
-          verifiedAt: verifyResult.verifiedAt,
-          verificationMode: verifyResult.verificationMode,
-          hashStatus: verifyResult.hashStatus,
-          signatureStatus: verifyResult.signatureStatus
-        });
+        setResult(err.response.data);
         setShakeKey(k => k + 1);
-      } else if (verifyResult.result === 'VALID') {
-        if (revokedStatus === null)
-          setResult({ ...verifyResult, message: verifyResult.message + ' (revocation status unknown — sync the revocation list to check)' });
-        else
-          setResult(verifyResult);
       } else {
-        setResult(verifyResult);
-        setShakeKey(k => k + 1);
+        setError(err.response?.data?.error || 'Verification request failed');
       }
-    } catch (err) {
-      if (err.response?.status === 404) setError('Cannot verify: unknown issuer, and no cached public key available.');
-      else if (!err.response) setError('No cached key for this issuer, and no network available to fetch it.');
-      else setError('Offline verification failed');
-    } finally { setLoading(false); }
+    }
+    finally { setLoading(false); }
   }
 
-  function handleClear() { setQrText(''); setCertNumber(''); setUploadedFile(null); setResult(null); setError(''); setKeySource(''); }
+  function handleClear() { setQrText(''); setCertNumber(''); setUploadedFile(null); setResult(null); setError(''); }
   function handleFileChange(e) { const f = e.target.files[0]; if (f) setUploadedFile(f); }
   function handleRemoveFile() { setUploadedFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }
   function handleDrop(e) {
@@ -480,23 +383,12 @@ function Verifier() {
 
       {/* ── MAIN VERIFICATION PROCESS CARD ─────────────────────────── */}
       <div className="card" id="verification-area" style={{ position: 'relative', zIndex: 2 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.25rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button style={mode === 'online'  ? tabActive : tabInactive} onClick={() => { setMode('online');  setResult(null); setError(''); }}>Online Verify</button>
-            <button style={mode === 'offline' ? tabActive : tabInactive} onClick={() => { setMode('offline'); setResult(null); setError(''); }}>Offline Verify</button>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.25rem' }}>
           <button className="btn-secondary" onClick={() => { setShowGetQrModal(true); setRetrievedQrData(''); setHelperError(''); }}
             style={{ fontSize: '0.85rem', padding: '8px 14px', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span>🔍</span> Get QR Data
+            Get QR Data
           </button>
         </div>
-
-        {mode === 'offline' && (
-          <div style={{ background: GS.bg, border: `1px solid ${GS.border}`, padding: '0.75rem 1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.8rem', color: GS.muted }}>Revocation list last synced: {lastSync ? new Date(lastSync).toLocaleString() : 'never'}</span>
-            <button style={tabBase} onClick={handleSync} disabled={syncing}>{syncing ? 'Syncing...' : 'Sync revocation list'}</button>
-          </div>
-        )}
 
         <h3>How would you like to verify?</h3>
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
@@ -706,7 +598,7 @@ function Verifier() {
           </div>
         )}
         {error && <div className="error-msg" style={{ marginTop: '1rem' }}>{error}</div>}
-        {keySource && <p style={{ color: GS.muted, fontSize: '0.8rem', marginTop: '0.75rem' }}>Public key source: {keySource}</p>}
+
       </div>
 
       {/* ── GET QR DATA MODAL ─────────────────────────────────────── */}
@@ -727,7 +619,7 @@ function Verifier() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span>🔍</span> Get QR Data &amp; Hashes
+                  Get QR Data & Hashes
                 </h3>
                 <button onClick={() => setShowGetQrModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '1.4rem', cursor: 'pointer', fontWeight: 700 }}>✕</button>
               </div>
@@ -1182,7 +1074,7 @@ function Verifier() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.88rem' }}>
                   <span>{result.result === 'VALID' ? '✓' : result.result === 'REVOKED' ? '✕' : '○'}</span>
                   <span><strong>Revocation Status:</strong>{' '}
-                    {result.result === 'VALID'   && (mode === 'online' ? 'Active — certificate is valid & not revoked' : 'Active (verified against local revocation cache)')}
+                    {result.result === 'VALID' && 'Active — certificate is valid & not revoked'}
                     {result.result === 'REVOKED' && 'REVOKED — certificate has been officially invalidated by the issuer'}
                     {result.result !== 'VALID' && result.result !== 'REVOKED' && 'Skipped (prior cryptographic checks failed)'}
                   </span>
@@ -1193,19 +1085,17 @@ function Verifier() {
                 </div>
               </div>
               <div style={{ marginTop: '0.85rem', borderTop: '1px solid #e0e0e0', paddingTop: '0.75rem', display: 'grid', gap: '0.3rem', fontSize: '0.8rem', color: '#555555' }}>
-                <p style={{ margin: 0 }}><strong>Algorithm:</strong> {result.algorithm || (mode === 'offline' ? 'SHA256-RSA2048' : '—')}</p>
-                <p style={{ margin: 0 }}><strong>Verification Mode:</strong> {result.verificationMode || (mode === 'offline' ? 'OFFLINE' : 'ONLINE')}</p>
+                <p style={{ margin: 0 }}><strong>Algorithm:</strong> {result.algorithm || 'SHA256-RSA2048'}</p>
+                <p style={{ margin: 0 }}><strong>Verification Mode:</strong> {result.verificationMode || 'ONLINE'}</p>
                 <p style={{ margin: 0 }}><strong>Verified At:</strong> {result.verifiedAt ? new Date(result.verifiedAt).toLocaleString('en-IN', { hour12: false }) : new Date().toLocaleString('en-IN', { hour12: false })}</p>
-                {keySource && <p style={{ margin: 0 }}><strong>Public Key Source:</strong> {keySource}</p>}
+
               </div>
             </div>
 
             {/* Blockchain Anchor Panel */}
             <div style={{ marginTop: '1.25rem', borderTop: '2px solid #0a0a0a', paddingTop: '1rem', textAlign: 'left', width: '100%', color: '#0a0a0a' }}>
               <p style={{ fontWeight: 700, marginBottom: '0.5rem', fontSize: '0.95rem', color: '#0a0a0a' }}>Blockchain Ledger Proof</p>
-              {mode === 'offline' ? (
-                <p style={{ fontSize: '0.85rem', color: '#555555' }}>Blockchain status not checked in offline mode — switch to Online Verify to confirm on-chain anchoring.</p>
-              ) : result.blockchain?.verified ? (
+              {result.blockchain?.verified ? (
                 <div style={{ textAlign: 'left', display: 'inline-block' }}>
                   <p><strong>✓ Hash anchored on-chain</strong></p>
                   <p style={{ fontSize: '0.85rem' }}><strong>Transaction ID:</strong>{' '}

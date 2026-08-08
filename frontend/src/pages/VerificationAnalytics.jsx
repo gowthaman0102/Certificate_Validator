@@ -221,31 +221,7 @@ function VerificationAnalytics() {
         </motion.div>
       )}
 
-      {/* ── Failure Reason Breakdown ───────────────────────────────────── */}
-      {data?.failureBreakdown && (
-        <motion.div className="card" style={{ maxWidth: "900px", marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }} variants={cardVariants}>
-          <h3 style={{ borderBottom: "2px solid #0a0a0a", paddingBottom: "0.6rem", marginBottom: "1rem", fontWeight: 700, fontSize: "1.2rem", color: GS.ink }}>
-            Security Failure Breakdown
-          </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
-            {[
-              { label: "Hash Mismatch", desc: "Certificate data tampered", value: data.failureBreakdown.hashMismatch, icon: "🔐" },
-              { label: "Invalid Signature", desc: "Digital signature forged", value: data.failureBreakdown.sigInvalid, icon: "✍️" },
-              { label: "Replay Attempts", desc: "Stale/reused scan tokens", value: data.failureBreakdown.replayRejected, icon: "🔁" },
-              { label: "Unknown Issuer", desc: "Unregistered university", value: data.failureBreakdown.unknownIssuer, icon: "🏛️" },
-            ].map(({ label, desc, value, icon }) => (
-              <div key={label} className="card-lift" style={{ background: value > 0 ? "#fef2f2" : "#f8fafc", border: `2px solid ${value > 0 ? "#fca5a5" : "#e2e8f0"}`, borderRadius: "10px", padding: "1rem", textAlign: "center" }}>
-                <div style={{ fontSize: "1.5rem", marginBottom: "4px" }}>{icon}</div>
-                <div style={{ fontSize: "1.6rem", fontWeight: 800, color: value > 0 ? "#dc2626" : GS.muted, fontFamily: '"Prata", serif', lineHeight: 1 }}>
-                  <CountUp to={value} duration={0.8} />
-                </div>
-                <div style={{ fontSize: "0.76rem", fontWeight: 700, color: GS.ink, marginTop: "4px", textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</div>
-                <div style={{ fontSize: "0.7rem", color: GS.muted, marginTop: "2px" }}>{desc}</div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
+
 
       {/* ── Activity by Day of Week ────────────────────────────────────── */}
       {data?.byDay && (
@@ -270,29 +246,7 @@ function VerificationAnalytics() {
         </motion.div>
       )}
 
-      {/* ── Activity by Hour ───────────────────────────────────────────── */}
-      {data?.byHour && (
-        <motion.div className="card" style={{ maxWidth: "900px", marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }} variants={cardVariants}>
-          <h3 style={{ borderBottom: "2px solid #0a0a0a", paddingBottom: "0.6rem", marginBottom: "1rem", fontWeight: 700, fontSize: "1.2rem", color: GS.ink }}>
-            Verification Activity by Hour of Day
-          </h3>
-          {(() => {
-            const maxH = Math.max(...data.byHour.map(h => h.count), 1);
-            return (
-              <div style={{ display: "flex", gap: "2px", alignItems: "flex-end", height: "100px", overflowX: "auto" }}>
-                {data.byHour.map(({ hour, count }) => (
-                  <div key={hour} style={{ flex: "0 0 auto", width: "32px", display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
-                    <div style={{ fontSize: "0.58rem", fontWeight: 700, color: GS.muted, height: "12px" }}>{count > 0 ? count : ""}</div>
-                    <div style={{ width: "100%", background: count > 0 ? "#0a0a0a" : "#e2e8f0", borderRadius: "2px 2px 0 0", height: `${Math.max((count / maxH) * 65, count > 0 ? 5 : 2)}px`, transition: "height 0.5s ease" }} />
-                    <div style={{ fontSize: "0.55rem", fontWeight: 600, color: GS.muted, transform: "rotate(-45deg)", transformOrigin: "center", marginTop: "4px", whiteSpace: "nowrap" }}>{hour}</div>
-                  </div>
-                ))}
-              </div>
-            );
-          })()}
-          <div style={{ fontSize: "0.72rem", color: GS.subtle, marginTop: "0.75rem", textAlign: "right" }}>Times shown in server local time (IST)</div>
-        </motion.div>
-      )}
+
 
       {/* ── Recent Verification Events ─────────────────────────────────── */}
       {genuineRecent.length > 0 && (
