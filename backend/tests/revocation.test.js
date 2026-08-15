@@ -1,8 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { db } = require('../config/db');
-const { generateHash, signData, verifySignature } = require('../utils/crypto');
-const { anchorToBlockchain } = require('../utils/blockchain');
+const { db } = require('../core/config/db');
+const { generateHash, signData, verifySignature } = require('../core/utils/crypto');
+const { anchorToBlockchain } = require('../core/utils/blockchain');
 const { v4: uuidv4 } = require('uuid');
 
 const { getOrCreateTestUniversity } = require('./testHelper');

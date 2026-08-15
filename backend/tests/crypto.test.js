@@ -8,7 +8,7 @@ const {
   generateCertificateNumber,
   generateScanToken,
   validateReplayProtection,
-} = require('../utils/crypto');
+} = require('../core/utils/crypto');
 
 test('1. RSA-2048 Key Pair Generation', () => {
   const keys = generateKeyPair();

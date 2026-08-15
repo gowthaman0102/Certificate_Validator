@@ -1,9 +1,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { db } = require('../config/db');
-const { generateHash, signData } = require('../utils/crypto');
+const { db } = require('../core/config/db');
+const { generateHash, signData } = require('../core/utils/crypto');
 const { v4: uuidv4 } = require('uuid');
-const { verifyCertificate } = require('../controllers/verificationController');
+const { verifyCertificate } = require('../modules/verification/verificationController');
 
 const { getOrCreateTestUniversity } = require('./testHelper');
 

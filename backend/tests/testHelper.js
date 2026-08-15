@@ -1,5 +1,5 @@
-const { db } = require('../config/db');
-const { generateKeyPair } = require('../utils/crypto');
+const { db } = require('../core/config/db');
+const { generateKeyPair } = require('../core/utils/crypto');
 const { v4: uuidv4 } = require('uuid');
 
 function getOrCreateTestUniversity() {

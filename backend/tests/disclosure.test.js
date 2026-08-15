@@ -1,9 +1,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { db } = require('../config/db');
-const { generateHash, signData, verifySignature } = require('../utils/crypto');
+const { db } = require('../core/config/db');
+const { generateHash, signData, verifySignature } = require('../core/utils/crypto');
 const { v4: uuidv4 } = require('uuid');
-const { createDisclosure, verifyDisclosure } = require('../controllers/disclosureController');
+const { createDisclosure, verifyDisclosure } = require('../modules/skill-passport-wallet/disclosureController');
 
 const { getOrCreateTestUniversity } = require('./testHelper');
 
