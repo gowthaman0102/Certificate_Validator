@@ -211,8 +211,13 @@ function Verifier() {
     setHelperError(''); setRetrievedQrData(''); setHelperLoading(true);
     try {
       if (helperTab === 'certId') {
-        if (!helperCertId.trim()) throw new Error('Enter a Certificate ID to get its QR data.');
-        const res = await getCertificateByCertNumber(helperCertId.trim());
+        let cleanId = (helperCertId || '').replace(/\\/g, '').trim();
+        const half = Math.floor(cleanId.length / 2);
+        if (cleanId.length > 6 && cleanId.length % 2 === 0 && cleanId.substring(0, half) === cleanId.substring(half)) {
+          cleanId = cleanId.substring(0, half);
+        }
+        if (!cleanId) throw new Error('Enter a Certificate ID to get its QR data.');
+        const res = await getCertificateByCertNumber(cleanId);
         const cert = res.data;
         let qrJson;
         if (cert.qr_data) {
@@ -272,9 +277,27 @@ function Verifier() {
       catch { throw new Error('Invalid QR data — could not parse as JSON.'); }
     }
     if (inputMode === 'certId') {
-      if (!certNumber.trim()) throw new Error('Enter a certificate ID.');
-      const res = await getCertificateByCertNumber(certNumber.trim());
+      let cleanNum = (certNumber || '').replace(/\\/g, '').trim();
+      const half = Math.floor(cleanNum.length / 2);
+      if (cleanNum.length > 6 && cleanNum.length % 2 === 0 && cleanNum.substring(0, half) === cleanNum.substring(half)) {
+        cleanNum = cleanNum.substring(0, half);
+      }
+      if (!cleanNum) throw new Error('Enter a certificate ID.');
+      const res = await getCertificateByCertNumber(cleanNum);
       const cert = res.data;
+      if (cert.qr_data) {
+        try {
+          const parsed = typeof cert.qr_data === 'string' ? JSON.parse(cert.qr_data) : cert.qr_data;
+          if (parsed && parsed.hash && parsed.signature) {
+            return {
+              ...parsed,
+              university_name: cert.university_name || parsed.university_name,
+              certificate_category: cert.certificate_category || parsed.certificate_category,
+              certificate_detail: cert.certificate_detail || parsed.certificate_detail,
+            };
+          }
+        } catch {}
+      }
       return {
         cert_id: cert.id, certificate_number: cert.certificate_number,
         register_number: cert.register_number, student_name: cert.student_name,
@@ -295,6 +318,19 @@ function Verifier() {
         try {
           const res = await getCertificateByCertNumber(payload.cert_id_from_name);
           const cert = res.data;
+          if (cert.qr_data) {
+            try {
+              const parsed = typeof cert.qr_data === 'string' ? JSON.parse(cert.qr_data) : cert.qr_data;
+              if (parsed && parsed.hash && parsed.signature) {
+                return {
+                  ...parsed,
+                  university_name: cert.university_name || parsed.university_name,
+                  certificate_category: cert.certificate_category || parsed.certificate_category,
+                  certificate_detail: cert.certificate_detail || parsed.certificate_detail,
+                };
+              }
+            } catch {}
+          }
           return {
             cert_id: cert.id, certificate_number: cert.certificate_number,
             register_number: cert.register_number, student_name: cert.student_name,

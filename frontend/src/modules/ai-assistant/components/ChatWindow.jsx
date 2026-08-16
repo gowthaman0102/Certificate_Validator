@@ -35,7 +35,7 @@ export default function ChatWindow({ onClose }) {
       {
         id: 'welcome-1',
         sender: 'assistant',
-        text: `### Hello! I am your AI Assistant
+        text: `### Hello! I am CredBOT 🤖
 I can help explain **Certificate Verification**, **RSA Signatures**, **SHA-256 Hashes**, **Blockchain Anchoring**, **Revocation Status**, and **AI Risk Scores**.
 
 How can I help you today?`,
@@ -102,7 +102,7 @@ How can I help you today?`,
         {
           id: `err-${Date.now()}`,
           sender: 'assistant',
-          text: '⚠️ Unable to connect to AI Assistant. Please check your network or try again.',
+          text: '⚠️ Unable to connect to CredBOT. Please check your network or try again.',
           timestamp: new Date().toISOString(),
         },
       ]);
@@ -167,7 +167,7 @@ How can I help you today?`,
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <GradRobotIcon size={22} color="#ffffff" />
           <div>
-            <span style={{ fontSize: '0.95rem', fontWeight: 600, fontFamily: "'Prata', serif" }}>AI Assistant</span>
+            <span style={{ fontSize: '0.95rem', fontWeight: 600, fontFamily: "'Prata', serif" }}>CredBOT</span>
             {/* AI Provider badge — updates automatically from /api/ai/provider */}
             <div
               style={{ position: 'relative', display: 'inline-block', marginLeft: '8px' }}

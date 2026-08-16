@@ -177,15 +177,18 @@ async function uploadCertificate(req, res) {
     if (RESTRICTED_CATEGORIES.has(certCategory)) {
       const duplicate = db.prepare(`
         SELECT id FROM certificates
-        WHERE university_id = ?
-          AND certificate_category = ?
-          AND (register_number = ? OR (student_email IS NOT NULL AND student_email = ?))
+        WHERE certificate_category = ?
+          AND (
+            (register_number = ? AND register_number != '')
+            OR (student_email IS NOT NULL AND student_email != '' AND LOWER(student_email) = LOWER(?))
+            OR (LOWER(student_name) = LOWER(?))
+          )
           AND status != 'REVOKED'
-      `).get(university.id, certCategory, normalizedRegNo, normalizedEmail || '');
+      `).get(certCategory, normalizedRegNo, normalizedEmail || '', student_name.trim());
 
       if (duplicate) {
         return res.status(409).json({
-          error: `This student has already been issued a ${certCategory}. Only one certificate of this type may be issued per student.`
+          error: `This student has already been issued a ${certCategory}. Only one certificate of this type may be issued per student across all institutions.`
         });
       }
     }
@@ -234,7 +237,7 @@ async function uploadCertificate(req, res) {
     const qrData = JSON.stringify(qrPayload);
 
     const qrFileName = `qr_${certificateId}.png`;
-    const qrFilePath = path.join(__dirname, '..', 'uploads', qrFileName);
+    const qrFilePath = path.join(__dirname, '..', '..', 'uploads', qrFileName);
     await QRCode.toFile(qrFilePath, qrData, { width: 1200, errorCorrectionLevel: 'H' });
 
     db.prepare(`
@@ -328,13 +331,20 @@ function getCertificate(req, res) {
 function getCertificateByCertNumber(req, res) {
   try {
     const { certNumber } = req.params;
-    const trimmed = (certNumber || '').trim();
+    let trimmed = (certNumber || '').replace(/\\/g, '').trim();
+    // Handle accidental double-concatenated paste e.g. ABCABC
+    const half = Math.floor(trimmed.length / 2);
+    if (trimmed.length > 6 && trimmed.length % 2 === 0 && trimmed.substring(0, half) === trimmed.substring(half)) {
+      trimmed = trimmed.substring(0, half);
+    }
     const cert = db.prepare(`
       SELECT c.*, u.name as university_name, u.issuer_code
       FROM certificates c
       JOIN universities u ON c.university_id = u.id
-      WHERE LOWER(c.certificate_number) = LOWER(?) OR LOWER(c.id) = LOWER(?)
-    `).get(trimmed, trimmed);
+      WHERE LOWER(c.certificate_number) = LOWER(?)
+         OR LOWER(c.id) = LOWER(?)
+         OR LOWER(REPLACE(c.certificate_number, '\\', '')) = LOWER(?)
+    `).get(trimmed, trimmed, trimmed);
     if (!cert) {
       return res.status(404).json({ error: `Certificate '${trimmed}' not found in system registry` });
     }
@@ -466,14 +476,17 @@ async function bulkUploadCertificates(req, res) {
         if (RESTRICTED_CATEGORIES.has(certCategory)) {
           const duplicate = db.prepare(`
             SELECT id FROM certificates
-            WHERE university_id = ?
-              AND certificate_category = ?
-              AND (register_number = ? OR (student_email IS NOT NULL AND student_email = ?))
+            WHERE certificate_category = ?
+              AND (
+                (register_number = ? AND register_number != '')
+                OR (student_email IS NOT NULL AND student_email != '' AND LOWER(student_email) = LOWER(?))
+                OR (LOWER(student_name) = LOWER(?))
+              )
               AND status != 'REVOKED'
-          `).get(university.id, certCategory, normalizedRegNo, normalizedEmail);
+          `).get(certCategory, normalizedRegNo, normalizedEmail || '', student_name.trim());
 
           if (duplicate) {
-            results.push({ row: rowNum, register_number: normalizedRegNo, student_name, success: false, reason: 'duplicate_restricted', error: `Already has a ${certCategory}` });
+            results.push({ row: rowNum, register_number: normalizedRegNo, student_name, success: false, reason: 'duplicate_restricted', error: `Already has a ${certCategory} across institutions` });
             continue;
           }
         }
@@ -521,7 +534,7 @@ async function bulkUploadCertificates(req, res) {
         const qrData = JSON.stringify(qrPayload);
 
         const qrFileName = `qr_${certificateId}.png`;
-        const qrFilePath = path.join(__dirname, '..', 'uploads', qrFileName);
+        const qrFilePath = path.join(__dirname, '..', '..', 'uploads', qrFileName);
         await QRCode.toFile(qrFilePath, qrData, { width: 1200, errorCorrectionLevel: 'H' });
 
         db.prepare(`

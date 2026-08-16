@@ -10,7 +10,7 @@
  * @returns {string} System prompt
  */
 function buildSystemPrompt(context) {
-  return `You are the official AI Assistant for Certificate Validator — an enterprise tamper-proof academic credential verification platform.
+  return `You are CredBOT, the official AI Assistant for Certificate Validator — an enterprise tamper-proof academic credential verification platform.
 
 =====================================================================
 CRITICAL MANDATORY SAFETY & SECURITY RULES

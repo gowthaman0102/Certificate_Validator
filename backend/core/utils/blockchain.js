@@ -46,6 +46,28 @@ function getLatestAnchor() {
  * @returns {{ txId, blockNumber, blockHash, anchoredAt, network }}
  */
 function anchorToBlockchain({ certHash, certId, certNumber, issuerCode, universityName }) {
+  const cleanId  = certId || '';
+  const cleanNum = (certNumber || '').replace(/\\/g, '').trim();
+
+  // Deduplication check — return existing unique anchor if already minted on chain
+  const existing = db.prepare(`
+    SELECT * FROM blockchain_anchors
+    WHERE (cert_id IS NOT NULL AND cert_id != '' AND cert_id = ?)
+       OR (certificate_number IS NOT NULL AND certificate_number != '' AND (certificate_number = ? OR REPLACE(certificate_number, '\\', '') = ?))
+       OR (cert_hash IS NOT NULL AND cert_hash != '' AND cert_hash = ?)
+    LIMIT 1
+  `).get(cleanId, certNumber || '', cleanNum, certHash || '');
+
+  if (existing) {
+    return {
+      txId: existing.tx_id,
+      blockNumber: existing.block_number,
+      blockHash: existing.block_hash,
+      anchoredAt: existing.anchored_at,
+      network: existing.network || NETWORK,
+    };
+  }
+
   const anchoredAt    = new Date().toISOString();
   const latest        = getLatestAnchor();
   const prevBlockHash = latest ? latest.block_hash : GENESIS_HASH;
@@ -59,7 +81,7 @@ function anchorToBlockchain({ certHash, certId, certNumber, issuerCode, universi
        cert_id, certificate_number, issuer_code, university_name, anchored_at, network, status)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIRMED')
   `).run(txId, blockNumber, blockHash, prevBlockHash, certHash,
-         certId, certNumber, issuerCode, universityName, anchoredAt, NETWORK);
+         cleanId, cleanNum, issuerCode, universityName, anchoredAt, NETWORK);
 
   return { txId, blockNumber, blockHash, anchoredAt, network: NETWORK };
 }
@@ -75,7 +97,7 @@ function verifyOnBlockchain(certHash) {
 }
 
 /**
- * Returns the most recent anchors for the explorer.
+ * Returns the most recent unique anchors for the explorer.
  * @param {number} limit
  * @param {number} offset
  * @returns {Array}
@@ -83,6 +105,11 @@ function verifyOnBlockchain(certHash) {
 function getRecentAnchors(limit = 20, offset = 0) {
   return db.prepare(`
     SELECT ba.* FROM blockchain_anchors ba
+    JOIN (
+      SELECT MIN(block_number) as min_block, COALESCE(cert_id, cert_hash, certificate_number) as key_id
+      FROM blockchain_anchors
+      GROUP BY COALESCE(cert_id, cert_hash, certificate_number)
+    ) u ON ba.block_number = u.min_block
     WHERE ba.issuer_code IN (SELECT issuer_code FROM universities WHERE issuer_code IS NOT NULL)
        OR LOWER(ba.university_name) IN (SELECT LOWER(name) FROM universities WHERE name IS NOT NULL)
     ORDER BY ba.block_number DESC
@@ -110,6 +137,11 @@ function searchAnchors(query) {
   const q = `%${query}%`;
   return db.prepare(`
     SELECT ba.* FROM blockchain_anchors ba
+    JOIN (
+      SELECT MIN(block_number) as min_block, COALESCE(cert_id, cert_hash, certificate_number) as key_id
+      FROM blockchain_anchors
+      GROUP BY COALESCE(cert_id, cert_hash, certificate_number)
+    ) u ON ba.block_number = u.min_block
     WHERE (ba.issuer_code IN (SELECT issuer_code FROM universities WHERE issuer_code IS NOT NULL) OR LOWER(ba.university_name) IN (SELECT LOWER(name) FROM universities WHERE name IS NOT NULL))
       AND (ba.tx_id LIKE ? OR ba.certificate_number LIKE ? OR ba.cert_hash LIKE ?)
     ORDER BY ba.block_number DESC

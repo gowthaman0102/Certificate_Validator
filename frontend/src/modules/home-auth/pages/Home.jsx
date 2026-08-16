@@ -546,21 +546,11 @@ function Home() {
                   <circle cx="270" cy="190" r="150" stroke="#e0e0e0" strokeWidth="1" strokeDasharray="3 3" />
                   <circle cx="270" cy="190" r="120" stroke="#d5d5d5" strokeWidth="1" />
                   
-                  {/* Outer Ring Satellite Accents */}
-                  <circle cx="270" cy="40" r="3.5" fill="#0a0a0a" />
-                  <circle cx="420" cy="190" r="3" fill="#0a0a0a" />
-                  <circle cx="270" cy="340" r="3.5" fill="#0a0a0a" />
-                  <circle cx="120" cy="190" r="3" fill="#0a0a0a" />
+
                 </g>
                 <g className="diagram-ring-spin-inner">
-                  {/* Connector Line Intersection Ring (r=96.2) - Perfectly matching the 4 elbow junction points */}
+                  {/* Connector Line Intersection Ring (r=96.2) */}
                   <circle cx="270" cy="190" r="96.2" stroke="#d0d0d0" strokeWidth="1" strokeDasharray="3 3" />
-                  
-                  {/* 4 Junction Nodes placed EXACTLY at the connector line elbows (185,145), (355,145), (185,235), (355,235) */}
-                  <circle cx="185" cy="145" r="4" fill="#ffffff" stroke="#0a0a0a" strokeWidth="1.5" />
-                  <circle cx="355" cy="145" r="4" fill="#ffffff" stroke="#0a0a0a" strokeWidth="1.5" />
-                  <circle cx="185" cy="235" r="4" fill="#ffffff" stroke="#0a0a0a" strokeWidth="1.5" />
-                  <circle cx="355" cy="235" r="4" fill="#ffffff" stroke="#0a0a0a" strokeWidth="1.5" />
                 </g>
 
                 {/* 4 Connecting Elbow Polyline Paths with Animated Line Flow Layer */}
@@ -587,24 +577,6 @@ function Home() {
 
                 {/* Dashed vertical center guide line */}
                 <line x1="270" y1="230" x2="270" y2="275" stroke="#0a0a0a" strokeWidth="1.5" strokeDasharray="3 3" />
-
-                {/* Native SVG animateMotion Traveling Data Dots along Connector Lines */}
-                {!shouldReduceMotion && (
-                  <>
-                    <circle r="3" fill="#0a0a0a">
-                      <animateMotion dur="4s" repeatCount="indefinite" path="M 140 72 L 160 72 L 185 145 L 205 145 L 270 190" begin="0s" />
-                    </circle>
-                    <circle r="3" fill="#0a0a0a">
-                      <animateMotion dur="4s" repeatCount="indefinite" path="M 400 72 L 380 72 L 355 145 L 335 145 L 270 190" begin="1s" />
-                    </circle>
-                    <circle r="3" fill="#0a0a0a">
-                      <animateMotion dur="4s" repeatCount="indefinite" path="M 140 290 L 160 290 L 185 235 L 205 235 L 270 190" begin="2s" />
-                    </circle>
-                    <circle r="3" fill="#0a0a0a">
-                      <animateMotion dur="4s" repeatCount="indefinite" path="M 400 290 L 380 290 L 355 235 L 335 235 L 270 190" begin="3s" />
-                    </circle>
-                  </>
-                )}
 
                 {/* Phase 1: Central QR Hub with Pure CSS hubBreathe (3s loop) */}
                 <foreignObject x="220" y="140" width="100" height="100" style={{ overflow: "visible" }}>

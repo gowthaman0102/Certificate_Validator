@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { initDB } = require('./core/config/db');
+const { initDB, db } = require('./core/config/db');
 const authRoutes = require('./modules/auth/authRoutes');
 const universityRoutes = require('./modules/university/universityRoutes');
 const certificateRoutes = require('./modules/certificate/certificateRoutes');

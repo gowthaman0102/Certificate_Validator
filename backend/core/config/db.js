@@ -2,7 +2,8 @@ const Database = require('better-sqlite3');
 const path = require('path');
 require('dotenv').config();
 
-const db = new Database(path.join(__dirname, '..', process.env.DB_PATH || './database.sqlite'));
+const DB_PATH = process.env.DB_PATH || './database.sqlite';
+const db = new Database(path.resolve(__dirname, '../..', DB_PATH));
 
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
@@ -377,16 +378,26 @@ function initDB() {
     CREATE INDEX IF NOT EXISTS idx_disclosures_cert ON disclosures(certificate_id);
   `);
 
-  // Clean up orphaned blockchain anchors for deleted universities
+  // Clean up legacy backslashes and deduplicate blockchain_anchors
   try {
-    db.prepare(`
+    db.exec(`
+      UPDATE universities
+      SET issuer_code = REPLACE(issuer_code, '\\', '')
+      WHERE issuer_code LIKE '%\\%';
+
+      UPDATE certificates 
+      SET certificate_number = REPLACE(certificate_number, '\\', ''),
+          register_number = REPLACE(register_number, '\\', '')
+      WHERE certificate_number LIKE '%\\%' OR register_number LIKE '%\\%';
+
       DELETE FROM blockchain_anchors
-      WHERE issuer_code NOT IN (SELECT issuer_code FROM universities WHERE issuer_code IS NOT NULL)
-        AND LOWER(university_name) NOT IN (SELECT LOWER(name) FROM universities WHERE name IS NOT NULL)
-    `).run();
-  } catch (err) {
-    // Ignore if table does not exist yet
-  }
+      WHERE rowid NOT IN (
+        SELECT MIN(rowid)
+        FROM blockchain_anchors
+        GROUP BY COALESCE(cert_id, cert_hash, certificate_number)
+      );
+    `);
+  } catch (err) {}
 
   console.log('DB tables ready');
 }

@@ -29,7 +29,10 @@ export const uploadCertificate = (formData) =>
   });
 export const bulkUploadCertificates = (rows) => client.post('/certificate/bulk-upload', { rows });
 export const getCertificate = (id) => client.get(`/certificate/${id}`);
-export const getCertificateByCertNumber = (certNumber) => client.get(`/certificate/by-number/${certNumber}`);
+export const getCertificateByCertNumber = (certNumber) => {
+  const clean = (certNumber || '').replace(/\\/g, '').trim();
+  return client.get(`/certificate/by-number/${encodeURIComponent(clean)}`);
+};
 export const getCertificatesByUniversity = (id) => client.get(`/certificates/university/${id}`);
 export const getCertificatesByEmail = (email) => client.get(`/certificates/by-email?email=${encodeURIComponent(email)}`);
 export const getCertificatesByRegisterNumber = (registerNumber) => client.get(`/certificates/by-register-number?registerNumber=${encodeURIComponent(registerNumber)}`);

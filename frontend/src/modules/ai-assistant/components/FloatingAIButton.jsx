@@ -39,7 +39,7 @@ export default function FloatingAIButton() {
       {/* Floating Button with ambient pulse & 90deg morph rotation */}
       <motion.div
         onClick={handleToggle}
-        title="Open AI Assistant"
+        title="Open CredBOT"
         animate={{
           scale: isOpen ? [1] : [1, 1.04, 1],
         }}

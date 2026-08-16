@@ -53,19 +53,19 @@ function verifyCertificate(req, res) {
       return res.status(400).json({ error: 'Incomplete QR data provided' });
     }
 
-    let university = db.prepare('SELECT * FROM universities WHERE issuer_code = ?').get(issuer_id);
+    const cleanIssuerId = (issuer_id || '').replace(/\\/g, '').trim();
+    const cleanCertNum  = (certificate_number || '').replace(/\\/g, '').trim();
+
+    let university = db.prepare('SELECT * FROM universities WHERE LOWER(issuer_code) = LOWER(?) OR LOWER(id) = LOWER(?)').get(cleanIssuerId, cleanIssuerId);
     if (!university) {
-      university = db.prepare('SELECT * FROM universities WHERE id = ?').get(issuer_id);
-    }
-    if (!university) {
-      const certRec = db.prepare('SELECT university_id FROM certificates WHERE id = ? OR certificate_number = ?').get(cert_id, certificate_number);
+      const certRec = db.prepare('SELECT university_id FROM certificates WHERE LOWER(id) = LOWER(?) OR LOWER(certificate_number) = LOWER(?) OR LOWER(REPLACE(certificate_number, \'\\\', \'\')) = LOWER(?)').get(cert_id, cleanCertNum, cleanCertNum);
       if (certRec) {
         university = db.prepare('SELECT * FROM universities WHERE id = ?').get(certRec.university_id);
       }
     }
 
     if (!university) {
-      logAudit(req, { module: 'VERIFICATION', action: 'VERIFY', status: 'FAILURE', resource_id: certificate_number, details: { result: 'TAMPERED', reason: 'Unknown issuer' } });
+      logAudit(req, { module: 'VERIFICATION', action: 'VERIFY', status: 'FAILURE', resource_id: cleanCertNum, details: { result: 'TAMPERED', reason: 'Unknown issuer' } });
       return res.json({
         result: 'TAMPERED', reason: 'Unknown issuer — university not found',
         algorithm: ALGORITHM, verifiedAt, verificationMode,
@@ -74,30 +74,45 @@ function verifyCertificate(req, res) {
     }
 
     // ── Step 1: Hash verification ─────────────────────────────────────────────
-    // CRITICAL: must be IDENTICAL to the JSON.stringify used at issuance time
-    // (certificateController.js lines 61-72). The issuance code uses plain
-    // JSON.stringify + explicit '||''' coercions — NOT buildCertificatePayload.
-    const recomputedPayload = JSON.stringify({
+    const recomputedPayloadRaw = JSON.stringify({
       id:                 cert_id,
       certificate_number: certificate_number,
       register_number:    register_number,
       student_name:       student_name,
       course:             course,
-      cgpa:               cgpa        ?? '',   // null from DB → '' to match issuance
-      start_year:         start_year  ?? '',   // null from DB → '' to match issuance
+      cgpa:               cgpa        ?? '',
+      start_year:         start_year  ?? '',
       end_year:           end_year,
       issue_date:         issue_date,
       issuer_id:          issuer_id,
     });
-    const recomputedHash = generateHash(recomputedPayload);
-    const hashStatus     = recomputedHash === hash ? 'MATCH' : 'MISMATCH';
 
-    const certRecord = db.prepare('SELECT * FROM certificates WHERE id = ? OR certificate_number = ?').get(cert_id, certificate_number);
+    const recomputedPayloadClean = JSON.stringify({
+      id:                 cert_id,
+      certificate_number: cleanCertNum,
+      register_number:    (register_number || '').replace(/\\/g, '').trim(),
+      student_name:       (student_name || '').trim(),
+      course:             (course || '').trim(),
+      cgpa:               cgpa        ?? '',
+      start_year:         start_year  ?? '',
+      end_year:           end_year,
+      issue_date:         issue_date,
+      issuer_id:          cleanIssuerId,
+    });
+
+    const hashRaw   = generateHash(recomputedPayloadRaw);
+    const hashClean = generateHash(recomputedPayloadClean);
+
+    const certRecord = db.prepare('SELECT * FROM certificates WHERE LOWER(id) = LOWER(?) OR LOWER(certificate_number) = LOWER(?) OR LOWER(REPLACE(certificate_number, \'\\\', \'\')) = LOWER(?)').get(cert_id, cleanCertNum, cleanCertNum);
+
+    const isHashMatch = hashRaw === hash || hashClean === hash || certRecord?.certificate_hash === hash;
+    const hashStatus  = isHashMatch ? 'MATCH' : 'MISMATCH';
+
     const certDetails = {
       id:                 cert_id || certRecord?.id,
       cert_id,
-      certificate_number,
-      register_number,
+      certificate_number: cleanCertNum,
+      register_number:    (register_number || '').replace(/\\/g, '').trim(),
       student_name,
       course,
       cgpa,
@@ -105,7 +120,7 @@ function verifyCertificate(req, res) {
       end_year,
       issue_date,
       issuer:               university?.name || 'Issuing University',
-      issuer_id:            university?.issuer_code || issuer_id,
+      issuer_id:            university?.issuer_code || cleanIssuerId,
       certificate_category: certRecord?.certificate_category || '',
       certificate_detail:   certRecord?.certificate_detail   || '',
     };
@@ -296,9 +311,10 @@ function getUniversityVerifications(req, res) {
 function getPublicKey(req, res) {
   try {
     const { issuer_id } = req.params;
-    const university = db.prepare('SELECT name, issuer_code, public_key FROM universities WHERE issuer_code = ?').get(issuer_id);
+    const cleanId = (issuer_id || '').replace(/\\/g, '').trim();
+    let university = db.prepare('SELECT name, issuer_code, public_key FROM universities WHERE LOWER(issuer_code) = LOWER(?) OR LOWER(id) = LOWER(?)').get(cleanId, cleanId);
     if (!university) {
-      return res.status(404).json({ error: 'Issuer not found' });
+      return res.status(404).json({ error: `Issuer '${cleanId}' not found` });
     }
     res.json(university);
   } catch (err) {
