@@ -100,9 +100,8 @@ const ParticipationTemplate = forwardRef(({ certificate, templatePreset, qrCodeU
           ))}
         </div>
 
-        {/* Event Meta Line */}
-        <div style={{ color: '#64748b', fontSize: '0.78rem', fontFamily: 'Arial, sans-serif', marginBottom: '10px', fontWeight: 600 }}>
-          <span>{issueDate}</span> • <span>Organized by {universityName}</span>
+        <div style={{ color: '#64748b', fontSize: '0.82rem', fontFamily: 'Arial, sans-serif', marginBottom: '10px', fontWeight: 600 }}>
+          <span>Event Period: <strong>{certificate.start_year ? `${certificate.start_year} – ${certificate.end_year || ''}` : (certificate.end_year || 'N/A')}</strong></span> • <span>Issue Date: <strong>{issueDate}</strong></span> • <span>Organized by {universityName}</span>
         </div>
 
         {/* ── MIDDLE CENTER QR CODE ────────────────── */}

@@ -99,7 +99,7 @@ const AcademicExcellenceTemplate = forwardRef(({ certificate, templatePreset, qr
         </div>
 
         <div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', marginBottom: '14px', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', padding: '8px 0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr 1fr 1fr', gap: '12px', marginBottom: '14px', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', padding: '8px 0' }}>
             <div>
               <div style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold' }}>Course</div>
               <div style={{ fontSize: '0.85rem', color: '#0B3D2E', fontWeight: 'bold' }}>{certificate.course || 'N/A'}</div>
@@ -109,8 +109,12 @@ const AcademicExcellenceTemplate = forwardRef(({ certificate, templatePreset, qr
               <div style={{ fontSize: '0.85rem', color: '#0B3D2E', fontWeight: 'bold' }}>{certificate.cgpa || 'N/A'}</div>
             </div>
             <div>
-              <div style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold' }}>Year</div>
-              <div style={{ fontSize: '0.85rem', color: '#0B3D2E', fontWeight: 'bold' }}>{certificate.end_year || certificate.start_year || 'N/A'}</div>
+              <div style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold' }}>Academic Period</div>
+              <div style={{ fontSize: '0.85rem', color: '#0B3D2E', fontWeight: 'bold' }}>{certificate.start_year ? `${certificate.start_year} – ${certificate.end_year || ''}` : (certificate.end_year || 'N/A')}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold' }}>Issue Date</div>
+              <div style={{ fontSize: '0.85rem', color: '#0B3D2E', fontWeight: 'bold' }}>{certificate.issue_date || 'N/A'}</div>
             </div>
           </div>
 

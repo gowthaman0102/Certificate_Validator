@@ -89,10 +89,14 @@ const InternshipTemplate = forwardRef(({ certificate, templatePreset, qrCodeUrl 
             {formatText(body.lines) || 'Has successfully completed the internship program...'}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', backgroundColor: '#f8fafc', padding: '12px 20px', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '16px', backgroundColor: '#f8fafc', padding: '12px 18px', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '14px' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '0.65rem', color: '#6b7280', textTransform: 'uppercase', fontWeight: 'bold' }}>Role / Department</span>
-              <span style={{ fontSize: '0.9rem', color: '#1C2B3A', fontWeight: 'bold', marginTop: '2px' }}>{certificate.course || 'Intern'}</span>
+              <span style={{ fontSize: '0.65rem', color: '#6b7280', textTransform: 'uppercase', fontWeight: 'bold' }}>Role / Internship Detail</span>
+              <span style={{ fontSize: '0.9rem', color: '#1C2B3A', fontWeight: 'bold', marginTop: '2px' }}>{certificate.certificate_detail || certificate.course || 'Intern'}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.65rem', color: '#6b7280', textTransform: 'uppercase', fontWeight: 'bold' }}>Internship Period</span>
+              <span style={{ fontSize: '0.9rem', color: '#1C2B3A', fontWeight: 'bold', marginTop: '2px' }}>{certificate.start_year ? `${certificate.start_year} – ${certificate.end_year || ''}` : (certificate.end_year || 'N/A')}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '0.65rem', color: '#6b7280', textTransform: 'uppercase', fontWeight: 'bold' }}>Issue Date</span>

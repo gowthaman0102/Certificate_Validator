@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { GradRobotIcon } from './FloatingAIButton';
 
 const GS = { ink: '#0a0a0a', muted: '#666666', border: '#0a0a0a', mid: '#8c8c8c' };
 const PREMIUM = [0.16, 1, 0.3, 1];
@@ -78,16 +79,14 @@ export default function ChatBubble({ message }) {
       transition={{ duration: 0.2, ease: PREMIUM }}
       style={{ display: 'flex', flexDirection: 'column', alignItems: isUser ? 'flex-end' : 'flex-start', marginBottom: '0.85rem' }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem', fontSize: '0.7rem', color: GS.muted, fontWeight: 600 }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem', fontSize: '0.72rem', color: GS.muted, fontWeight: 600 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
           {isUser ? (
             'YOU'
           ) : (
             <>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.85 }}>
-                <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
-              </svg>
-              AI ASSISTANT
+              <GradRobotIcon size={13} color="#0a0a0a" />
+              <span style={{ fontWeight: 700, letterSpacing: '0.04em', color: GS.ink }}>CredBot</span>
             </>
           )}
         </span>

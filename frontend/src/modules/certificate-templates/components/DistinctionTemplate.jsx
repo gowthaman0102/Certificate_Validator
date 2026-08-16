@@ -92,6 +92,18 @@ const DistinctionTemplate = forwardRef(({ certificate, templatePreset, qrCodeUrl
         <div style={{ fontSize: '0.88rem', textAlign: 'center', maxWidth: '650px', lineHeight: '1.6', fontFamily: 'Arial, sans-serif' }}>
           {formatText(body.lines) || 'In recognition of outstanding academic performance and excellence...'}
         </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '10px', fontSize: '0.78rem', color: '#C9A227', textTransform: 'uppercase', letterSpacing: '0.08em', borderTop: '1px solid rgba(201,162,39,0.35)', paddingTop: '6px' }}>
+          <div>Academic Period: <strong style={{ color: '#EDE8D5' }}>{certificate.start_year ? `${certificate.start_year} – ${certificate.end_year || ''}` : (certificate.end_year || 'N/A')}</strong></div>
+          <div>•</div>
+          <div>Issue Date: <strong style={{ color: '#EDE8D5' }}>{certificate.issue_date || 'N/A'}</strong></div>
+          {certificate.cgpa && (
+            <>
+              <div>•</div>
+              <div>CGPA: <strong style={{ color: '#EDE8D5' }}>{certificate.cgpa}</strong></div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Footer Row: QR Code + Stars + Signatures */}

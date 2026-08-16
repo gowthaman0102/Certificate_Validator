@@ -150,11 +150,18 @@ async function uploadCertificate(req, res) {
             certificate_category, certificate_detail } = req.body;
     const userId = req.user.id;
 
-    if (!student_name || !register_number || !student_email || !course || !end_year || !issue_date) {
-      return res.status(400).json({ error: 'student_name, register_number, student_email, course, end_year, and issue_date are required' });
+    if (!student_name || !register_number || !student_email || !course || !start_year || !end_year || !issue_date) {
+      return res.status(400).json({ error: 'student_name, register_number, student_email, course, start_year, end_year, and issue_date are required' });
     }
     if (!certificate_category) {
       return res.status(400).json({ error: 'certificate_category is required' });
+    }
+
+    const certCategory = normalizeCategoryName(certificate_category);
+    const certDetail   = (certificate_detail || '').trim();
+
+    if (NEEDS_DETAIL_CATEGORIES.has(certCategory) && !certDetail) {
+      return res.status(400).json({ error: `Certificate Detail is required for '${certCategory}'` });
     }
 
     // ── Strict 3-way credential verification (Name, Register Number, Student Email) ──
@@ -171,8 +178,6 @@ async function uploadCertificate(req, res) {
     // ── Duplicate restriction check ───────────────────────────────────────────
     const normalizedRegNo  = register_number.trim();
     const normalizedEmail  = student_email ? student_email.trim().toLowerCase() : null;
-    const certCategory     = normalizeCategoryName(certificate_category);
-    const certDetail       = (certificate_detail   || '').trim();
 
     if (RESTRICTED_CATEGORIES.has(certCategory)) {
       const duplicate = db.prepare(`
@@ -445,13 +450,14 @@ async function bulkUploadCertificates(req, res) {
           continue;
         }
 
-        if (!student_name || !register_number || !student_email || !course || !cgpa || !end_year) {
+        if (!student_name || !register_number || !student_email || !course || !cgpa || !start_year || !end_year) {
           const missing = [];
           if (!student_name) missing.push('Student Name');
           if (!register_number) missing.push('Register Number');
           if (!student_email) missing.push('Student Email');
           if (!course) missing.push('Department / Course');
           if (!cgpa) missing.push('CGPA');
+          if (!start_year) missing.push('Start Year');
           if (!end_year) missing.push('Year of Passing');
           results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'missing_fields', error: `Missing mandatory field(s): ${missing.join(', ')}` });
           continue;

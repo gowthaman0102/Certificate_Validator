@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { GradRobotIcon } from './FloatingAIButton';
 
 const GS = { ink: '#0a0a0a', muted: '#666666', border: '#0a0a0a' };
 
@@ -11,16 +12,19 @@ const dotVariants = {
       duration: 0.8,
       repeat: Infinity,
       ease: 'easeInOut',
-      delay: i * 0.12, // 120ms offset each
+      delay: i * 0.12,
     },
   }),
 };
 
 export default function TypingIndicator() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 0.85rem', background: '#f5f5f5', border: `1px solid ${GS.border}`, width: 'fit-content', borderRadius: '16px' }}>
-      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: GS.muted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>AI Thinking</span>
-      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 0.85rem', background: '#f5f5f5', border: `1px solid ${GS.border}`, width: 'fit-content', borderRadius: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+        <GradRobotIcon size={14} color="#0a0a0a" />
+        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: GS.ink, textTransform: 'uppercase', letterSpacing: '0.04em' }}>CredBot</span>
+      </div>
+      <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginLeft: '2px' }}>
         {[0, 1, 2].map((i) => (
           <motion.span
             key={i}

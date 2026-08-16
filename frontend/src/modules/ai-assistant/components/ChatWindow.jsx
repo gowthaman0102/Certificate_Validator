@@ -167,7 +167,7 @@ How can I help you today?`,
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <GradRobotIcon size={22} color="#ffffff" />
           <div>
-            <span style={{ fontSize: '0.95rem', fontWeight: 600, fontFamily: "'Prata', serif" }}>CredBOT</span>
+            <span style={{ fontSize: '0.95rem', fontWeight: 600, fontFamily: "'Prata', serif" }}>CredentialVault CredBOT</span>
             {/* AI Provider badge — updates automatically from /api/ai/provider */}
             <div
               style={{ position: 'relative', display: 'inline-block', marginLeft: '8px' }}

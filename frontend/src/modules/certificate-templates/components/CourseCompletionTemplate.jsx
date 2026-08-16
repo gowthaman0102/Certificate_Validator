@@ -86,13 +86,17 @@ const CourseCompletionTemplate = forwardRef(({ certificate, templatePreset, qrCo
               {formatText(body.lines) || 'Has successfully completed the prescribed coursework and satisfied all requirements...'}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', width: '85%', backgroundColor: '#f8fafc', padding: '12px 20px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '16px', width: '90%', backgroundColor: '#f8fafc', padding: '12px 18px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
               <div>
                 <div style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold' }}>Course Completed</div>
-                <div style={{ fontSize: '0.85rem', color: '#0A4D68', fontWeight: 'bold' }}>{certificate.course || 'N/A'}</div>
+                <div style={{ fontSize: '0.85rem', color: '#0A4D68', fontWeight: 'bold' }}>{certificate.certificate_detail || certificate.course || 'N/A'}</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold' }}>Date of Completion</div>
+                <div style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold' }}>Course Period</div>
+                <div style={{ fontSize: '0.85rem', color: '#0A4D68', fontWeight: 'bold' }}>{certificate.start_year ? `${certificate.start_year} – ${certificate.end_year || ''}` : (certificate.end_year || 'N/A')}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold' }}>Issue Date</div>
                 <div style={{ fontSize: '0.85rem', color: '#0A4D68', fontWeight: 'bold' }}>{certificate.issue_date || 'N/A'}</div>
               </div>
             </div>

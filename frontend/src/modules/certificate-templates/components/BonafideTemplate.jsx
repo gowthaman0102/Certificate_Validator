@@ -68,7 +68,8 @@ const BonafideTemplate = forwardRef(({ certificate, templatePreset, qrCodeUrl },
 
           <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#333' }}>
             <div>Ref No: {refNo}</div>
-            <div>Date: {certificate.issue_date || new Date().toLocaleDateString()}</div>
+            <div>Academic Period: {certificate.start_year ? `${certificate.start_year} – ${certificate.end_year || ''}` : (certificate.end_year || 'N/A')}</div>
+            <div>Issue Date: {certificate.issue_date || new Date().toLocaleDateString()}</div>
           </div>
         </div>
 

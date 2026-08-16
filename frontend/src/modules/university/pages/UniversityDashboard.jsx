@@ -8,6 +8,7 @@ import {
 } from "../../../shared/api/client";
 import CategoryCertificateTemplate from "../../certificate-templates/components/CategoryCertificateTemplate";
 import { downloadCertificateAsPDF } from "../../certificate-templates/utils/certificatePdf";
+import * as XLSX from "xlsx";
 import { parseCertificateExcel } from "../../../shared/utils/excelParser";
 import { CATEGORIES, NEEDS_DETAIL } from "../../skill-passport-wallet/utils/certificateCategory";
 import UniversityDashboardDecorations from "../components/UniversityDashboardDecorations";
@@ -142,13 +143,18 @@ function UniversityDashboard() {
   async function handleIssueCertificate(e) {
     e.preventDefault(); setError(""); setIssuing(true); setLastIssued(null);
     try {
+      if (!startYear) {
+        setError("Start Year is required");
+        setIssuing(false);
+        return;
+      }
       const formData = new FormData();
       formData.append("student_name", studentName);
       formData.append("register_number", registerNumber);
       if (studentEmail) formData.append("student_email", studentEmail);
       formData.append("course", course);
       formData.append("cgpa", cgpa);
-      if (startYear) formData.append("start_year", startYear);
+      formData.append("start_year", startYear);
       formData.append("end_year", endYear);
       formData.append("issue_date", issueDate);
       formData.append("certificate_category", certCategory);
@@ -162,6 +168,64 @@ function UniversityDashboard() {
       loadCertificates(university.id);
     } catch (err) { setError(err.response?.data?.error || err.response?.data?.debug || err.message || "Failed to issue certificate"); }
     finally { setIssuing(false); }
+  }
+
+  function handleDownloadSampleExcel() {
+    const sampleData = [
+      {
+        "Name": "John Doe",
+        "Register Number": "21CS1001",
+        "Student Email": "john.doe@student.com",
+        "Department / Course": "Computer Science Engineering",
+        "CGPA": "8.5",
+        "Start Year": "2022",
+        "Year of Passing": "2026",
+        "Issue Date": "2026-08-16",
+        "Certificate Category": "Course Completion Certificate",
+        "Certificate Detail": "Full Stack Web Development"
+      },
+      {
+        "Name": "Priya Sharma",
+        "Register Number": "21CS1002",
+        "Student Email": "priya.sharma@student.com",
+        "Department / Course": "Computer Science Engineering",
+        "CGPA": "9.2",
+        "Start Year": "2022",
+        "Year of Passing": "2026",
+        "Issue Date": "2026-08-16",
+        "Certificate Category": "Degree / Graduation Certificate",
+        "Certificate Detail": ""
+      },
+      {
+        "Name": "Alex Mercer",
+        "Register Number": "21CS1003",
+        "Student Email": "alex.mercer@student.com",
+        "Department / Course": "Information Technology",
+        "CGPA": "8.8",
+        "Start Year": "2022",
+        "Year of Passing": "2026",
+        "Issue Date": "2026-08-16",
+        "Certificate Category": "Internship Completion Certificate",
+        "Certificate Detail": "Software Development Internship"
+      },
+      {
+        "Name": "Sara Smith",
+        "Register Number": "21CS1004",
+        "Student Email": "sara.smith@student.com",
+        "Department / Course": "Electronics Engineering",
+        "CGPA": "9.5",
+        "Start Year": "2022",
+        "Year of Passing": "2026",
+        "Issue Date": "2026-08-16",
+        "Certificate Category": "Academic Excellence Certificate",
+        "Certificate Detail": ""
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(sampleData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Certificates");
+    XLSX.writeFile(wb, "Sample_Bulk_Certificate_Issuance_Template.xlsx");
   }
 
   const [revokeTarget, setRevokeTarget] = useState(null);
@@ -342,7 +406,7 @@ function UniversityDashboard() {
           <input value={course} onChange={(e) => { setCourse(e.target.value); if (error) setError(""); }} required />
           <div style={{ display: "flex", gap: "1rem" }}>
             <div style={{ flex: 1 }}><label>CGPA</label><input value={cgpa} onChange={(e) => setCgpa(e.target.value)} required placeholder="8.7" /></div>
-            <div style={{ flex: 1 }}><label>Start Year (optional)</label><input type="number" min="1950" max="2100" value={startYear} onChange={(e) => setStartYear(e.target.value)} placeholder="2022" /></div>
+            <div style={{ flex: 1 }}><label>Start Year</label><input type="number" min="1950" max="2100" value={startYear} onChange={(e) => setStartYear(e.target.value)} required placeholder="2022" /></div>
             <div style={{ flex: 1 }}><label>Year of Passing</label><input type="number" min="1950" max="2100" value={endYear} onChange={(e) => setEndYear(e.target.value)} required placeholder="2026" /></div>
           </div>
           <label style={{ cursor: "pointer" }} onClick={(e) => { const el = e.currentTarget.nextElementSibling; if (el) { try { el.showPicker(); } catch { el.focus(); } } }}>Issue Date</label>
@@ -426,8 +490,8 @@ function UniversityDashboard() {
 
       <motion.div className="card" variants={cardVariants}>
         <h3 style={{ fontWeight: 700, fontSize: "1.2rem", color: "#0a0a0a", borderBottom: "2px solid #0a0a0a", paddingBottom: "0.4rem", marginBottom: "1.2rem" }}>Bulk Issue Certificates</h3>
-        <p style={{ color: GS.muted, fontSize: "0.85rem", marginBottom: "1rem", lineHeight: "1.5" }}>
-          Upload an Excel file (.xlsx) with mandatory columns: <strong>Name</strong>, <strong>Register Number</strong>, <strong>Student Email</strong>, <strong>Department / Course</strong>, <strong>CGPA</strong>, <strong>Year of Passing</strong>, <strong>Issue Date</strong>, <strong>Certificate Category</strong>, and <strong>Certificate Detail</strong> (if required by category). All fields mandatory in single issuance are also mandatory in bulk issuance.
+        <p style={{ color: GS.muted, fontSize: "0.85rem", marginBottom: "1rem", lineHeight: "1.45" }}>
+          Upload an Excel file (.xlsx) with mandatory columns: <strong>Name</strong>, <strong>Register Number</strong>, <strong>Student Email</strong>, <strong>Department / Course</strong>, <strong>CGPA</strong>, <strong>Start Year</strong>, <strong>Year of Passing</strong>, <strong>Issue Date</strong>, <strong>Certificate Category</strong>, and <strong>Certificate Detail</strong> (mandatory for Course Completion, Internship, Project, Participation, and Bonafide certificates).
         </p>
         {!bulkFile ? (
           <div

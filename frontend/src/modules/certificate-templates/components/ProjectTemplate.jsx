@@ -85,18 +85,22 @@ const ProjectTemplate = forwardRef(({ certificate, templatePreset, qrCodeUrl }, 
         </div>
 
         {/* Academic Details Strip */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', backgroundColor: 'rgba(30,27,75,0.03)', borderTop: '1px solid rgba(184,150,46,0.3)', borderBottom: '1px solid rgba(184,150,46,0.3)', padding: '10px 18px', margin: '8px 0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1fr', gap: '12px', backgroundColor: 'rgba(30,27,75,0.03)', borderTop: '1px solid rgba(184,150,46,0.3)', borderBottom: '1px solid rgba(184,150,46,0.3)', padding: '10px 18px', margin: '8px 0' }}>
           <div>
-            <div style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold' }}>Course</div>
-            <div style={{ fontSize: '0.85rem', color: '#1E1B4B', fontWeight: 'bold', fontFamily: 'Arial, sans-serif' }}>{certificate.course || 'N/A'}</div>
+            <div style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold' }}>Project Title</div>
+            <div style={{ fontSize: '0.85rem', color: '#1E1B4B', fontWeight: 'bold', fontFamily: 'Arial, sans-serif' }}>{certificate.certificate_detail || certificate.course || 'N/A'}</div>
           </div>
           <div>
-            <div style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold' }}>CGPA / Grade</div>
-            <div style={{ fontSize: '0.85rem', color: '#1E1B4B', fontWeight: 'bold', fontFamily: 'Arial, sans-serif' }}>{certificate.cgpa || 'N/A'}</div>
+            <div style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold' }}>Project Period</div>
+            <div style={{ fontSize: '0.85rem', color: '#1E1B4B', fontWeight: 'bold', fontFamily: 'Arial, sans-serif' }}>{certificate.start_year ? `${certificate.start_year} – ${certificate.end_year || ''}` : (certificate.end_year || 'N/A')}</div>
           </div>
           <div>
             <div style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold' }}>Issue Date</div>
             <div style={{ fontSize: '0.85rem', color: '#1E1B4B', fontWeight: 'bold', fontFamily: 'Arial, sans-serif' }}>{certificate.issue_date || 'N/A'}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold' }}>CGPA / Grade</div>
+            <div style={{ fontSize: '0.85rem', color: '#1E1B4B', fontWeight: 'bold', fontFamily: 'Arial, sans-serif' }}>{certificate.cgpa || 'N/A'}</div>
           </div>
         </div>
 

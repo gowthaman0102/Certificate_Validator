@@ -84,6 +84,18 @@ const MeritTemplate = forwardRef(({ certificate, templatePreset, qrCodeUrl }, re
         <div style={{ fontSize: '0.88rem', textAlign: 'center', maxWidth: '680px', lineHeight: '1.6', fontFamily: 'Arial, sans-serif', color: '#334155' }}>
           {formatText(body.lines) || 'Has been awarded this certificate of merit for exceptional academic performance...'}
         </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '10px', fontSize: '0.78rem', color: '#0D2149', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <div>Academic Period: <span style={{ color: '#334155' }}>{certificate.start_year ? `${certificate.start_year} – ${certificate.end_year || ''}` : (certificate.end_year || 'N/A')}</span></div>
+          <div>•</div>
+          <div>Issue Date: <span style={{ color: '#334155' }}>{certificate.issue_date || 'N/A'}</span></div>
+          {certificate.cgpa && (
+            <>
+              <div>•</div>
+              <div>CGPA: <span style={{ color: '#334155' }}>{certificate.cgpa}</span></div>
+            </>
+          )}
+        </div>
       </div>
 
       <div>

@@ -507,7 +507,7 @@ function Home() {
               />
             </svg>
 
-            {/* Hero Brand Title — STEP 0 & 1: Keyed on location.key for route revisit, typewriter effect */}
+            {/* Hero Brand Title */}
             <div className="brand-header-block" key={location.key} style={{ position: "relative", zIndex: 1 }}>
               <h1 className="main-brand-title hero-typewriter">
                 CredentialVault
@@ -517,7 +517,7 @@ function Home() {
               </p>
             </div>
 
-            {/* STEP 3 & 4: Word-by-word sub-headline and description entrance */}
+            {/* Tagline & Description Block */}
             <div className="headline-block" style={{ position: "relative", zIndex: 1 }}>
               <h2 className="headline-text">
                 <span className="hero-word">Verify.</span>{" "}
@@ -526,8 +526,7 @@ function Home() {
                 <span className="hero-word">Forever.</span>
               </h2>
               <p className="headline-description hero-description">
-                CredentialVault helps institutions issue tamper-proof academic
-                certificates and empowers anyone to verify them instantly — even offline.
+                CredentialVault helps institutions issue tamper-proof academic certificates and empowers anyone to verify them instantly — even offline.
               </p>
             </div>
 
@@ -541,19 +540,19 @@ function Home() {
               <div className="dot-matrix-pattern top-right" />
 
               <svg className="orbit-svg" viewBox="0 0 540 370" fill="none">
-                {/* Outer & Inner Dotted Rings with Synchronized Line Junction Nodes */}
+                {/* Static Rings — no rotation */}
                 <g className="diagram-ring-spin-outer">
                   <circle cx="270" cy="190" r="150" stroke="#e0e0e0" strokeWidth="1" strokeDasharray="3 3" />
                   <circle cx="270" cy="190" r="120" stroke="#d5d5d5" strokeWidth="1" />
-                  
-
                 </g>
                 <g className="diagram-ring-spin-inner">
-                  {/* Connector Line Intersection Ring (r=96.2) */}
                   <circle cx="270" cy="190" r="96.2" stroke="#d0d0d0" strokeWidth="1" strokeDasharray="3 3" />
                 </g>
 
-                {/* 4 Connecting Elbow Polyline Paths with Animated Line Flow Layer */}
+                {/* Dashed vertical center guide line */}
+                <line x1="270" y1="230" x2="270" y2="275" stroke="#0a0a0a" strokeWidth="1.5" strokeDasharray="3 3" />
+
+                {/* 4 Static Connecting Elbow Polylines */}
                 <polyline
                   points="140 72, 160 72, 185 145, 205 145"
                   stroke="#0a0a0a" strokeWidth="1.2" fill="none"
@@ -575,21 +574,73 @@ function Home() {
                   className="diagram-line-flow"
                 />
 
-                {/* Dashed vertical center guide line */}
-                <line x1="270" y1="230" x2="270" y2="275" stroke="#0a0a0a" strokeWidth="1.5" strokeDasharray="3 3" />
-
-                {/* Phase 1: Central QR Hub with Pure CSS hubBreathe (3s loop) */}
-                <foreignObject x="220" y="140" width="100" height="100" style={{ overflow: "visible" }}>
+                {/* Phase 1: Central Monochrome Black & White Architectural Security Core */}
+                <foreignObject x="195" y="118" width="150" height="145" style={{ overflow: "visible" }}>
                   <motion.div
                     className="isometric-qr-wrapper-inner"
                     variants={qrHubVariants}
                     style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}
                   >
-                    <div className="shadow-floor" style={{ position: "absolute", width: "88px", height: "42px", background: "rgba(0,0,0,0.12)", filter: "blur(8px)", borderRadius: "50%", bottom: "-10px" }} />
-                    <div className="iso-block-top diagram-hub-breathe" style={{ width: "88px", height: "88px", background: "#ffffff", border: "2px solid #0a0a0a", borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 0 #0a0a0a, 0 12px 0 #e0e0e0", zIndex: 3, padding: "6px" }}>
-                      <svg width="56" height="56" viewBox="0 0 100 100" fill="#0a0a0a">
-                        <path d="M10 10h30v30H10zM16 16v18h18V16zM22 22h6v6h-6zM60 10h30v30H60zM66 16v18h18V16zM72 22h6v6h-6zM10 60h30v30H10zM16 66v18h18V66zM22 72h6v6h-6zM50 10h6v16h-6zM50 34h6v6h-6zM60 50h10v6H60zM76 50h14v6H76zM50 60h10v10H50zM70 60h10v10H70zM86 60h4v20h-4zM60 76h10v14H60zM76 84h14v6H76z" />
-                      </svg>
+                    {/* Shadow Floor */}
+                    <div className="shadow-floor" style={{ position: "absolute", width: "112px", height: "46px", background: "rgba(0,0,0,0.14)", filter: "blur(12px)", borderRadius: "50%", bottom: "-14px" }} />
+
+                    {/* Outer Monochrome Pulse Ring */}
+                    <div className="bw-monochrome-pulse-ring" />
+
+                    {/* High-Contrast Black HUD Reticle Framing Brackets */}
+                    <div className="hud-scanner-reticle" style={{ position: "absolute", width: "124px", height: "124px", pointerEvents: "none", zIndex: 4 }}>
+                      <span className="hud-bracket hud-tl" style={{ borderColor: "#0a0a0a", borderWidth: "2.5px 0 0 2.5px" }} />
+                      <span className="hud-bracket hud-tr" style={{ borderColor: "#0a0a0a", borderWidth: "2.5px 2.5px 0 0" }} />
+                      <span className="hud-bracket hud-bl" style={{ borderColor: "#0a0a0a", borderWidth: "0 0 2.5px 2.5px" }} />
+                      <span className="hud-bracket hud-br" style={{ borderColor: "#0a0a0a", borderWidth: "0 2.5px 2.5px 0" }} />
+                    </div>
+
+                    {/* Main High-Contrast Black & White Security Core */}
+                    <div
+                      className="diagram-hub-breathe bw-architectural-core"
+                      style={{
+                        width: "108px",
+                        height: "108px",
+                        background: "#ffffff",
+                        border: "2.5px solid #0a0a0a",
+                        borderRadius: "20px",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justify: "space-between",
+                        boxShadow: "0 8px 0 #0a0a0a, 0 16px 28px rgba(0, 0, 0, 0.12)",
+                        zIndex: 3,
+                        position: "relative",
+                        overflow: "hidden",
+                        padding: "8px 6px 6px 6px"
+                      }}
+                    >
+                      {/* Monochrome Laser Beam Sweep */}
+                      <div className="bw-laser-sweep" />
+
+                      {/* Top Black Pill Header */}
+                      <div style={{ background: "#0a0a0a", color: "#ffffff", padding: "2px 8px", borderRadius: "999px", display: "flex", alignItems: "center", gap: "4px", zIndex: 2, marginBottom: "2px", whiteSpace: "nowrap" }}>
+                        <span style={{ fontFamily: "var(--font-body)", fontSize: "0.48rem", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" }}>» REWARD</span>
+                      </div>
+
+                      {/* Center Black Vector QR Code with Integrated Shield Emblem */}
+                      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: "54px", height: "54px", zIndex: 2 }}>
+                        <svg width="52" height="52" viewBox="0 0 100 100" fill="#0a0a0a">
+                          <path d="M10 10h30v30H10zM16 16v18h18V16zM22 22h6v6h-6zM60 10h30v30H60zM66 16v18h18V16zM72 22h6v6h-6zM10 60h30v30H10zM16 66v18h18V66zM22 72h6v6h-6zM50 10h6v16h-6zM50 34h6v6h-6zM60 50h10v6H60zM76 50h14v6H76zM50 60h10v10H50zM70 60h10v10H70zM86 60h4v20h-4zM60 76h10v14H60zM76 84h14v6H76z" />
+                        </svg>
+
+                        {/* Central Black Shield Badge with White Lock */}
+                        <div style={{ position: "absolute", width: "18px", height: "18px", background: "#0a0a0a", border: "2px solid #ffffff", borderRadius: "5px", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 4, boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Bottom Ticker: » REWARD */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "3px", zIndex: 2, marginTop: "2px", borderTop: "1px stroke #e5e5e5", paddingTop: "2px", width: "100%", justifyContent: "center", whiteSpace: "nowrap" }}>
+                        <span style={{ fontFamily: "var(--font-body)", fontSize: "0.48rem", fontWeight: 800, color: "#0a0a0a", letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>» REWARD</span>
+                      </div>
                     </div>
                   </motion.div>
                 </foreignObject>

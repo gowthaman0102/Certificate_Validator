@@ -107,8 +107,11 @@ const GraduationTemplate = forwardRef(({ certificate, templatePreset, qrCodeUrl 
             [ {certificate.certificate_detail || 'Faculty Name • Honours / Class'} ]
           </div>
 
-          <div style={{ color: '#555555', fontSize: '0.82rem', fontFamily: 'Georgia, serif' }}>
-            Done at {certificate.university_name || 'Kingsmere'} on [ {certificate.issue_date || 'Date'} ]
+          <div style={{ color: '#555555', fontSize: '0.82rem', fontFamily: 'Georgia, serif', marginTop: '6px' }}>
+            Academic Period: {certificate.start_year ? `${certificate.start_year} – ${certificate.end_year || ''}` : (certificate.end_year || 'N/A')} · Issue Date: {certificate.issue_date || 'N/A'}
+          </div>
+          <div style={{ color: '#555555', fontSize: '0.82rem', fontFamily: 'Georgia, serif', marginTop: '3px' }}>
+            Done at {certificate.university_name || 'Kingsmere'}
           </div>
         </div>
 
