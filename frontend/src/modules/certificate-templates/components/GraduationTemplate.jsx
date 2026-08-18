@@ -128,12 +128,8 @@ const GraduationTemplate = forwardRef(({ certificate, templatePreset, qrCodeUrl 
           </div>
         </div>
 
-        {/* ── BOTTOM CENTER: LATIN MOTTO & OFFICIAL QR CODE ────────────── */}
+        {/* ── BOTTOM CENTER: OFFICIAL QR CODE ────────────── */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '4px' }}>
-          <div style={{ color: '#777777', fontSize: '0.62rem', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: '8px', fontFamily: 'Georgia, serif' }}>
-            LUX MENTIS LUX ORBIS
-          </div>
-
           <img
             src={activeQrUrl}
             alt="Official QR Code"

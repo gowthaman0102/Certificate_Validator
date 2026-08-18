@@ -105,7 +105,16 @@ function verifyCertificate(req, res) {
 
     const certRecord = db.prepare('SELECT * FROM certificates WHERE LOWER(id) = LOWER(?) OR LOWER(certificate_number) = LOWER(?) OR LOWER(REPLACE(certificate_number, \'\\\', \'\')) = LOWER(?)').get(cert_id, cleanCertNum, cleanCertNum);
 
-    const isHashMatch = hashRaw === hash || hashClean === hash || certRecord?.certificate_hash === hash;
+    // 1. The payload fields MUST recompute to match the hash provided in the QR payload
+    const isPayloadHashValid = (hashRaw === hash || hashClean === hash);
+
+    // 2. If certificate exists in database, the DB certificate_hash MUST match the recomputed hash / QR hash
+    let isDbHashValid = true;
+    if (certRecord) {
+      isDbHashValid = (certRecord.certificate_hash === hash || certRecord.certificate_hash === hashRaw || certRecord.certificate_hash === hashClean);
+    }
+
+    const isHashMatch = isPayloadHashValid && isDbHashValid;
     const hashStatus  = isHashMatch ? 'MATCH' : 'MISMATCH';
 
     const certDetails = {

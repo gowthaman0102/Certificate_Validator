@@ -143,7 +143,7 @@ export default function WalletDetailPane({ cert, onDownload, onBackMobile }) {
     revoked:  { cls: "wallet-sig-failed",   text: "✕ Certificate Revoked" },
   };
   const sig = sigMap[sigStatus];
-  const qrUrl = `${API_BASE}/uploads/qr_${cert.id}.png`;
+  const qrUrl = cert?.qr_code_url ? `${API_BASE}${cert.qr_code_url}` : `${API_BASE}/uploads/qr_${cert.id}.png`;
   const isVertical = cert.certificate_category === "Degree / Graduation Certificate";
 
   return (

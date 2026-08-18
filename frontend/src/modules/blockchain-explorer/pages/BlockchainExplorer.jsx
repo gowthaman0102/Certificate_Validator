@@ -297,6 +297,12 @@ function LedgerDetailModal({ anchor, onClose }) {
   const statusUpper = (anchor.status || "").toUpperCase();
   const isRevoked = statusUpper === "REVOKED";
 
+  // Portrait (Graduation) needs different scale & height to show full certificate
+  const isPortrait = certData?.certificate_category === "Degree / Graduation Certificate";
+  const certPreviewScale  = isPortrait ? 0.42 : 0.56;
+  const certPreviewHeight = isPortrait ? "420px" : "400px";
+  const certPreviewWidth  = isPortrait ? "620px" : "800px";
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -390,15 +396,15 @@ function LedgerDetailModal({ anchor, onClose }) {
               border: "1.5px solid #cbd5e1",
               background: "#f8fafc",
               padding: "0.5rem",
-              height: "400px",
+              height: certPreviewHeight,
               overflow: "hidden",
               display: "flex",
               justifyContent: "center",
               alignItems: "flex-start"
             }}>
               <div style={{
-                width: "800px",
-                transform: "scale(0.56)",
+                width: certPreviewWidth,
+                transform: `scale(${certPreviewScale})`,
                 transformOrigin: "top center",
                 marginTop: "0.2rem",
                 flexShrink: 0
