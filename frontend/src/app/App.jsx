@@ -97,11 +97,28 @@ function ProgressBar({ visible }) {
   );
 }
 
+function isTokenExpired(token) {
+  if (!token) return true;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return true;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    if (payload.exp && Date.now() >= payload.exp * 1000) {
+      return true;
+    }
+    return false;
+  } catch (err) {
+    return true;
+  }
+}
+
 function ProtectedRoute({ children, requiredRole }) {
   const token = localStorage.getItem('token');
   const userStr = localStorage.getItem('user');
 
-  if (!token) {
+  if (!token || isTokenExpired(token)) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     return <Navigate to={requiredRole === 'UNIVERSITY' ? '/university-login' : '/student-login'} replace />;
   }
 

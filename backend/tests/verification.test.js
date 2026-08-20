@@ -138,6 +138,39 @@ test('14. Year Gap Validation — Rejects > 4-Year Gap between Start Year and Ye
   uploadCertificate(req, res);
 
   assert.equal(statusCode, 400);
-  assert.ok(responseData.error.includes('cannot exceed 4 years'));
+  assert.ok(responseData.error.includes('must be exactly 4 years'));
+});
+
+test('15. Year Gap Validation — Rejects Non-4-Year Gap (e.g. 1 Year Gap 2025-2026)', () => {
+  const { uploadCertificate } = require('../modules/certificate/certificateController');
+  const uni = db.prepare('SELECT * FROM universities LIMIT 1').get();
+
+  const req = {
+    user: { id: uni.user_id },
+    body: {
+      student_name: 'Jane ShortPeriod',
+      register_number: 'REG101',
+      student_email: 'jane@test.com',
+      course: 'Computer Science',
+      cgpa: '9.0',
+      start_year: '2025',
+      end_year: '2026', // 1 year gap (must be 4)
+      issue_date: '2026-08-01',
+      certificate_category: 'Course Completion Certificate',
+      certificate_detail: 'Web Design',
+    },
+  };
+
+  let statusCode = 0;
+  let responseData = null;
+  const res = {
+    status: (code) => { statusCode = code; return res; },
+    json: (data) => { responseData = data; return res; },
+  };
+
+  uploadCertificate(req, res);
+
+  assert.equal(statusCode, 400);
+  assert.ok(responseData.error.includes('must be exactly 4 years'));
 });
 

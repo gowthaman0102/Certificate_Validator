@@ -18,7 +18,20 @@ const templateRoutes   = require('./modules/certificate-templates/templateRoutes
 const disclosureRoutes = require('./modules/skill-passport-wallet/disclosureRoutes');
 const goalRoutes       = require('./modules/skill-passport-wallet/goalRoutes');
 
+const { apiRateLimiter } = require('./core/middleware/rateLimiter');
+
 const app = express();
+
+// ── Security Headers Middleware (Helmet Equivalent Hardening - Finding 13) ────
+app.use((req, res, next) => {
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
+});
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
@@ -37,8 +50,19 @@ app.use(cors({
   },
   credentials: true,
 }));
+
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ── Apply Global Rate Limiter to /api routes (Finding 10) ────────────────────
+app.use('/api', apiRateLimiter);
+
+// ── Static uploads: Protect raw PDF certificates from public exposure (Finding 5) ──
+app.use('/uploads', (req, res, next) => {
+  if (req.path.toLowerCase().endsWith('.pdf')) {
+    return res.status(403).json({ error: 'Direct PDF download prohibited. Use authenticated certificate download endpoint.' });
+  }
+  next();
+}, express.static(path.join(__dirname, 'uploads')));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
@@ -98,6 +122,19 @@ app.use('/api/passport', passportRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api', disclosureRoutes);
 app.use('/api/goals', goalRoutes);
+
+// ── Global Express Error Handler (Bug 3) ───────────────────────────────────
+app.use((err, req, res, next) => {
+  console.error('[Global Express Error Handler]', err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  const statusCode = err.statusCode || err.status || 500;
+  res.status(statusCode).json({
+    error: err.message || 'Internal Server Error',
+    statusCode,
+  });
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

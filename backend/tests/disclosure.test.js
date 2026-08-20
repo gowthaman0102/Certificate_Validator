@@ -26,7 +26,7 @@ test('13. Selective Disclosure — Valid Predicate, Refused False Predicate & Ta
   const reqTrue = {
     params: { id: certId },
     body: { claim_type: 'cgpa_gte', claim_value: '3.5' },
-    user: { id: 'student_123', role: 'STUDENT' },
+    user: { id: 'student_123', email: 'disc@test.com', role: 'STUDENT' },
   };
 
   let trueResData = null;
@@ -70,7 +70,7 @@ test('13. Selective Disclosure — Valid Predicate, Refused False Predicate & Ta
   const reqFalse = {
     params: { id: certId },
     body: { claim_type: 'cgpa_gte', claim_value: '3.95' },
-    user: { id: 'student_123', role: 'STUDENT' },
+    user: { id: 'student_123', email: 'disc@test.com', role: 'STUDENT' },
   };
 
   let falseResData = null;

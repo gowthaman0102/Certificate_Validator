@@ -23,6 +23,10 @@ function register(req, res) {
       return res.status(400).json({ error: 'Name, email, password, and role are required' });
     }
 
+    if (String(password).length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
     if (!['UNIVERSITY', 'STUDENT'].includes(role)) {
       return res.status(400).json({ error: 'Role must be UNIVERSITY or STUDENT' });
     }
@@ -138,6 +142,18 @@ function login(req, res) {
     console.error(err);
     res.status(500).json({ error: 'Login failed' });
   }
+function logout(req, res) {
+  try {
+    if (req.user) {
+      logAudit(req, {
+        module: 'AUTH', action: 'LOGOUT', status: 'SUCCESS',
+        user_id: req.user.id, user_email: req.user.email, role: req.user.role,
+      });
+    }
+    res.json({ message: 'Logout successful' });
+  } catch (err) {
+    res.status(500).json({ error: 'Logout failed' });
+  }
 }
 
-module.exports = { register, login };
+module.exports = { register, login, logout };

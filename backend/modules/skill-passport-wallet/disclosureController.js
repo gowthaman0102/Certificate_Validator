@@ -35,6 +35,19 @@ function createDisclosure(req, res) {
       return res.status(404).json({ error: 'Issuing university not found' });
     }
 
+    // Verify user authorization: student must own the certificate, or university must have issued it (Finding 2)
+    const authUser = req.user;
+    if (authUser) {
+      const isOwnerStudent = (cert.student_user_id && cert.student_user_id === authUser.id) ||
+        (cert.student_email && authUser.email && cert.student_email.toLowerCase() === authUser.email.toLowerCase()) ||
+        (cert.register_number && cert.register_number === authUser.register_number);
+      const isIssuerUni = (uni.user_id === authUser.id);
+
+      if (!isOwnerStudent && !isIssuerUni) {
+        return res.status(403).json({ error: 'You are not authorized to generate a selective disclosure for this certificate' });
+      }
+    }
+
     // Evaluate predicate condition
     let isValidClaim = false;
     let claimDescription = '';

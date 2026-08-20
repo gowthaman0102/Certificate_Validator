@@ -145,15 +145,9 @@ function UniversityDashboard() {
     const s = parseInt(sVal, 10);
     const e = parseInt(eVal, 10);
     if (!isNaN(s) && !isNaN(e)) {
-      if (e < s) {
-        const msg = `Year of Passing (${e}) cannot be earlier than Start Year (${s}).`;
-        alert(msg);
-        setError(msg);
-        return false;
-      }
-      if (e - s > 4) {
-        const msg = `Invalid Academic Duration: The gap between Start Year (${s}) and Year of Passing (${e}) is ${e - s} years. Maximum allowed gap is 4 years!`;
-        alert(msg);
+      const gap = e - s;
+      if (gap !== 4) {
+        const msg = `Invalid Academic Duration: The gap between Start Year (${s}) and Year of Passing (${e}) is ${gap} ${gap === 1 ? 'year' : 'years'}. The required duration between Start Year and Year of Passing is exactly 4 years (e.g., 2022 to 2026).`;
         setError(msg);
         return false;
       }

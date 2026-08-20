@@ -2,8 +2,9 @@ const Database = require('better-sqlite3');
 const path = require('path');
 require('dotenv').config();
 
-const DB_PATH = process.env.DB_PATH || './database.sqlite';
-const db = new Database(path.resolve(__dirname, '../..', DB_PATH));
+const isTest = process.env.NODE_ENV === 'test';
+const DB_PATH = isTest ? ':memory:' : (process.env.DB_PATH || './database.sqlite');
+const db = new Database(isTest ? ':memory:' : path.resolve(__dirname, '../..', DB_PATH));
 
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');

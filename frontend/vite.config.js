@@ -16,7 +16,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icons.svg', 'pwa-icon-192.jpg', 'pwa-icon-512.jpg'],
+      includeAssets: ['favicon.svg', 'pwa-icon-192.jpg', 'pwa-icon-512.jpg'],
 
       manifest: {
         name: 'Certificate Validator — Crest',

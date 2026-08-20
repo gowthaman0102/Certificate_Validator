@@ -34,7 +34,7 @@ async function sendMessage(req, res) {
 async function getHistory(req, res) {
   try {
     const session_id = req.query.session_id;
-    const user_id = req.query.user_id;
+    const user_id = req.user ? req.user.id : null;
 
     const history = fetchHistory(req, { session_id, user_id });
     return res.status(200).json({
@@ -56,7 +56,7 @@ async function getHistory(req, res) {
 async function clearHistory(req, res) {
   try {
     const session_id = req.query.session_id || req.body?.session_id;
-    const user_id = req.query.user_id || req.body?.user_id;
+    const user_id = req.user ? req.user.id : null;
 
     const deletedCount = purgeHistory(req, { session_id, user_id });
     return res.status(200).json({

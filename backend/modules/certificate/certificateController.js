@@ -167,11 +167,9 @@ async function uploadCertificate(req, res) {
     const sYearNum = parseInt(start_year, 10);
     const eYearNum = parseInt(end_year, 10);
     if (!isNaN(sYearNum) && !isNaN(eYearNum)) {
-      if (eYearNum < sYearNum) {
-        return res.status(400).json({ error: `Year of Passing (${end_year}) cannot be earlier than Start Year (${start_year})` });
-      }
-      if (eYearNum - sYearNum > 4) {
-        return res.status(400).json({ error: `The gap between Start Year (${start_year}) and Year of Passing (${end_year}) cannot exceed 4 years` });
+      const gap = eYearNum - sYearNum;
+      if (gap !== 4) {
+        return res.status(400).json({ error: `Invalid Academic Duration: The gap between Start Year (${start_year}) and Year of Passing (${end_year}) must be exactly 4 years (e.g., 2022 to 2026)` });
       }
     }
 
@@ -388,7 +386,18 @@ function getCertificateByCertNumber(req, res) {
 function getCertificatesByUniversity(req, res) {
   try {
     const { id } = req.params;
-    const certs = db.prepare('SELECT * FROM certificates WHERE university_id = ? ORDER BY created_at DESC').all(id);
+    const authUser = req.user;
+
+    const uni = db.prepare('SELECT * FROM universities WHERE id = ? OR issuer_code = ?').get(id, id);
+    if (!uni) {
+      return res.status(404).json({ error: 'University not found' });
+    }
+
+    if (authUser.role === 'UNIVERSITY' && uni.user_id !== authUser.id) {
+      return res.status(403).json({ error: 'You are not authorized to view certificates issued by another university' });
+    }
+
+    const certs = db.prepare('SELECT * FROM certificates WHERE university_id = ? ORDER BY created_at DESC').all(uni.id);
     res.json(certs);
   } catch (err) {
     console.error(err);
@@ -399,17 +408,24 @@ function getCertificatesByUniversity(req, res) {
 function getCertificatesByEmail(req, res) {
   try {
     const { email } = req.query;
-    if (!email) {
+    const authUser = req.user;
+    const targetEmail = (email || authUser?.email || '').trim().toLowerCase();
+
+    if (!targetEmail) {
       return res.status(400).json({ error: 'email query parameter is required' });
     }
-    const normalizedEmail = email.trim().toLowerCase();
+
+    if (authUser.role === 'STUDENT' && authUser.email.toLowerCase() !== targetEmail) {
+      return res.status(403).json({ error: 'You are only authorized to view your own certificates' });
+    }
+
     const certs = db.prepare(`
       SELECT c.*, u.name as university_name
       FROM certificates c
       JOIN universities u ON c.university_id = u.id
-      WHERE c.student_email = ?
+      WHERE LOWER(c.student_email) = LOWER(?)
       ORDER BY c.created_at DESC
-    `).all(normalizedEmail);
+    `).all(targetEmail);
     res.json(certs);
   } catch (err) {
     console.error(err);
@@ -420,17 +436,24 @@ function getCertificatesByEmail(req, res) {
 function getCertificatesByRegisterNumber(req, res) {
   try {
     const { registerNumber } = req.query;
-    if (!registerNumber) {
+    const authUser = req.user;
+    const targetRegNo = (registerNumber || authUser?.register_number || '').trim();
+
+    if (!targetRegNo) {
       return res.status(400).json({ error: 'registerNumber query parameter is required' });
     }
-    const normalized = registerNumber.trim();
+
+    if (authUser.role === 'STUDENT' && authUser.register_number && authUser.register_number !== targetRegNo) {
+      return res.status(403).json({ error: 'You are only authorized to view your own certificates' });
+    }
+
     const certs = db.prepare(`
       SELECT c.*, u.name as university_name
       FROM certificates c
       JOIN universities u ON c.university_id = u.id
       WHERE c.register_number = ?
       ORDER BY c.created_at DESC
-    `).all(normalized);
+    `).all(targetRegNo);
     res.json(certs);
   } catch (err) {
     console.error(err);
@@ -497,12 +520,9 @@ async function bulkUploadCertificates(req, res) {
         const sYearNum = parseInt(start_year, 10);
         const eYearNum = parseInt(end_year, 10);
         if (!isNaN(sYearNum) && !isNaN(eYearNum)) {
-          if (eYearNum < sYearNum) {
-            results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'invalid_year_gap', error: `Year of Passing (${end_year}) cannot be earlier than Start Year (${start_year})` });
-            continue;
-          }
-          if (eYearNum - sYearNum > 4) {
-            results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'invalid_year_gap', error: `The gap between Start Year (${start_year}) and Year of Passing (${end_year}) is ${eYearNum - sYearNum} years (maximum allowed is 4 years)` });
+          const gap = eYearNum - sYearNum;
+          if (gap !== 4) {
+            results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'invalid_year_gap', error: `Invalid Academic Duration: The gap between Start Year (${start_year}) and Year of Passing (${end_year}) is ${gap} ${gap === 1 ? 'year' : 'years'} (must be exactly 4 years)` });
             continue;
           }
         }
@@ -681,6 +701,20 @@ async function bulkUploadCertificates(req, res) {
 function getCertificatesByIdentity(req, res) {
   try {
     const { email, registerNumber } = req.query;
+    const authUser = req.user;
+
+    if (authUser.role === 'STUDENT') {
+      const studentEmail = (authUser.email || '').toLowerCase();
+      const studentRegNo = authUser.register_number;
+
+      if (email && email.trim().toLowerCase() !== studentEmail) {
+        return res.status(403).json({ error: 'You are only authorized to view your own certificates' });
+      }
+      if (registerNumber && studentRegNo && registerNumber.trim() !== studentRegNo) {
+        return res.status(403).json({ error: 'You are only authorized to view your own certificates' });
+      }
+    }
+
     if (!registerNumber && !email) {
       return res.status(400).json({ error: 'email or registerNumber query parameter is required' });
     }

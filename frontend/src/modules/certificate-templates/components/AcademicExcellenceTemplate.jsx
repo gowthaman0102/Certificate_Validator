@@ -1,14 +1,10 @@
 import React, { forwardRef } from 'react';
 import { getCertificateBody } from '../../skill-passport-wallet/utils/certificateCategory';
-import { API_BASE } from '../../../app/config';
+import { useQrDataUrl } from '../../../app/useQrDataUrl';
 
 const AcademicExcellenceTemplate = forwardRef(({ certificate, templatePreset, qrCodeUrl }, ref) => {
   const body = getCertificateBody(certificate);
-  const certId = certificate?.id || certificate?.cert_id;
-  const activeQrUrl = qrCodeUrl ||
-    (certificate?.qr_code_url ? `${API_BASE}${certificate.qr_code_url}` :
-    (certId ? `${API_BASE}/uploads/qr_${certId}.png` :
-    `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(certificate?.certificate_number || certificate?.student_name || 'VERIFIED')}`));
+  const activeQrUrl = useQrDataUrl(certificate, qrCodeUrl);
 
   const containerStyle = {
     width: '850px',
@@ -123,10 +119,6 @@ const AcademicExcellenceTemplate = forwardRef(({ certificate, templatePreset, qr
               <img
                 src={activeQrUrl}
                 alt="Official QR Code"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(certificate?.certificate_number || certificate?.student_name || 'VERIFIED')}`;
-                }}
                 style={{ width: '100px', height: '100px', border: '2px solid #0B3D2E', display: 'block', imageRendering: 'pixelated', padding: '3px', backgroundColor: '#fff' }}
               />
             </div>

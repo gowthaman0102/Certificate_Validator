@@ -16,10 +16,11 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
   fileFilter: function (req, file, cb) {
-    if (file.mimetype === 'application/pdf') {
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    if (ext === '.pdf' && file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF files are allowed'), false);
+      cb(new Error('Security error: Only valid PDF documents (.pdf) are allowed'), false);
     }
   }
 });
