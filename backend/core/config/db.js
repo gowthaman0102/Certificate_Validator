@@ -8,7 +8,12 @@ const db = new Database(path.resolve(__dirname, '../..', DB_PATH));
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
+let isInitialized = false;
+
 function initDB() {
+  if (isInitialized) return;
+  isInitialized = true;
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -19,6 +24,12 @@ function initDB() {
       register_number TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS processed_nonces (
+      nonce TEXT PRIMARY KEY,
+      used_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_processed_nonces_used_at ON processed_nonces(used_at);
 
     CREATE TABLE IF NOT EXISTS universities (
       id TEXT PRIMARY KEY,
@@ -97,7 +108,22 @@ function initDB() {
     );
     CREATE INDEX IF NOT EXISTS idx_wallet_events_user ON wallet_events(student_user_id);
     CREATE INDEX IF NOT EXISTS idx_wallet_events_cert ON wallet_events(certificate_id);
+  `);
 
+  // Migration: add certificate_category and certificate_detail to certificates table
+  const certColumns = db.pragma('table_info(certificates)').map((c) => c.name);
+  if (!certColumns.includes('certificate_category')) {
+    db.exec("ALTER TABLE certificates ADD COLUMN certificate_category TEXT DEFAULT 'Degree / Graduation Certificate';");
+    console.log('Migration: added certificate_category column to certificates table');
+  }
+  if (!certColumns.includes('certificate_detail')) {
+    db.exec("ALTER TABLE certificates ADD COLUMN certificate_detail TEXT DEFAULT '';");
+    console.log('Migration: added certificate_detail column to certificates table');
+  }
+  // Backfill any null or empty category values
+  db.exec("UPDATE certificates SET certificate_category = 'Degree / Graduation Certificate' WHERE certificate_category IS NULL OR certificate_category = '';");
+
+  db.exec(`
     CREATE TABLE IF NOT EXISTS verification_events (
       id TEXT PRIMARY KEY,
       university_id TEXT NOT NULL,
@@ -157,17 +183,6 @@ function initDB() {
     CREATE INDEX IF NOT EXISTS idx_audit_module      ON audit_logs(module);
     CREATE INDEX IF NOT EXISTS idx_audit_action      ON audit_logs(action);
   `);
-
-  // Migration: add certificate_category and certificate_detail to certificates table
-  const certColumns = db.pragma('table_info(certificates)').map((c) => c.name);
-  if (!certColumns.includes('certificate_category')) {
-    db.exec("ALTER TABLE certificates ADD COLUMN certificate_category TEXT DEFAULT 'Course Completion Certificate';");
-    console.log('Migration: added certificate_category column to certificates table');
-  }
-  if (!certColumns.includes('certificate_detail')) {
-    db.exec("ALTER TABLE certificates ADD COLUMN certificate_detail TEXT DEFAULT '';");
-    console.log('Migration: added certificate_detail column to certificates table');
-  }
 
   // Blockchain anchor ledger — append-only, never UPDATE or DELETE
   db.exec(`

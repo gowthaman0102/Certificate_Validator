@@ -85,7 +85,7 @@ export default function PublicSkillPassport() {
         >
           Verified Academic Identity
         </motion.h2>
-        <Link to="/" style={{ color: GS.ink, textDecoration: "underline", fontSize: "0.9rem" }}>Certificate Validator Home</Link>
+        <Link to="/" className="btn-back-home-oval">← Back to Home</Link>
       </div>
 
       {/* Profile Header Card */}

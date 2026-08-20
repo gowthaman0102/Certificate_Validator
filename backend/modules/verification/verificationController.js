@@ -21,10 +21,11 @@ function normaliseSignatureToHex(signature, sigEnc) {
 function verifyCertificate(req, res) {
   try {
     const {
-      cert_id, certificate_number, register_number, student_name, course,
+      cert_id: raw_cert_id, id: raw_id, certificate_number, register_number, student_name, course,
       cgpa, start_year, end_year, issue_date, issuer_id, hash, signature,
       sig_enc, scan_nonce, scan_ts,
     } = req.body;
+    const cert_id = raw_cert_id || raw_id;
 
     const verifiedAt       = new Date().toISOString();
     const verificationMode = 'ONLINE';

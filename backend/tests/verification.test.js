@@ -107,3 +107,37 @@ test('11. Verification Fails on Hash Mismatch (Data Tampering)', () => {
   assert.equal(responseData.result, 'HASH_MISMATCH');
   assert.equal(responseData.hashStatus, 'MISMATCH');
 });
+
+test('14. Year Gap Validation — Rejects > 4-Year Gap between Start Year and Year of Passing', () => {
+  const { uploadCertificate } = require('../modules/certificate/certificateController');
+  const uni = db.prepare('SELECT * FROM universities LIMIT 1').get();
+
+  const req = {
+    user: { id: uni.user_id },
+    body: {
+      student_name: 'John Test',
+      register_number: 'REG100',
+      student_email: 'john@test.com',
+      course: 'Computer Science',
+      cgpa: '8.5',
+      start_year: '2020',
+      end_year: '2026', // 6 year gap (> 4)
+      issue_date: '2026-08-01',
+      certificate_category: 'Course Completion Certificate',
+      certificate_detail: 'Full Stack',
+    },
+  };
+
+  let statusCode = 0;
+  let responseData = null;
+  const res = {
+    status: (code) => { statusCode = code; return res; },
+    json: (data) => { responseData = data; return res; },
+  };
+
+  uploadCertificate(req, res);
+
+  assert.equal(statusCode, 400);
+  assert.ok(responseData.error.includes('cannot exceed 4 years'));
+});
+

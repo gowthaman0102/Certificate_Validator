@@ -164,6 +164,17 @@ async function uploadCertificate(req, res) {
       return res.status(400).json({ error: `Certificate Detail is required for '${certCategory}'` });
     }
 
+    const sYearNum = parseInt(start_year, 10);
+    const eYearNum = parseInt(end_year, 10);
+    if (!isNaN(sYearNum) && !isNaN(eYearNum)) {
+      if (eYearNum < sYearNum) {
+        return res.status(400).json({ error: `Year of Passing (${end_year}) cannot be earlier than Start Year (${start_year})` });
+      }
+      if (eYearNum - sYearNum > 4) {
+        return res.status(400).json({ error: `The gap between Start Year (${start_year}) and Year of Passing (${end_year}) cannot exceed 4 years` });
+      }
+    }
+
     // ── Strict 3-way credential verification (Name, Register Number, Student Email) ──
     const credCheck = verifyStudentCredentials(student_name, register_number, student_email);
     if (!credCheck.valid) {
@@ -337,12 +348,9 @@ function getCertificateByCertNumber(req, res) {
   try {
     const { certNumber } = req.params;
     let trimmed = (certNumber || '').replace(/\\/g, '').trim();
-    // Handle accidental double-concatenated paste e.g. ABCABC
-    const half = Math.floor(trimmed.length / 2);
-    if (trimmed.length > 6 && trimmed.length % 2 === 0 && trimmed.substring(0, half) === trimmed.substring(half)) {
-      trimmed = trimmed.substring(0, half);
-    }
-    const cert = db.prepare(`
+
+    // 1. First attempt exact match lookup in DB
+    let cert = db.prepare(`
       SELECT c.*, u.name as university_name, u.issuer_code
       FROM certificates c
       JOIN universities u ON c.university_id = u.id
@@ -350,6 +358,23 @@ function getCertificateByCertNumber(req, res) {
          OR LOWER(c.id) = LOWER(?)
          OR LOWER(REPLACE(c.certificate_number, '\\', '')) = LOWER(?)
     `).get(trimmed, trimmed, trimmed);
+
+    // 2. Only if no match is found, try double-concatenated paste fallback e.g. ABCABC -> ABC
+    if (!cert) {
+      const half = Math.floor(trimmed.length / 2);
+      if (trimmed.length > 6 && trimmed.length % 2 === 0 && trimmed.substring(0, half) === trimmed.substring(half)) {
+        const fallbackTrimmed = trimmed.substring(0, half);
+        cert = db.prepare(`
+          SELECT c.*, u.name as university_name, u.issuer_code
+          FROM certificates c
+          JOIN universities u ON c.university_id = u.id
+          WHERE LOWER(c.certificate_number) = LOWER(?)
+             OR LOWER(c.id) = LOWER(?)
+             OR LOWER(REPLACE(c.certificate_number, '\\', '')) = LOWER(?)
+        `).get(fallbackTrimmed, fallbackTrimmed, fallbackTrimmed);
+      }
+    }
+
     if (!cert) {
       return res.status(404).json({ error: `Certificate '${trimmed}' not found in system registry` });
     }
@@ -428,6 +453,7 @@ async function bulkUploadCertificates(req, res) {
     }
 
     const results = [];
+    const validItems = [];
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
@@ -466,6 +492,19 @@ async function bulkUploadCertificates(req, res) {
         if (NEEDS_DETAIL_CATEGORIES.has(certCategory) && !certDetail) {
           results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'missing_fields', error: `Missing mandatory field: 'Certificate Detail' is required for '${certCategory}'` });
           continue;
+        }
+
+        const sYearNum = parseInt(start_year, 10);
+        const eYearNum = parseInt(end_year, 10);
+        if (!isNaN(sYearNum) && !isNaN(eYearNum)) {
+          if (eYearNum < sYearNum) {
+            results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'invalid_year_gap', error: `Year of Passing (${end_year}) cannot be earlier than Start Year (${start_year})` });
+            continue;
+          }
+          if (eYearNum - sYearNum > 4) {
+            results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'invalid_year_gap', error: `The gap between Start Year (${start_year}) and Year of Passing (${end_year}) is ${eYearNum - sYearNum} years (maximum allowed is 4 years)` });
+            continue;
+          }
         }
 
         const normalizedRegNo  = String(register_number).trim();
@@ -543,45 +582,78 @@ async function bulkUploadCertificates(req, res) {
         const qrFilePath = path.join(__dirname, '..', '..', 'uploads', qrFileName);
         await QRCode.toFile(qrFilePath, qrData, { width: 1200, errorCorrectionLevel: 'H' });
 
-        db.prepare(`
-          INSERT INTO certificates
-            (id, certificate_number, register_number, student_name, student_email, student_user_id, course, cgpa,
-             start_year, end_year, issue_date, certificate_hash, signature, university_id,
-             file_path, qr_data, status, certificate_category, certificate_detail)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'VALID', ?, ?)
-        `).run(
-          certificateId, certificateNumber, normalizedRegNo, student_name, normalizedEmail, credCheck.studentUserId || null,
-          course, cgpa || null, start_year || null, end_year, issue_date,
-          certificateHash, signature, university.id, null, qrData,
-          certCategory, certDetail || null
-        );
-
-        // ── Blockchain hash anchoring (non-blocking per row) ──────────────────
-        let bcAnchor = null;
-        try {
-          bcAnchor = anchorToBlockchain({
-            certHash:       certificateHash,
-            certId:         certificateId,
-            certNumber:     certificateNumber,
-            issuerCode:     university.issuer_code,
-            universityName: university.name,
-          });
-        } catch (bcErr) {
-          console.error('[blockchain] Bulk anchor failed for row', rowNum, ':', bcErr.message);
-        }
-
-        results.push({
-          row: rowNum,
-          register_number: normalizedRegNo,
+        // Collect valid row for atomic batch insertion
+        validItems.push({
+          rowNum,
+          id: certificateId,
+          certificateNumber,
+          normalizedRegNo,
           student_name,
-          certificate_number: certificateNumber,
-          certificate_category: certCategory,
-          success: true,
-          blockchain: bcAnchor ? { anchored: true, txId: bcAnchor.txId, blockNumber: bcAnchor.blockNumber } : { anchored: false },
+          normalizedEmail,
+          studentUserId: credCheck.studentUserId || null,
+          course,
+          cgpa: cgpa || null,
+          start_year: start_year || null,
+          end_year,
+          issue_date,
+          certificateHash,
+          signature,
+          qrData,
+          certCategory,
+          certDetail: certDetail || null,
         });
       } catch (rowErr) {
         console.error('Bulk row error:', rowErr);
         results.push({ row: rowNum, register_number: row.register_number || '(unknown)', success: false, error: rowErr.message });
+      }
+    }
+
+    // Execute atomic DB transaction for all valid rows
+    if (validItems.length > 0) {
+      const insertStmt = db.prepare(`
+        INSERT INTO certificates
+          (id, certificate_number, register_number, student_name, student_email, student_user_id, course, cgpa,
+           start_year, end_year, issue_date, certificate_hash, signature, university_id,
+           file_path, qr_data, status, certificate_category, certificate_detail)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'VALID', ?, ?)
+      `);
+
+      const executeTransaction = db.transaction((items) => {
+        for (const item of items) {
+          insertStmt.run(
+            item.id, item.certificateNumber, item.normalizedRegNo, item.student_name, item.normalizedEmail, item.studentUserId,
+            item.course, item.cgpa, item.start_year, item.end_year, item.issue_date,
+            item.certificateHash, item.signature, university.id, null, item.qrData,
+            item.certCategory, item.certDetail
+          );
+        }
+      });
+
+      executeTransaction(validItems);
+
+      for (const item of validItems) {
+        let bcAnchor = null;
+        try {
+          bcAnchor = anchorToBlockchain({
+            certHash:       item.certificateHash,
+            certId:         item.id,
+            certNumber:     item.certificateNumber,
+            issuerCode:     university.issuer_code,
+            universityName: university.name,
+          });
+        } catch (bcErr) {
+          console.error('[blockchain] Bulk anchor failed for row', item.rowNum, ':', bcErr.message);
+        }
+
+        results.push({
+          row: item.rowNum,
+          register_number: item.normalizedRegNo,
+          student_name: item.student_name,
+          certificate_number: item.certificateNumber,
+          certificate_category: item.certCategory,
+          success: true,
+          blockchain: bcAnchor ? { anchored: true, txId: bcAnchor.txId, blockNumber: bcAnchor.blockNumber } : { anchored: false },
+        });
       }
     }
 
@@ -674,7 +746,7 @@ async function revokeCertificate(req, res) {
       return res.status(404).json({ error: 'Certificate not found' });
     }
 
-    if (cert.university_id !== university.id && cert.university_id !== university.user_id) {
+    if (cert.university_id !== university.id) {
       return res.status(403).json({ error: 'You are not authorized to revoke certificates issued by another university' });
     }
 

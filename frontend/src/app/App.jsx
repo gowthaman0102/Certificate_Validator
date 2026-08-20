@@ -97,6 +97,26 @@ function ProgressBar({ visible }) {
   );
 }
 
+function ProtectedRoute({ children, requiredRole }) {
+  const token = localStorage.getItem('token');
+  const userStr = localStorage.getItem('user');
+
+  if (!token) {
+    return <Navigate to={requiredRole === 'UNIVERSITY' ? '/university-login' : '/student-login'} replace />;
+  }
+
+  if (requiredRole && userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      if (user.role && user.role !== requiredRole) {
+        return <Navigate to={user.role === 'UNIVERSITY' ? '/university' : '/student'} replace />;
+      }
+    } catch {}
+  }
+
+  return children;
+}
+
 /* ── Animated Routes ───────────────────────────────────────────────
    Must be a child of BrowserRouter so useLocation() works.
    Keying Routes on location.key ensures React treats every navigation
@@ -115,19 +135,19 @@ function AnimatedRoutes() {
         <Route path="/register"                  element={<PageWrapper><StudentRegister /></PageWrapper>} />
         <Route path="/student-register"          element={<PageWrapper><StudentRegister /></PageWrapper>} />
         <Route path="/university-register"       element={<PageWrapper><UniversityRegister /></PageWrapper>} />
-        <Route path="/university"                element={<PageWrapper><UniversityDashboard /></PageWrapper>} />
-        <Route path="/university/templates"      element={<PageWrapper><TemplateManager /></PageWrapper>} />
-        <Route path="/student"                   element={<PageWrapper><StudentDashboard /></PageWrapper>} />
-        <Route path="/student-dashboard"         element={<PageWrapper><StudentDashboard /></PageWrapper>} />
+        <Route path="/university"                element={<ProtectedRoute requiredRole="UNIVERSITY"><PageWrapper><UniversityDashboard /></PageWrapper></ProtectedRoute>} />
+        <Route path="/university/templates"      element={<ProtectedRoute requiredRole="UNIVERSITY"><PageWrapper><TemplateManager /></PageWrapper></ProtectedRoute>} />
+        <Route path="/student"                   element={<ProtectedRoute requiredRole="STUDENT"><PageWrapper><StudentDashboard /></PageWrapper></ProtectedRoute>} />
+        <Route path="/student-dashboard"         element={<ProtectedRoute requiredRole="STUDENT"><PageWrapper><StudentDashboard /></PageWrapper></ProtectedRoute>} />
         <Route path="/passport"                  element={<Navigate to="/wallet" replace />} />
-        <Route path="/skill-passport"            element={<PageWrapper><DigitalSkillPassport /></PageWrapper>} />
+        <Route path="/skill-passport"            element={<ProtectedRoute requiredRole="STUDENT"><PageWrapper><DigitalSkillPassport /></PageWrapper></ProtectedRoute>} />
         <Route path="/student/profile/:id"       element={<PageWrapper><PublicSkillPassport /></PageWrapper>} />
         <Route path="/verify"                    element={<PageWrapper><Verifier /></PageWrapper>} />
-        <Route path="/wallet"                    element={<PageWrapper><WalletDashboard /></PageWrapper>} />
-        <Route path="/audit"                     element={<PageWrapper><AuditLog /></PageWrapper>} />
-        <Route path="/analytics/university"      element={<PageWrapper><UniversityAnalytics /></PageWrapper>} />
-        <Route path="/analytics/student"         element={<PageWrapper><StudentAnalytics /></PageWrapper>} />
-        <Route path="/analytics/verification"    element={<PageWrapper><VerificationAnalytics /></PageWrapper>} />
+        <Route path="/wallet"                    element={<ProtectedRoute requiredRole="STUDENT"><PageWrapper><WalletDashboard /></PageWrapper></ProtectedRoute>} />
+        <Route path="/audit"                     element={<ProtectedRoute requiredRole="UNIVERSITY"><PageWrapper><AuditLog /></PageWrapper></ProtectedRoute>} />
+        <Route path="/analytics/university"      element={<ProtectedRoute requiredRole="UNIVERSITY"><PageWrapper><UniversityAnalytics /></PageWrapper></ProtectedRoute>} />
+        <Route path="/analytics/student"         element={<ProtectedRoute requiredRole="STUDENT"><PageWrapper><StudentAnalytics /></PageWrapper></ProtectedRoute>} />
+        <Route path="/analytics/verification"    element={<ProtectedRoute requiredRole="UNIVERSITY"><PageWrapper><VerificationAnalytics /></PageWrapper></ProtectedRoute>} />
         <Route path="/blockchain-explorer"       element={<PageWrapper><BlockchainExplorer /></PageWrapper>} />
         <Route path="/disclosure/:disclosureId"  element={<PageWrapper><PublicDisclosureView /></PageWrapper>} />
       </Routes>

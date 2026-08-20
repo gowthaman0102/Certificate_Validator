@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import CategoryCertificateTemplate from "../components/CategoryCertificateTemplate";
@@ -60,7 +60,7 @@ export default function TemplateManager() {
       <div className="dashboard-header">
         <div>
           <h2 style={{ margin: 0, fontWeight: 700 }}>Certificate Template Preview</h2>
-          <Link to="/university" style={{ color: GS.ink, fontSize: "0.9rem", fontWeight: 500, textDecoration: "underline", marginTop: "0.2rem", display: "inline-block" }}>← Back to University Dashboard</Link>
+          <Link to="/university" className="btn-secondary" style={{ fontSize: "0.85rem", padding: "0.4rem 0.9rem" }}>← Back to Dashboard</Link>
         </div>
         <button className="btn" onClick={() => navigate("/university")}>University Dashboard</button>
       </div>

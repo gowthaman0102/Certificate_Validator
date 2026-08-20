@@ -120,9 +120,9 @@ button.btn:hover:not(:disabled),
   transform: none !important;
 }
 
-.btn-secondary, button.btn-secondary, .logout-btn, .btn-danger {
-  background-color: #ffffff !important;
-  color: #0a0a0a !important;
+.btn-secondary, button.btn-secondary, .btn-danger {
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
   border: 2px solid #0a0a0a !important;
   border-radius: 9999px !important;
   padding: 0.55rem 1.35rem;
@@ -141,8 +141,34 @@ button.btn:hover:not(:disabled),
 
 .btn-secondary:hover:not(:disabled),
 button.btn-secondary:hover:not(:disabled),
-.logout-btn:hover:not(:disabled),
 .btn-danger:hover:not(:disabled) {
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
+  border-color: #0a0a0a !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15) !important;
+}
+
+.logout-btn {
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
+  border: 2px solid #0a0a0a !important;
+  border-radius: 9999px !important;
+  padding: 0.55rem 1.35rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none !important;
+  transition: all 0.25s ease-in-out !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.logout-btn:hover:not(:disabled) {
   background-color: #0a0a0a !important;
   color: #ffffff !important;
   border-color: #0a0a0a !important;
@@ -494,8 +520,8 @@ button.btn-secondary:hover:not(:disabled),
   padding: 0.5rem 1.4rem !important;
   border-radius: 9999px !important;
   border: 2px solid #0a0a0a !important;
-  background-color: #ffffff !important;
-  color: #0a0a0a !important;
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
   font-size: 0.88rem !important;
   font-weight: 700 !important;
   font-family: 'Inter', sans-serif !important;
@@ -506,8 +532,8 @@ button.btn-secondary:hover:not(:disabled),
 }
 
 .btn-back-home-oval:hover {
-  background-color: #0a0a0a !important;
-  color: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
   transform: translateY(-2px) !important;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15) !important;
 }
@@ -543,6 +569,43 @@ button.btn-secondary:hover:not(:disabled),
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   box-sizing: border-box !important;
+}
+
+/* Master rule for top header buttons: All top buttons black background with white text, EXCEPT logout */
+.dashboard-header button:not(.logout-btn),
+.dashboard-header a:not(.logout-btn),
+.dashboard-header .btn-secondary,
+.btn-secondary,
+button.btn-secondary,
+.btn-back-home-oval {
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
+  border: 2px solid #0a0a0a !important;
+}
+
+.dashboard-header button:not(.logout-btn):hover:not(:disabled),
+.dashboard-header a:not(.logout-btn):hover:not(:disabled),
+.dashboard-header .btn-secondary:hover:not(:disabled),
+.btn-secondary:hover:not(:disabled),
+button.btn-secondary:hover:not(:disabled),
+.btn-back-home-oval:hover:not(:disabled) {
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
+  border-color: #0a0a0a !important;
+}
+
+.dashboard-header .logout-btn,
+.logout-btn {
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
+  border: 2px solid #0a0a0a !important;
+}
+
+.dashboard-header .logout-btn:hover:not(:disabled),
+.logout-btn:hover:not(:disabled) {
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
+  border-color: #0a0a0a !important;
 }
 
 .dashboard-header h2 {

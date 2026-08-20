@@ -140,11 +140,41 @@ function UniversityDashboard() {
     finally { setCreating(false); }
   }
 
+  function validateYearGap(sVal, eVal) {
+    if (!sVal || !eVal) return true;
+    const s = parseInt(sVal, 10);
+    const e = parseInt(eVal, 10);
+    if (!isNaN(s) && !isNaN(e)) {
+      if (e < s) {
+        const msg = `Year of Passing (${e}) cannot be earlier than Start Year (${s}).`;
+        alert(msg);
+        setError(msg);
+        return false;
+      }
+      if (e - s > 4) {
+        const msg = `Invalid Academic Duration: The gap between Start Year (${s}) and Year of Passing (${e}) is ${e - s} years. Maximum allowed gap is 4 years!`;
+        alert(msg);
+        setError(msg);
+        return false;
+      }
+    }
+    return true;
+  }
+
   async function handleIssueCertificate(e) {
     e.preventDefault(); setError(""); setIssuing(true); setLastIssued(null);
     try {
       if (!startYear) {
         setError("Start Year is required");
+        setIssuing(false);
+        return;
+      }
+      if (!endYear) {
+        setError("Year of Passing is required");
+        setIssuing(false);
+        return;
+      }
+      if (!validateYearGap(startYear, endYear)) {
         setIssuing(false);
         return;
       }
@@ -406,8 +436,8 @@ function UniversityDashboard() {
           <input value={course} onChange={(e) => { setCourse(e.target.value); if (error) setError(""); }} required />
           <div style={{ display: "flex", gap: "1rem" }}>
             <div style={{ flex: 1 }}><label>CGPA</label><input value={cgpa} onChange={(e) => setCgpa(e.target.value)} required placeholder="8.7" /></div>
-            <div style={{ flex: 1 }}><label>Start Year</label><input type="number" min="1950" max="2100" value={startYear} onChange={(e) => setStartYear(e.target.value)} required placeholder="2022" /></div>
-            <div style={{ flex: 1 }}><label>Year of Passing</label><input type="number" min="1950" max="2100" value={endYear} onChange={(e) => setEndYear(e.target.value)} required placeholder="2026" /></div>
+            <div style={{ flex: 1 }}><label>Start Year</label><input type="number" min="1950" max="2100" value={startYear} onChange={(e) => { setStartYear(e.target.value); if (error) setError(""); }} onBlur={(e) => validateYearGap(e.target.value, endYear)} required placeholder="2022" /></div>
+            <div style={{ flex: 1 }}><label>Year of Passing</label><input type="number" min="1950" max="2100" value={endYear} onChange={(e) => { setEndYear(e.target.value); if (error) setError(""); }} onBlur={(e) => validateYearGap(startYear, e.target.value)} required placeholder="2026" /></div>
           </div>
           <label style={{ cursor: "pointer" }} onClick={(e) => { const el = e.currentTarget.nextElementSibling; if (el) { try { el.showPicker(); } catch { el.focus(); } } }}>Issue Date</label>
           <input

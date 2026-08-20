@@ -84,7 +84,7 @@ function generateCertificateNumber(issuerCode) {
  * - This prevents captured verification session payloads from being replayed by adversaries
  *   to spoof fresh verification contexts or flood the system.
  */
-const PROCESSED_NONCES = new Map();
+const { db } = require('../config/db');
 const REPLAY_WINDOW_MS = 5 * 60 * 1000; // 5 minutes scan session window
 
 function generateScanToken() {
@@ -113,20 +113,23 @@ function validateReplayProtection(scanNonce, scanTs) {
     }
   }
 
-  // 2. Nonce uniqueness check (prevents replayed request payload)
+  // 2. Nonce uniqueness check — SQLite persistence ensures nonces survive server restarts
   if (scanNonce) {
-    if (PROCESSED_NONCES.has(scanNonce)) {
-      return { valid: false, reason: 'Replay attack detected — this verification scan session has already been used.' };
-    }
+    try {
+      const existing = db.prepare('SELECT nonce FROM processed_nonces WHERE nonce = ?').get(scanNonce);
+      if (existing) {
+        return { valid: false, reason: 'Replay attack detected — this verification scan session has already been used.' };
+      }
+      db.prepare('INSERT INTO processed_nonces (nonce, used_at) VALUES (?, ?)').run(scanNonce, now);
 
-    PROCESSED_NONCES.set(scanNonce, now);
-
-    // Periodic memory cleanup
-    if (PROCESSED_NONCES.size > 500) {
-      for (const [nonce, ts] of PROCESSED_NONCES.entries()) {
-        if (now - ts > REPLAY_WINDOW_MS * 2) {
-          PROCESSED_NONCES.delete(nonce);
-        }
+      // Opportunistic cleanup of expired nonces (older than 10 mins)
+      if (Math.random() < 0.1) {
+        const expiredCutoff = now - (REPLAY_WINDOW_MS * 2);
+        db.prepare('DELETE FROM processed_nonces WHERE used_at < ?').run(expiredCutoff);
+      }
+    } catch (e) {
+      if (e.message && e.message.includes('UNIQUE constraint failed')) {
+        return { valid: false, reason: 'Replay attack detected — this verification scan session has already been used.' };
       }
     }
   }

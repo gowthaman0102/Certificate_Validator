@@ -620,7 +620,7 @@ function Home() {
 
                       {/* Top Black Pill Header */}
                       <div style={{ background: "#0a0a0a", color: "#ffffff", padding: "2px 8px", borderRadius: "999px", display: "flex", alignItems: "center", gap: "4px", zIndex: 2, marginBottom: "2px", whiteSpace: "nowrap" }}>
-                        <span style={{ fontFamily: "var(--font-body)", fontSize: "0.48rem", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" }}>» REWARD</span>
+                        <span style={{ fontFamily: "var(--font-body)", fontSize: "0.48rem", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" }}>» SCAN</span>
                       </div>
 
                       {/* Center Black Vector QR Code with Integrated Shield Emblem */}
@@ -637,9 +637,9 @@ function Home() {
                         </div>
                       </div>
 
-                      {/* Bottom Ticker: » REWARD */}
+                      {/* Bottom Ticker: » VERIFY */}
                       <div style={{ display: "flex", alignItems: "center", gap: "3px", zIndex: 2, marginTop: "2px", borderTop: "1px stroke #e5e5e5", paddingTop: "2px", width: "100%", justifyContent: "center", whiteSpace: "nowrap" }}>
-                        <span style={{ fontFamily: "var(--font-body)", fontSize: "0.48rem", fontWeight: 800, color: "#0a0a0a", letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>» REWARD</span>
+                        <span style={{ fontFamily: "var(--font-body)", fontSize: "0.48rem", fontWeight: 800, color: "#0a0a0a", letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>» VERIFY</span>
                       </div>
                     </div>
                   </motion.div>
