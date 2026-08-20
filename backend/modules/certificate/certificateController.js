@@ -167,9 +167,14 @@ async function uploadCertificate(req, res) {
     const sYearNum = parseInt(start_year, 10);
     const eYearNum = parseInt(end_year, 10);
     if (!isNaN(sYearNum) && !isNaN(eYearNum)) {
-      const gap = eYearNum - sYearNum;
-      if (gap !== 4) {
-        return res.status(400).json({ error: `Invalid Academic Duration: The gap between Start Year (${start_year}) and Year of Passing (${end_year}) must be exactly 4 years (e.g., 2022 to 2026)` });
+      if (eYearNum <= sYearNum) {
+        const errMsg = eYearNum === sYearNum
+          ? `Year of Passing (${end_year}) cannot be the same as Start Year (${start_year})`
+          : `Year of Passing (${end_year}) cannot be earlier than Start Year (${start_year})`;
+        return res.status(400).json({ error: errMsg });
+      }
+      if (eYearNum - sYearNum > 4) {
+        return res.status(400).json({ error: `The gap between Start Year (${start_year}) and Year of Passing (${end_year}) cannot exceed 4 years` });
       }
     }
 
@@ -520,9 +525,15 @@ async function bulkUploadCertificates(req, res) {
         const sYearNum = parseInt(start_year, 10);
         const eYearNum = parseInt(end_year, 10);
         if (!isNaN(sYearNum) && !isNaN(eYearNum)) {
-          const gap = eYearNum - sYearNum;
-          if (gap !== 4) {
-            results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'invalid_year_gap', error: `Invalid Academic Duration: The gap between Start Year (${start_year}) and Year of Passing (${end_year}) is ${gap} ${gap === 1 ? 'year' : 'years'} (must be exactly 4 years)` });
+          if (eYearNum <= sYearNum) {
+            const errMsg = eYearNum === sYearNum
+              ? `Year of Passing (${end_year}) cannot be the same as Start Year (${start_year})`
+              : `Year of Passing (${end_year}) cannot be earlier than Start Year (${start_year})`;
+            results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'invalid_year_gap', error: errMsg });
+            continue;
+          }
+          if (eYearNum - sYearNum > 4) {
+            results.push({ row: rowNum, register_number: register_number || '(missing)', success: false, reason: 'invalid_year_gap', error: `The gap between Start Year (${start_year}) and Year of Passing (${end_year}) is ${eYearNum - sYearNum} years (maximum allowed is 4 years)` });
             continue;
           }
         }

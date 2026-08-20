@@ -14,8 +14,8 @@ router.get('/certificates/:id/revocation-status', getRevocationStatus);
 router.get('/certificates/by-email', authenticateToken, getCertificatesByEmail);
 router.get('/certificates/by-register-number', authenticateToken, getCertificatesByRegisterNumber);
 router.get('/certificates/by-identity', authenticateToken, getCertificatesByIdentity);
-router.get('/certificate/by-number/:certNumber', authenticateToken, getCertificateByCertNumber);
-router.get('/certificate/:id', authenticateToken, getCertificate);
+router.get('/certificate/by-number/:certNumber', getCertificateByCertNumber);
+router.get('/certificate/:id', getCertificate);
 router.get('/certificates/university/:id', authenticateToken, getCertificatesByUniversity);
 
 module.exports = router;
