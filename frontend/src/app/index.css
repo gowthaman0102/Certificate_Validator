@@ -32,9 +32,9 @@
   outline-offset: 2px !important;
 }
 
-/* Mobile Responsiveness Pass: Minimum 44px Touch Targets on Small Screens */
-@media (max-width: 480px) {
-  button, .btn, .btn-secondary, input, select {
+/* Mobile & Tablet Responsiveness: Minimum 44px Touch Targets on Small Screens */
+@media (max-width: 768px) {
+  button, .btn, .btn-primary, .btn-secondary, .btn-danger, .logout-btn, .btn-back-home-oval, input, select, textarea {
     min-height: 44px !important;
   }
 }
@@ -541,28 +541,29 @@ button.btn-secondary:hover:not(:disabled),
 /* -- Dashboard Layouts --------------------------------------- */
 .dashboard {
   width: 100%;
-  max-width: 1360px;
+  max-width: clamp(1100px, 92vw, 1680px);
   margin: 0 auto;
-  padding: calc(var(--header-height, 135px) + 15px) 1.5rem 2.5rem 1.5rem !important;
+  padding: calc(var(--header-height, 135px) + 20px) clamp(1rem, 2.5vw, 3rem) 3rem clamp(1rem, 2.5vw, 3rem) !important;
   background-color: var(--color-bg);
   background-image: radial-gradient(rgba(10, 10, 10, 0.05) 0.8px, transparent 0.8px);
   background-size: 24px 24px;
   min-height: 100vh;
   position: relative;
+  box-sizing: border-box;
 }
 
 .dashboard-header {
   position: fixed !important;
   top: 0 !important;
-  left: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
   width: 100% !important;
-  max-width: 100% !important;
-  transform: none !important;
+  max-width: clamp(1100px, 92vw, 1680px) !important;
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
   border: none !important;
-  padding: 0.85rem 2rem !important;
+  padding: 0.85rem clamp(1rem, 2.5vw, 3rem) !important;
   z-index: 1000 !important;
   background: #ffffff !important;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
@@ -621,11 +622,13 @@ button.btn-secondary:hover:not(:disabled),
   background-size: 16px 16px !important;
   border: 1px solid var(--color-border);
   border-radius: 25px !important;
-  padding: 1.75rem;
+  padding: clamp(1.25rem, 2vw, 2rem);
   margin: 0 auto 1.5rem auto;
-  max-width: 1040px;
+  width: 100%;
+  max-width: clamp(900px, 90vw, 1560px);
   position: relative;
   z-index: 2;
+  box-sizing: border-box;
 }
 
 .card h3 {
@@ -841,25 +844,24 @@ input[type="date"] *::selection {
 
 .home-root {
   background: var(--color-bg);
-  height: 100vh;
-  max-height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .home-content {
   width: 100%;
-  max-width: 1440px;
-  height: 100%;
+  max-width: clamp(1200px, 92vw, 1720px);
+  min-height: 100vh;
   margin: 0 auto;
-  padding: clamp(0.5rem, 1.2vh, 1rem) clamp(1.25rem, 2.5vw, 3rem);
+  padding: clamp(0.75rem, 1.5vh, 1.5rem) clamp(1.25rem, 3vw, 3.5rem);
   display: flex;
   flex-direction: column;
   flex: 1;
   justify-content: space-between;
-  overflow: hidden;
   box-sizing: border-box;
 }
 

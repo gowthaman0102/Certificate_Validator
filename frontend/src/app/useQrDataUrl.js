@@ -29,24 +29,33 @@ export function useQrDataUrl(cert, qrCodeUrlProp) {
 
     async function generate() {
       try {
+        let certNum = cert?.certificate_number || cert?.id || cert?.cert_id || '';
+
+        if (!certNum && cert?.qr_data) {
+          try {
+            const parsed = typeof cert.qr_data === 'string' ? JSON.parse(cert.qr_data) : cert.qr_data;
+            certNum = parsed.certificate_number || parsed.cert_id || parsed.id || '';
+          } catch {}
+        }
+
         let qrContent = '';
 
-        if (cert?.qr_data) {
-          // Use the full QR payload string stored in DB — preserves verifiability
+        if (certNum) {
+          // Construct clean, mobile-scannable Verification URL for external phone cameras
+          const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+          qrContent = `${origin}/verify?cert_number=${encodeURIComponent(certNum)}`;
+        } else if (cert?.qr_data) {
           qrContent = typeof cert.qr_data === 'string' ? cert.qr_data : JSON.stringify(cert.qr_data);
-        } else if (cert?.certificate_number) {
-          qrContent = cert.certificate_number;
-        } else if (cert?.id) {
-          qrContent = cert.id;
         } else {
           return;
         }
 
+        // Generate crisp, optimal-density QR code (Level M = 15% error correction, Version 3 matrix)
         const url = await QRCode.toDataURL(qrContent, {
-          width: 300,
-          margin: 1,
-          errorCorrectionLevel: 'H',
-          color: { dark: '#0a0a0a', light: '#ffffff' },
+          width: 400,
+          margin: 2,
+          errorCorrectionLevel: 'M',
+          color: { dark: '#000000', light: '#ffffff' },
         });
 
         if (!cancelled) setDataUrl(url);

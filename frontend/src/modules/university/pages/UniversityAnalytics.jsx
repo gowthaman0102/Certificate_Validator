@@ -309,7 +309,7 @@ function UniversityAnalytics() {
     <div className="dashboard" id="univ-analytics-container">
       <UniversityAnalyticsDecorations />
       <div className="dashboard-header"><h2>University Analytics</h2></div>
-      <div className="card" style={{ maxWidth: "900px" }}>
+      <div className="card">
         <SkeletonCard rows={3} heights={["1.5rem", "5rem", "10rem"]} gap="1rem" />
       </div>
     </div>
@@ -353,12 +353,12 @@ function UniversityAnalytics() {
         </div>
       </div>
 
-      {error && <motion.div className="card" style={{ maxWidth: "900px" }} variants={cardVariants}><div className="error-msg">{error}</div></motion.div>}
+      {error && <motion.div className="card" variants={cardVariants}><div className="error-msg">{error}</div></motion.div>}
 
       {data?.summary && (
         <motion.div
           variants={cardVariants}
-          style={{ maxWidth: "900px", margin: "0 auto 1.5rem auto", position: "relative", zIndex: 2, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}
+          style={{ margin: "0 auto 1.5rem auto", position: "relative", zIndex: 2, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}
         >
           <StatCard label="Total Issued" value={data.summary.total} subtext="Lifetime credentials" />
           <StatCard label="Active Credentials" value={data.summary.active} subtext={`${activePercent}% operational integrity`} />
@@ -374,7 +374,7 @@ function UniversityAnalytics() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: false, amount: 0.2 }}
         transition={{ duration: 0.6, ease: PREMIUM }}
-        style={{ maxWidth: "900px", border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }}
+        style={{ border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginBottom: "1.25rem", borderBottom: "2px solid #0a0a0a", paddingBottom: "0.75rem" }}>
           <h3 style={{ margin: 0, fontWeight: 700, fontSize: "1.2rem", color: GS.ink }}>
@@ -424,7 +424,7 @@ function UniversityAnalytics() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: false, amount: 0.2 }}
           transition={{ duration: 0.6, ease: PREMIUM }}
-          style={{ maxWidth: "900px", border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)", marginTop: "1.5rem" }}
+          style={{ border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)", marginTop: "1.5rem" }}
         >
           <style>{`
             @keyframes fadeInPieLabel {
@@ -472,7 +472,7 @@ function UniversityAnalytics() {
       )}
 
       {data?.recent?.length > 0 && (
-        <motion.div className="card" style={{ maxWidth: "900px", marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px" }} variants={cardVariants}>
+        <motion.div className="card" style={{ marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px" }} variants={cardVariants}>
           <h3 style={{ borderBottom: "2px solid #0a0a0a", paddingBottom: "0.6rem", marginBottom: "1rem", fontWeight: 700 }}>
             Recent Issued Certificates
           </h3>
@@ -501,7 +501,7 @@ function UniversityAnalytics() {
       )}
 
       {data?.revocations?.length > 0 && (
-        <motion.div className="card" style={{ maxWidth: "900px", marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px" }} variants={cardVariants}>
+        <motion.div className="card" style={{ marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px" }} variants={cardVariants}>
           <h3 style={{ borderBottom: "2px solid #0a0a0a", paddingBottom: "0.6rem", marginBottom: "1rem", fontWeight: 700, color: "#dc2626" }}>
             Revocation Records
           </h3>

@@ -71,6 +71,48 @@ function Verifier() {
         setLastSync(getLastSyncTime());
       })
       .catch(() => {});
+
+    // Auto-verify if user arrived via QR URL scan (e.g., /verify?cert_number=BN/2026/3456)
+    if (typeof window !== 'undefined' && window.location.search) {
+      const params = new URLSearchParams(window.location.search);
+      const queryCertNum = params.get('cert_number') || params.get('cert_id') || params.get('id');
+      if (queryCertNum) {
+        const cleanNum = decodeURIComponent(queryCertNum).trim();
+        setCertNumber(cleanNum);
+        setInputMode('certId');
+        
+        setLoading(true);
+        setError('');
+        getCertificateByCertNumber(cleanNum)
+          .then(res => {
+            const cert = res.data;
+            const payload = {
+              cert_id: cert.id,
+              certificate_number: cert.certificate_number,
+              register_number: cert.register_number,
+              student_name: cert.student_name,
+              course: cert.course,
+              cgpa: cert.cgpa ?? '',
+              start_year: cert.start_year ?? '',
+              end_year: cert.end_year,
+              issue_date: cert.issue_date,
+              issuer_id: cert.issuer_code,
+              hash: cert.certificate_hash,
+              signature: cert.signature,
+            };
+            return verifyCertificate(payload);
+          })
+          .then(verRes => {
+            setResult(verRes.data);
+          })
+          .catch(err => {
+            setError(err.response?.data?.error || `Certificate '${cleanNum}' could not be verified.`);
+          })
+          .finally(() => {
+            setLoading(false);
+          });
+      }
+    }
   }, []);
 
   /* ── Batch Verification State (Phase 6) ── */

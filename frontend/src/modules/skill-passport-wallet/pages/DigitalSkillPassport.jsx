@@ -248,7 +248,7 @@ export default function DigitalSkillPassport() {
 
   if (loading) {
     return (
-      <div className="dashboard" style={{ maxWidth: "1100px", margin: "0 auto", textAlign: "center", paddingTop: "5rem" }}>
+      <div className="dashboard" style={{ textAlign: "center", paddingTop: "5rem" }}>
         <SkeletonCard />
       </div>
     );
@@ -267,7 +267,6 @@ export default function DigitalSkillPassport() {
   return (
     <motion.div
       className="dashboard"
-      style={{ maxWidth: "1100px", margin: "0 auto" }}
       variants={containerVariants}
       initial="hidden"
       animate="visible"

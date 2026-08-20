@@ -278,8 +278,20 @@ function parseQrDataString(rawData) {
     } catch {}
   }
 
-  // Certificate ID pattern match (e.g. ABC001-2026-A918 or URL query param)
-  const idMatch = trimmed.match(/([A-Z0-9]{2,12}[-_]\d{4}[-_][A-Z0-9]{2,12})/i);
+  // URL query parameter extraction (e.g. http://domain/verify?cert_number=BN/2026/3456)
+  if (trimmed.includes('verify') || trimmed.includes('cert_number=') || trimmed.includes('cert_id=')) {
+    try {
+      const dummyOrigin = 'http://localhost:5173';
+      const urlObj = new URL(trimmed.startsWith('http') ? trimmed : `${dummyOrigin}/${trimmed.replace(/^\//, '')}`);
+      const certParam = urlObj.searchParams.get('cert_number') || urlObj.searchParams.get('cert_id') || urlObj.searchParams.get('id');
+      if (certParam) {
+        return { cert_id_from_name: certParam.trim().toUpperCase() };
+      }
+    } catch {}
+  }
+
+  // Certificate ID pattern match (e.g. BN/2026/3456 or ABC001-2026-A918)
+  const idMatch = trimmed.match(/([A-Z0-9]{2,12}[-_/]\d{4}[-_/][A-Z0-9]{2,12})/i);
   if (idMatch) {
     return { cert_id_from_name: idMatch[1].toUpperCase() };
   }

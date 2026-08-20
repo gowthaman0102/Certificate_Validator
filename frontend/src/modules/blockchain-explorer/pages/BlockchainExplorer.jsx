@@ -337,7 +337,7 @@ function LedgerDetailModal({ anchor, onClose }) {
           border: "2.5px solid #0a0a0a",
           borderRadius: "16px",
           width: "100%",
-          maxWidth: "880px",
+          maxWidth: "min(880px, 92vw)",
           maxHeight: "90vh",
           overflowY: "auto",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",

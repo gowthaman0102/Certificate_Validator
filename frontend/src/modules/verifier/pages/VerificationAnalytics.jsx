@@ -128,7 +128,7 @@ function VerificationAnalytics() {
     <div className="dashboard">
       <VerificationAnalyticsDecorations />
       <div className="dashboard-header"><h2>Verification Analytics</h2></div>
-      <div className="card" style={{ maxWidth: "900px" }}>
+      <div className="card">
         <SkeletonCard rows={3} heights={["1.5rem", "5rem", "10rem"]} gap="1rem" />
       </div>
     </div>
@@ -155,10 +155,10 @@ function VerificationAnalytics() {
         </div>
       </div>
 
-      {error && <motion.div className="card" style={{ maxWidth: "900px" }} variants={cardVariants}><div className="error-msg">{error}</div></motion.div>}
+      {error && <motion.div className="card" variants={cardVariants}><div className="error-msg">{error}</div></motion.div>}
 
       {data?.summary && (
-        <motion.div className="card" style={{ maxWidth: "900px", border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }} variants={cardVariants}>
+        <motion.div className="card" style={{ border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }} variants={cardVariants}>
           <h3 style={{ borderBottom: "2px solid #0a0a0a", paddingBottom: "0.6rem", marginBottom: "1rem", fontWeight: 700, fontSize: "1.2rem", color: GS.ink }}>
             Verification Overview
           </h3>
@@ -173,7 +173,7 @@ function VerificationAnalytics() {
 
 
       {data?.monthly?.length > 0 && (
-        <motion.div className="card" style={{ maxWidth: "900px", marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }} variants={cardVariants}>
+        <motion.div className="card" style={{ marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }} variants={cardVariants}>
           <h3 style={{ borderBottom: "2px solid #0a0a0a", paddingBottom: "0.6rem", marginBottom: "1rem", fontWeight: 700, fontSize: "1.2rem", color: GS.ink }}>
             Result Breakdown by Month
           </h3>
@@ -194,7 +194,7 @@ function VerificationAnalytics() {
 
       {/* ── Top Verified Certificates ──────────────────────────────────── */}
       {data?.topCertificates?.length > 0 && (
-        <motion.div className="card" style={{ maxWidth: "900px", marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }} variants={cardVariants}>
+        <motion.div className="card" style={{ marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }} variants={cardVariants}>
           <h3 style={{ borderBottom: "2px solid #0a0a0a", paddingBottom: "0.6rem", marginBottom: "1rem", fontWeight: 700, fontSize: "1.2rem", color: GS.ink }}>
             Most Verified Certificates
           </h3>
@@ -225,7 +225,7 @@ function VerificationAnalytics() {
 
       {/* ── Activity by Day of Week ────────────────────────────────────── */}
       {data?.byDay && (
-        <motion.div className="card" style={{ maxWidth: "900px", marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }} variants={cardVariants}>
+        <motion.div className="card" style={{ marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px", boxShadow: "0 4px 16px rgba(0,0,0,0.05)" }} variants={cardVariants}>
           <h3 style={{ borderBottom: "2px solid #0a0a0a", paddingBottom: "0.6rem", marginBottom: "1rem", fontWeight: 700, fontSize: "1.2rem", color: GS.ink }}>
             Verification Activity by Day of Week
           </h3>
@@ -250,7 +250,7 @@ function VerificationAnalytics() {
 
       {/* ── Recent Verification Events ─────────────────────────────────── */}
       {genuineRecent.length > 0 && (
-        <motion.div className="card" style={{ maxWidth: "900px", marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px" }} variants={cardVariants}>
+        <motion.div className="card" style={{ marginTop: "1.5rem", border: "2px solid #0a0a0a", borderRadius: "12px" }} variants={cardVariants}>
           <h3 style={{ borderBottom: "2px solid #0a0a0a", paddingBottom: "0.6rem", marginBottom: "1rem", fontWeight: 700, fontSize: "1.2rem", color: GS.ink }}>
             Recent Verification Events
           </h3>

@@ -94,7 +94,7 @@ function StudentAnalytics() {
   if (loading) return (
     <div className="dashboard">
       <div className="dashboard-header"><h2>My Analytics</h2></div>
-      <div className="card" style={{ maxWidth: "900px" }}>
+      <div className="card">
         <SkeletonCard rows={3} heights={["1.5rem", "5rem", "10rem"]} gap="1rem" />
       </div>
     </div>
@@ -118,9 +118,9 @@ function StudentAnalytics() {
           <button className="logout-btn" onClick={handleLogout} id="sanalytics-logout-btn">Logout</button>
         </div>
       </div>
-      {error && <motion.div className="card" style={{ maxWidth: "900px" }} variants={cardVariants}><div className="error-msg">{error}</div></motion.div>}
+      {error && <motion.div className="card" variants={cardVariants}><div className="error-msg">{error}</div></motion.div>}
       {data?.summary && (
-        <motion.div className="card" style={{ maxWidth: "900px" }} variants={cardVariants}>
+        <motion.div className="card" variants={cardVariants}>
           <h3>Certificate Overview</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "0.75rem" }}>
             <StatBox label="Total Certificates" value={data.summary.total} />
@@ -132,7 +132,7 @@ function StudentAnalytics() {
       )}
 
       {data?.timeline?.length > 0 && (
-        <motion.div className="card" style={{ maxWidth: "900px" }} variants={cardVariants}>
+        <motion.div className="card" variants={cardVariants}>
           <h3>Certificate Receipt Timeline</h3>
           <ResponsiveContainer width="100%" height={210}>
             <BarChart data={data.timeline} margin={{ top: 10, right: 15, left: -10, bottom: 5 }}>
@@ -155,7 +155,7 @@ function StudentAnalytics() {
         </motion.div>
       )}
       {data?.certificates?.length > 0 && (
-        <motion.div className="card" style={{ maxWidth: "900px" }} variants={cardVariants}>
+        <motion.div className="card" variants={cardVariants}>
           <h3>
             All Certificates (<CountUp to={data.certificates.length} duration={0.6} />)
           </h3>
@@ -181,7 +181,7 @@ function StudentAnalytics() {
         </motion.div>
       )}
       {data?.certificates?.length === 0 && (
-        <motion.div className="card" style={{ maxWidth: "900px" }} variants={cardVariants}>
+        <motion.div className="card" variants={cardVariants}>
           <p style={{ color: GS.muted }}>No certificates found for your account.</p>
         </motion.div>
       )}

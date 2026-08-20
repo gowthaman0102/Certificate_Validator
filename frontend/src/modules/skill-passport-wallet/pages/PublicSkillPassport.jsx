@@ -42,7 +42,7 @@ export default function PublicSkillPassport() {
 
   if (loading) {
     return (
-      <div className="dashboard" style={{ maxWidth: "1000px", margin: "0 auto" }}>
+      <div className="dashboard">
         <div className="dashboard-header"><h2>Verified Academic Identity</h2></div>
         <div className="card">
           <SkeletonCard rows={4} heights={["2rem", "6rem", "8rem", "4rem"]} gap="1rem" />
@@ -53,7 +53,7 @@ export default function PublicSkillPassport() {
 
   if (error) {
     return (
-      <div className="dashboard" style={{ maxWidth: "1000px", margin: "0 auto" }}>
+      <div className="dashboard">
         <div className="card">
           <h2 style={{ color: "#0a0a0a" }}>Student Portfolio</h2>
           <div className="error-msg">{error}</div>
@@ -72,7 +72,6 @@ export default function PublicSkillPassport() {
   return (
     <motion.div
       className="dashboard"
-      style={{ maxWidth: "1000px", margin: "0 auto" }}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
